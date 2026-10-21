@@ -22,12 +22,13 @@ type Props = {
   matches: CatalogMatch[];
   toLine: (i: ShoppingItem) => ListLine;
   onFixPrice: (itemId: string, price: number) => void;
-  onDone: (lines: PutAwayLine[], logSpend: boolean) => void;
+  onDone: (lines: PutAwayLine[], logSpend: boolean, track: string[]) => void;
   onCancel: () => void;
 };
 
-// "Put away" at home: how many of each went into the cupboard, and a spend entry
-// filled in from the shop prices. One tap on a price fixes it to the receipt.
+// Shopping done: how many of each went into the cupboard (untick anything not bought), and a
+// spend entry filled in from the shop prices. One tap on a price fixes it to the receipt.
+// Catalog items not on the house list can be tracked at home from here.
 export function PutAway({ bought, stockById, shops, matches, toLine, onFixPrice, onDone, onCancel }: Props) {
   const [lines, setLines] = useState<PutAwayLine[]>(() =>
     bought.map((i) => {
@@ -45,10 +46,20 @@ export function PutAway({ bought, stockById, shops, matches, toLine, onFixPrice,
     }),
   );
   const [fixing, setFixing] = useState<string | null>(null);
+  const [skip, setSkip] = useState<Set<string>>(new Set());
+  const [track, setTrack] = useState<Set<string>>(new Set());
+  const toggle = (set: Set<string>, id: string) => {
+    const next = new Set(set);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    return next;
+  };
+  const bought2 = lines.filter((l) => !skip.has(l.extraId));
+  const fromCatalog = new Set(bought.filter((i) => i.catalog_product_id && !i.item_id).map((i) => i.id));
   const [draft, setDraft] = useState("");
 
   const set = (id: string, change: Partial<PutAwayLine>) => setLines((ls) => ls.map((l) => (l.extraId === id ? { ...l, ...change } : l)));
-  const spend = spendByShop(lines);
+  const spend = spendByShop(bought2);
   const total = spend.reduce((sum, g) => sum + g.total, 0);
   const shopName = (id: string | null) => shops.find((s) => s.id === id)?.name ?? "Anywhere";
   const unitOf = (l: PutAwayLine) => (l.itemId ? stockById.get(l.itemId)?.unit : undefined);
@@ -64,17 +75,20 @@ export function PutAway({ bought, stockById, shops, matches, toLine, onFixPrice,
   return (
     <section aria-labelledby="put-away" className="flex flex-col gap-3 rounded-xl border-2 border-brand bg-raised p-4">
       <h2 id="put-away" className="font-display text-xl">
-        Put away
+        Shopping done · add to stock
       </h2>
-      <p className="text-sm text-muted">Check what went into the cupboard. If the receipt says something different, tap the price.</p>
+      <p className="text-sm text-muted">Untick anything you didn&apos;t buy. If the receipt says something different, tap the price.</p>
       <ul className="divide-y divide-line">
         {lines.map((l) => (
           <li key={l.extraId} className="flex flex-col gap-2 py-3">
             <div className="flex items-center justify-between gap-2">
-              <span className="min-w-0 font-bold">
-                {l.title}
-                <span className="block text-sm font-normal text-muted">{shopName(l.shopId)}</span>
-              </span>
+              <label className="flex min-w-0 items-start gap-2 font-bold">
+                <input type="checkbox" checked={!skip.has(l.extraId)} onChange={() => setSkip((s) => toggle(s, l.extraId))} className="mt-1 size-6 shrink-0" aria-label={`Bought ${l.title}`} />
+                <span className={skip.has(l.extraId) ? "text-muted line-through" : ""}>
+                  {l.title}
+                  <span className="block text-sm font-normal text-muted">{shopName(l.shopId)}</span>
+                </span>
+              </label>
               {l.level ? (
                 <span className="text-sm text-muted">Back to OK</span>
               ) : (
@@ -105,6 +119,12 @@ export function PutAway({ bought, stockById, shops, matches, toLine, onFixPrice,
                 </div>
               )}
             </div>
+            {fromCatalog.has(l.extraId) && !skip.has(l.extraId) && (
+              <label className="flex min-h-10 items-center gap-2 text-sm">
+                <input type="checkbox" checked={track.has(l.extraId)} onChange={() => setTrack((t) => toggle(t, l.extraId))} className="size-5" />
+                Keep track of this at home (adds it to Stock)
+              </label>
+            )}
             {fixing === l.extraId ? (
               <form
                 className="flex gap-2"
@@ -163,12 +183,12 @@ export function PutAway({ bought, stockById, shops, matches, toLine, onFixPrice,
         </ul>
       )}
 
-      <button type="button" onClick={() => onDone(lines, true)} disabled={total <= 0} className="min-h-12 rounded-xl bg-brand font-bold text-brand-contrast disabled:opacity-50">
-        Put away · log {kes(total)} spent
+      <button type="button" onClick={() => onDone(bought2, true, [...track])} disabled={total <= 0} className="min-h-12 rounded-xl bg-brand font-bold text-brand-contrast disabled:opacity-50">
+        Add to stock · log {kes(total)} spent
       </button>
       <div className="flex justify-between gap-2">
-        <button type="button" onClick={() => onDone(lines, false)} className="min-h-12 rounded-xl px-2 font-bold text-brand">
-          Put away, no spend
+        <button type="button" onClick={() => onDone(bought2, false, [...track])} className="min-h-12 rounded-xl px-2 font-bold text-brand">
+          Add to stock, no spend
         </button>
         <button type="button" onClick={onCancel} className="min-h-12 rounded-xl px-2 font-bold text-muted">
           Not yet

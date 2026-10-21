@@ -7,10 +7,10 @@ import { useSync } from "@/components/SyncProvider";
 import { UndoBar, type UndoState } from "@/components/UndoBar";
 import { CatalogView } from "@/components/shop/CatalogView";
 import { DealRestock } from "@/components/shop/DealRestock";
+import { AisleBar, SwapBrand, useWakeLock } from "@/components/shop/Aisle";
 import { PutAway } from "@/components/shop/PutAway";
 import { ItemPrice } from "@/components/shop/ItemPrice";
 import { ModeBar } from "@/components/shop/ModeBar";
-import { StockView } from "@/components/shop/StockView";
 import { StoreCompare } from "@/components/shop/StoreCompare";
 import { TripCheck, isActive, type Trip } from "@/components/shop/TripCheck";
 import {
@@ -27,9 +27,15 @@ import {
   type StockLike,
   type Tier,
 } from "@/lib/shopping/pricing";
-import { SHOP_HINT, SUPERMARKETS, sortShops, type Shop, type ShoppingItem, type StockItem } from "@/lib/shopping/shops";
+import { SHOP_HINT, SUPERMARKETS, type Shop, type ShoppingItem, type StockItem } from "@/lib/shopping/shops";
 import type { Product } from "@/lib/shopping/catalog";
-import { autoListItems, putAwayMovements, spendByShop, withLocalCounts, type Movement, type PutAwayLine } from "@/lib/shopping/stock";
+import { autoListItems, type PutAwayLine } from "@/lib/shopping/stock";
+import { restockHouse } from "@/lib/sync/workflows";
+import { fromTemplate, postJob, updateJob } from "@/lib/jobs/actions";
+import type { Job } from "@/lib/jobs/logic";
+import { TEMPLATES } from "@/lib/jobs/templates";
+import { upgradeDeals } from "@/lib/shopping/predict";
+import { useStock } from "@/lib/shopping/useStock";
 import { localDB, syncEngine } from "@/lib/sync/client";
 import { useMe, useRows, type Member } from "@/lib/sync/hooks";
 
@@ -52,21 +58,20 @@ function savedMode(): Mode {
 }
 
 const VIEW_KEY = "kimemiah-shop-view";
-type View = "catalog" | "list" | "stock";
+type View = "catalog" | "list";
 const VIEWS: { id: View; label: string }[] = [
   { id: "catalog", label: "Catalog" },
   { id: "list", label: "Cart / List" },
-  { id: "stock", label: "Kitchen stock" },
 ];
 
-// Shop tab: the supermarket Catalog, the family Cart / List, and Kitchen stock, one switch apart.
+// Shop tab: the supermarket Catalog and the family Cart / List, one switch apart. Stock has its own tab.
 export default function ShopPage() {
   const { syncNow } = useSync();
   const [view, setViewState] = useState<View>("catalog");
   useEffect(() => {
     try {
-      const v = localStorage.getItem(VIEW_KEY);
-      if (v === "list" || v === "stock") setViewState(v);
+      const v = new URLSearchParams(window.location.search).get("view") ?? localStorage.getItem(VIEW_KEY);
+      if (v === "list") setViewState(v);
     } catch {}
   }, []);
   const setView = (v: View) => {
@@ -76,14 +81,7 @@ export default function ShopPage() {
     } catch {}
   };
 
-  const me = useMe();
-  const shops = sortShops(useRows<Shop>("shops") ?? []);
-  const stockRows = useRows<StockItem>("stock_items");
-  const movementRows = useRows<Movement & { id: string }>("stock_movements");
-  const movements = useMemo(() => movementRows ?? [], [movementRows]);
-  // Counts include this phone's unsynced +/-, the same sum the server keeps.
-  const stock = useMemo(() => withLocalCounts(stockRows ?? [], movements, me?.id), [stockRows, movements, me?.id]);
-  const members = useRows<Member>("members") ?? [];
+  const { shops, stock, members } = useStock();
   const items = useRows<ShoppingItem>("shopping_extras");
   // Every list row ever (removed ones too), for "Most bought by the house".
   const history = useLiveQuery(() => localDB().rows("shopping_extras").toArray(), [], []) as ShoppingItem[];
@@ -168,7 +166,7 @@ export default function ShopPage() {
   }
 
   const switcher = (
-    <div role="tablist" aria-label="Shop" className="grid grid-cols-3 gap-1 rounded-full border border-line bg-raised p-1">
+    <div role="tablist" aria-label="Shop" className="grid grid-cols-2 gap-1 rounded-full border border-line bg-raised p-1">
       {VIEWS.map((v) => (
         <button
           key={v.id}
@@ -184,14 +182,6 @@ export default function ShopPage() {
     </div>
   );
 
-  if (view === "stock") {
-    return (
-      <Screen title="Kitchen stock">
-        {switcher}
-        <StockView stock={stock} movements={movements} shops={shops} members={members} meId={me?.id} />
-      </Screen>
-    );
-  }
   if (view === "catalog") {
     return (
       <Screen title="Catalog">
@@ -259,6 +249,9 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
   const [undo, setUndo] = useState<UndoState>(null);
   const [showHouseList, setShowHouseList] = useState(false);
   const [puttingAway, setPuttingAway] = useState(false);
+  const [aisle, setAisle] = useState(false);
+  useWakeLock(aisle);
+  const jobs = (useRows<Job & { id: string }>("jobs") ?? []) as Job[];
   const closeUndo = useCallback(() => setUndo(null), []);
 
   const setMode = (m: Mode) => {
@@ -381,37 +374,44 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
     await syncEngine().queue("stock_items", "update", { id: itemId, usual_price_kes: price });
   }
 
-  // Bought amounts go back into stock as movements; the spend is one money entry per shop (insert only).
-  async function putAway(lines: PutAwayLine[], logSpend: boolean) {
-    const engine = syncEngine();
+  // Shopping done: bought amounts into stock, the spend logged, the basket cleared, the run
+  // job marked done (lib/sync/workflows.ts). Catalog items ticked "keep track" join Stock first.
+  async function putAway(lines: PutAwayLine[], logSpend: boolean, track: string[]) {
     const trip = trips.find((t) => isActive(t) && t.member_id === me?.id);
-    for (const m of putAwayMovements(lines)) {
-      if (m.level) await engine.queue("stock_items", "update", { id: m.item_id, level: "ok" });
-      await engine.queue("stock_movements", "insert", { id: crypto.randomUUID(), item_id: m.item_id, delta: m.delta, reason: "put_away", trip_id: trip?.id ?? null });
-    }
-    const spend = logSpend ? spendByShop(lines) : [];
-    const today = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Nairobi" });
-    for (const g of spend) {
-      await engine.queue("money_entries", "insert", {
-        id: crypto.randomUUID(),
-        direction: "out",
-        occurred_on: today,
-        amount_kes: g.total,
-        method: null,
-        spent_by: me?.id ?? null,
-        shop_id: g.shopId,
-        category_id: null,
-        trip_id: trip && trip.shop_id === g.shopId ? trip.id : null,
-        note: g.note,
-        voids_entry_id: null,
+    for (const l of lines.filter((x) => track.includes(x.extraId))) {
+      const row = (items ?? []).find((i) => i.id === l.extraId);
+      const product = products.find((p) => p.id === row?.catalog_product_id);
+      const id = crypto.randomUUID();
+      await syncEngine().queue("stock_items", "insert", {
+        id,
+        name: l.title,
+        category: "other",
+        unit: "piece",
+        min_qty: 1,
+        usual_price_kes: l.price ? Math.round(l.price) : null,
+        shop_id: l.shopId,
+        track_mode: "count",
+        level: "ok",
+        sort: 900,
+        shopping_tier: row?.shopping_tier ?? "standard",
+        canonical_concept: product?.canonical_concept ?? null,
+        canonical_group_key: product?.canonical_group_key ?? null,
       });
+      l.itemId = id;
+      l.perPack = 1;
     }
-    for (const l of lines) await engine.queue("shopping_extras", "delete", { id: l.extraId });
-    if (trip) await engine.queue("shopping_trips", "update", { id: trip.id, finished_at: new Date().toISOString() });
+    const { spent, runsDone } = await restockHouse(lines, {
+      meId: me?.id,
+      logSpend,
+      tripId: trip?.id ?? null,
+      extraIds: lines.map((l) => l.extraId).filter((id) => !id.startsWith("auto:")),
+    });
     void syncNow();
     setPuttingAway(false);
-    const spent = spend.reduce((sum, g) => sum + g.total, 0);
-    setUndo({ id: Date.now(), message: `${lines.length === 1 ? "1 item" : `${lines.length} items`} put away${spent ? ` · ${kes(spent)} logged` : ""}` });
+    setUndo({
+      id: Date.now(),
+      message: `${lines.length === 1 ? "1 item" : `${lines.length} items`} added to stock${spent ? ` · ${kes(spent)} logged` : ""}${runsDone ? " · shopping run done" : ""}`,
+    });
   }
 
   async function startTrip(shop: Shop, keep: StockLike[]) {
@@ -446,16 +446,72 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
     return s.is_fast_mover ? `Fast-mover · ${word}` : word;
   };
 
+  // Can-wait upgrades with a 12%+ deal this week.
+  const deals = new Map(
+    upgradeDeals(
+      visible.map((i) => ({ ...i, concept: i.item_id ? stockById.get(i.item_id)?.canonical_concept : null })),
+      matches,
+    ).map((d) => [d.line.id, d.deal]),
+  );
+  const myTrip = trips.find((t) => isActive(t) && t.member_id === me?.id);
+  const tripStore = shops.find((s) => s.id === myTrip?.shop_id)?.name === "Naivas" ? "naivas" : "quickmart";
+
+  async function swap(i: ShoppingItem, product: CatalogMatch) {
+    await change("update", { id: i.id, catalog_product_id: product.id, preferred_store: product.store });
+    setUndo({ id: Date.now(), message: `Swapped to ${product.brand ?? product.title}` });
+  }
+
   const row = (i: ShoppingItem, who: string) => (
-    <ItemRow key={i.id} item={i} who={who} badge={i.bought_at ? null : badgeFor(i)} onToggle={() => toggle(i)} onRemove={i.auto ? undefined : () => remove(i)}>
+    <ItemRow key={i.id} item={i} who={who} big={aisle} badge={i.bought_at ? null : badgeFor(i)} onToggle={() => toggle(i)} onRemove={i.auto ? undefined : () => remove(i)}>
+      {!i.bought_at && deals.get(i.id) && (
+        <span className="mt-1 inline-block rounded-md bg-ok-bg px-1.5 text-xs font-bold text-ok-fg">
+          ✨ On sale this week: −{Math.round(deals.get(i.id)!.discount_pct)}% ({kes(deals.get(i.id)!.effective_price)})
+        </span>
+      )}
       {!i.bought_at && <ItemPrice line={toLine(i)} matches={matches} />}
+      {!i.bought_at && !i.auto && aisle && <SwapBrand line={toLine(i)} matches={matches} store={tripStore} onSwap={(p) => swap(i, p)} />}
     </ItemRow>
   );
+
+  // The supermarket run on the Jobs board, with its cost following the cart.
+  const run = jobs.find((j) => !j.done_at && !j.deleted_at && j.template_key === "funded");
+  const fullTotal = totals.full;
+  useEffect(() => {
+    if (run && fullTotal > 0 && Math.abs(Number(run.estimated_cost_kes ?? 0) - fullTotal) >= 50) {
+      void updateJob(run.id, { estimated_cost_kes: Math.round(fullTotal) });
+    }
+  }, [run, fullTotal]);
+
+  async function planRun() {
+    const t = TEMPLATES.find((x) => x.id === "funded")!;
+    await postJob({ ...fromTemplate(t), estimated_cost_kes: Math.round(fullTotal) || null });
+    void syncNow();
+    setUndo({ id: Date.now(), message: "Supermarket run posted on Jobs (2 people, in 3 days)" });
+  }
 
   return (
     <Screen title="Cart / List">
       {switcher}
       <ModeBar mode={mode} onChange={setMode} totals={totals} estimate={current.total} unpriced={current.unpriced} moneyLeft={moneyLeft} />
+      {needed.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {!aisle && (
+            <button type="button" onClick={() => setAisle(true)} className="min-h-12 rounded-xl bg-brand px-4 font-bold text-brand-contrast">
+              🛒 Start shopping in store
+            </button>
+          )}
+          {run ? (
+            <a href="/jobs" className="flex min-h-12 items-center rounded-xl border border-line px-4 text-sm font-bold">
+              📅 Run planned{run.planned_for ? ` for ${run.planned_for}` : ""}
+              {run.estimated_cost_kes ? ` · about ${kes(run.estimated_cost_kes)}` : ""}
+            </a>
+          ) : (
+            <button type="button" onClick={planRun} className="min-h-12 rounded-xl border border-brand px-4 font-bold text-brand">
+              📅 Plan a supermarket run
+            </button>
+          )}
+        </div>
+      )}
 
       <TripCheck
         supermarkets={supermarkets}
@@ -563,29 +619,32 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
         </p>
       )}
 
-      {bought.length > 0 &&
-        (puttingAway ? (
-          <PutAway
-            bought={bought}
-            stockById={stockById}
-            shops={shops}
-            matches={matches}
-            toLine={toLine}
-            onFixPrice={fixPrice}
-            onDone={putAway}
-            onCancel={() => setPuttingAway(false)}
-          />
-        ) : (
-          <section className="rounded-xl border border-line p-4">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="font-bold">In the basket ({bought.length})</h2>
-              <button type="button" onClick={() => setPuttingAway(true)} className="min-h-12 rounded-xl bg-brand px-4 font-bold text-brand-contrast">
-                Put away
-              </button>
-            </div>
-            <ul className="mt-1 divide-y divide-line">{bought.map((i) => row(i, ""))}</ul>
-          </section>
-        ))}
+      {puttingAway ? (
+        <PutAway
+          bought={bought.length ? bought : visible}
+          stockById={stockById}
+          shops={shops}
+          matches={matches}
+          toLine={toLine}
+          onFixPrice={fixPrice}
+          onDone={putAway}
+          onCancel={() => setPuttingAway(false)}
+        />
+      ) : bought.length > 0 ? (
+        <section className="rounded-xl border border-line p-4">
+          <h2 className="font-bold">In the basket ({bought.length})</h2>
+          <ul className="mt-1 divide-y divide-line">{bought.map((i) => row(i, ""))}</ul>
+          <button type="button" onClick={() => setPuttingAway(true)} className="mt-2 min-h-14 w-full rounded-xl bg-brand px-4 font-bold text-brand-contrast tabular">
+            ✅ Shopping done · add all to stock ({kes(estimate(bought.map(toLine), matches).total)})
+          </button>
+        </section>
+      ) : (
+        visible.length > 0 && (
+          <button type="button" onClick={() => setPuttingAway(true)} className="min-h-12 rounded-xl border border-brand px-4 font-bold text-brand">
+            ✅ Shopping done · add what you bought to stock
+          </button>
+        )
+      )}
 
       <DealRestock stock={stock as StockLike[]} matches={matches} onList={onList} onAdd={(s, deal) => addItem(s.name, { itemId: s.id, catalog: deal })} />
 
@@ -632,6 +691,17 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
         Find more in the catalog
       </button>
 
+      {aisle && (
+        <AisleBar
+          inTrolley={estimate(bought.map(toLine), matches).total}
+          ticked={bought.length}
+          total={bought.length + visible.length}
+          remaining={current.total}
+          moneyLeft={moneyLeft}
+          onDone={() => setAisle(false)}
+        />
+      )}
+      {aisle && <div className="h-20" aria-hidden="true" />}
       <UndoBar state={undo} onClose={closeUndo} />
     </Screen>
   );
@@ -643,9 +713,11 @@ function ItemRow({
   badge,
   onToggle,
   onRemove,
+  big = false,
   children,
 }: {
   item: ShoppingItem;
+  big?: boolean; // aisle mode: bigger targets for one hand on a trolley
   who: string;
   badge?: string | null;
   onToggle: () => void;
@@ -657,17 +729,17 @@ function ItemRow({
   const tierTag = item.shopping_tier === "essential" ? "Essential" : item.shopping_tier === "qol" ? "Can wait" : null;
   return (
     <li className="flex items-start gap-1">
-      <button type="button" aria-pressed={done} onClick={onToggle} aria-label={`${done ? "Untick" : "Tick"} ${item.title}`} className="flex min-h-14 shrink-0 items-center px-4 py-2">
+      <button type="button" aria-pressed={done} onClick={onToggle} aria-label={`${done ? "Untick" : "Tick"} ${item.title}`} className={`flex shrink-0 items-center px-4 py-2 ${big ? "min-h-20" : "min-h-14"}`}>
         <span
           aria-hidden="true"
-          className={`flex size-7 items-center justify-center rounded-full border-2 ${done ? "border-brand bg-brand text-brand-contrast" : "border-muted"}`}
+          className={`flex items-center justify-center rounded-full border-2 ${big ? "size-11 text-xl" : "size-7"} ${done ? "border-brand bg-brand text-brand-contrast" : "border-muted"}`}
         >
           {done && "✓"}
         </span>
       </button>
       <div className="min-w-0 flex-1 py-3">
         <button type="button" onClick={onToggle} className="block text-left">
-          <span className={`font-bold ${done ? "text-muted line-through" : ""}`}>{item.title}</span>
+          <span className={`font-bold ${big ? "text-lg" : ""} ${done ? "text-muted line-through" : ""}`}>{item.title}</span>
           {badge && (
             <span className={`ml-2 rounded-md px-1.5 text-xs font-bold ${badge.endsWith("Out") ? "bg-out-bg text-out-fg" : "bg-low-bg text-low-fg"}`}>
               {badge.endsWith("Out") ? "✕ " : "! "}

@@ -18,6 +18,7 @@ import {
   type Sort,
   type StoreFilter,
 } from "@/lib/shopping/catalog";
+import { BottomSheet } from "@/components/BottomSheet";
 import { kes, storeName, storeTotals, type ListLine, type Store, type Tier } from "@/lib/shopping/pricing";
 import type { ShoppingItem, StockItem } from "@/lib/shopping/shops";
 
@@ -241,7 +242,58 @@ export function CatalogView({ products, stock, cart, cartLines, history, onAdd, 
   );
 }
 
-function ProductCard({
+type CardProps = {
+  product: Product;
+  others: Product[];
+  packs: Map<string, Product[]>;
+  inCart: Map<string, ShoppingItem>;
+  tierFor: (p: Product) => Tier;
+  onAdd: (p: Product, tier: Tier) => void;
+  onQty: (row: ShoppingItem, quantity: number) => void;
+  onTier: (row: ShoppingItem, tier: Tier) => void;
+};
+
+/** One product in the list: name and sale tag, its price, and Add. Tap for brands, tier and quantity. */
+function ProductCard(props: CardProps) {
+  const { product, others, inCart, tierFor, onAdd } = props;
+  const [sheet, setSheet] = useState(false);
+  const row = inCart.get(product.id);
+  const per = perUnit(product);
+  return (
+    <li className="rounded-xl bg-raised shadow-[0_1px_3px_rgba(10,51,35,.10)]">
+      <div className="flex items-center gap-3 p-4">
+        <button type="button" onClick={() => setSheet(true)} className="min-w-0 flex-1 text-left">
+          <span className="flex flex-wrap items-center gap-1.5">
+            <span className="font-bold">{product.title}</span>
+            {product.is_on_sale && <span className="rounded-full bg-ok-bg px-2 py-0.5 text-xs font-bold text-ok-fg">−{Math.round(product.discount_pct)}%</span>}
+          </span>
+          <span className="mt-0.5 block text-sm text-muted tabular">
+            <strong className="text-ink">{kes(product.effective_price)}</strong> at {storeName(product.store)}
+            {per ? ` · ${per}` : ""}
+            {others.length ? ` · +${others.length} ${others.length === 1 ? "brand" : "brands"}` : ""}
+          </span>
+        </button>
+        {row ? (
+          <button type="button" onClick={() => setSheet(true)} className="min-h-12 shrink-0 rounded-xl border border-ok-fg px-3 font-bold text-ok-fg">
+            ✓ In cart{Number(row.quantity ?? 1) > 1 ? ` ×${row.quantity}` : ""}
+          </button>
+        ) : (
+          <button type="button" aria-label={`Add ${product.title}`} onClick={() => onAdd(product, tierFor(product))} className="min-h-12 shrink-0 rounded-xl bg-brand px-4 font-bold text-brand-contrast">
+            + Add
+          </button>
+        )}
+      </div>
+      {sheet && (
+        <BottomSheet title={product.title} onClose={() => setSheet(false)}>
+          <ProductDetails {...props} />
+        </BottomSheet>
+      )}
+    </li>
+  );
+}
+
+// Everything about a product, in its sheet: both stores, tier, quantity, the other brands.
+function ProductDetails({
   product,
   others,
   packs,
@@ -267,7 +319,7 @@ function ProductCard({
   const row = inCart.get(product.id);
 
   return (
-    <li className="rounded-xl bg-raised p-4 shadow-[0_1px_3px_rgba(10,51,35,.10)]">
+    <div className="pt-1">
       <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold">
         {product.brand && <span className="rounded-full bg-base px-2 py-0.5">{product.brand}</span>}
         {product.pack_size_label && <span className="rounded-full border border-line px-2 py-0.5">{product.pack_size_label}</span>}
@@ -374,6 +426,6 @@ function ProductCard({
           )}
         </>
       )}
-    </li>
+    </div>
   );
 }

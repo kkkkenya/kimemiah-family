@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { dayPlus, dueOnDay, postJob } from "@/lib/jobs/actions";
+import { likelyLow } from "@/lib/shopping/predict";
 import { useSync } from "@/components/SyncProvider";
 import { UndoBar, type UndoState } from "@/components/UndoBar";
 import { isCounted, kes, stockStatus, type Flex, type Status, type StockLike, type Tier } from "@/lib/shopping/pricing";
@@ -19,6 +21,7 @@ const CATEGORIES: Record<string, string> = {
   utilities: "Gas, power and fuel",
   drinks_alcohol: "Drinks for guests",
   pets: "Dog",
+  tools: "Tools & equipment",
   home_upgrades: "Home upgrades",
 };
 const categoryName = (c: string) => CATEGORIES[c] ?? c.replace(/_/g, " ").replace(/^./, (x) => x.toUpperCase());
@@ -42,10 +45,65 @@ const when = (iso: string) =>
 type Item = StockItem & StockLike & { early_depletion_streak?: number };
 
 // Stock: + / − for packaged items, one tap OK / Low / Out for fresh produce, grouped by category.
+type Filter = "all" | "needed" | "tools";
+const FILTERS: { id: Filter; label: string }[] = [
+  { id: "all", label: "Everything" },
+  { id: "needed", label: "Low, out or likely low" },
+  { id: "tools", label: "🧰 Tools & equipment" },
+];
+const STILL_OK_KEY = "kimemiah-still-ok";
+const readStillOk = (): Record<string, number> => {
+  try {
+    return JSON.parse(localStorage.getItem(STILL_OK_KEY) ?? "{}");
+  } catch {
+    return {};
+  }
+};
+
 export function StockView({ stock, movements, shops, members, meId }: { stock: Item[]; movements: Movement[]; shops: Shop[]; members: Member[]; meId?: string }) {
   const { syncNow } = useSync();
   const [undo, setUndo] = useState<UndoState>(null);
   const [open, setOpen] = useState<string | null>(null);
+  const [filter, setFilter] = useState<Filter>("all");
+  const [stillOk, setStillOk] = useState<Record<string, number>>({});
+  useEffect(() => setStillOk(readStillOk()), []);
+  const maybeLow = (s: Item) => s.track_mode !== "tool" && isCounted(s) && stockStatus(s) === "ok" && likelyLow(s.id, movements, Date.now(), stillOk[s.id]);
+
+  function markStillOk(s: Item) {
+    const next = { ...readStillOk(), [s.id]: Date.now() };
+    try {
+      localStorage.setItem(STILL_OK_KEY, JSON.stringify(next));
+    } catch {}
+    setStillOk(next);
+  }
+
+  // "Likely running low?" -> Low: OK / Low / Out items change level; counted items go on the list.
+  async function markLow(s: Item) {
+    if (s.track_mode === "level") return setLevel(s, "low");
+    await syncEngine().queue("shopping_extras", "insert", {
+      id: crypto.randomUUID(),
+      title: s.name,
+      qty: null,
+      quantity: 1,
+      shop_id: s.shop_id,
+      item_id: s.id,
+      bought_at: null,
+      shopping_tier: s.shopping_tier ?? "standard",
+    });
+    void syncNow();
+    setUndo({ id: Date.now(), message: `${s.name} added to the shopping list` });
+  }
+
+  async function updateTool(s: Item, change: Partial<Item>) {
+    await syncEngine().queue("stock_items", "update", { id: s.id, ...change });
+    void syncNow();
+  }
+
+  async function repairJob(s: Item) {
+    await postJob({ title: `Fix or sharpen the ${s.name.toLowerCase()}`, category: "maintenance_fix", strain: "medium", duration_min: 30, people_needed: 1, due_at: dueOnDay(dayPlus(2)) });
+    void syncNow();
+    setUndo({ id: Date.now(), message: "Repair job posted on Jobs" });
+  }
   const closeUndo = useCallback(() => setUndo(null), []);
 
   const out = stock.filter((s) => isCounted(s) && stockStatus(s) === "out").length;
@@ -77,15 +135,32 @@ export function StockView({ stock, movements, shops, members, meId }: { stock: I
     });
   }
 
-  const groups = [...new Set(stock.map((s) => s.category))]
+  const shown = stock.filter((s) =>
+    filter === "tools" ? s.track_mode === "tool" : filter === "needed" ? s.track_mode !== "tool" && ((isCounted(s) && stockStatus(s) !== "ok") || maybeLow(s)) : true,
+  );
+  const groups = [...new Set(shown.map((s) => s.category))]
     .sort((a, b) => categoryRank(a) - categoryRank(b))
-    .map((c) => ({ category: c, items: stock.filter((s) => s.category === c).sort((a, b) => a.sort - b.sort) }));
+    .map((c) => ({ category: c, items: shown.filter((s) => s.category === c).sort((a, b) => a.sort - b.sort) }));
 
   return (
     <>
       <p className="text-muted">
         {out || low ? `${out} out · ${low} low. They're on the shopping list.` : "Tap − when you use something up, + when you add some."}
       </p>
+
+      <div role="group" aria-label="Show" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
+        {FILTERS.map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            aria-pressed={filter === f.id}
+            onClick={() => setFilter(f.id)}
+            className={`min-h-10 shrink-0 rounded-full border px-3 text-sm font-bold ${filter === f.id ? "border-brand bg-brand text-brand-contrast" : "border-line bg-raised"}`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
 
       {groups.map(({ category, items }) => (
         <section key={category} aria-labelledby={`cat-${category}`} className="overflow-hidden rounded-xl bg-raised shadow-[0_1px_3px_rgba(10,51,35,.10)]">
@@ -105,6 +180,11 @@ export function StockView({ stock, movements, shops, members, meId }: { stock: I
                 shops={shops}
                 members={members}
                 onSaved={(name) => setUndo({ id: Date.now(), message: `${name} saved` })}
+                maybeLow={maybeLow(s)}
+                onStillOk={() => markStillOk(s)}
+                onMarkLow={() => markLow(s)}
+                onTool={(change) => updateTool(s, change)}
+                onRepair={() => repairJob(s)}
               />
             ))}
           </ul>
@@ -136,6 +216,11 @@ function StockRow({
   shops,
   members,
   onSaved,
+  maybeLow,
+  onStillOk,
+  onMarkLow,
+  onTool,
+  onRepair,
 }: {
   item: Item;
   open: boolean;
@@ -146,7 +231,13 @@ function StockRow({
   shops: Shop[];
   members: Member[];
   onSaved: (name: string) => void;
+  maybeLow: boolean;
+  onStillOk: () => void;
+  onMarkLow: () => void;
+  onTool: (change: Partial<Item>) => void;
+  onRepair: () => void;
 }) {
+  if (item.track_mode === "tool") return <ToolRow item={item} members={members} onTool={onTool} onRepair={onRepair} />;
   const level = item.track_mode === "level";
   const have = Number(item.have_qty ?? 0);
   const btn = "flex size-14 shrink-0 items-center justify-center rounded-xl border border-line bg-base text-2xl font-bold disabled:opacity-40";
@@ -191,6 +282,17 @@ function StockRow({
         )}
       </div>
       {ranOutEarly(item) && <p className="mt-1 text-sm text-low-fg">Ran out early last 2 runs. Consider buying more.</p>}
+      {maybeLow && (
+        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-low-bg px-3 py-2 text-sm text-low-fg">
+          <span className="font-bold">Likely running low?</span>
+          <button type="button" onClick={onStillOk} className="min-h-10 rounded-lg border border-current px-3 font-bold">
+            Still OK
+          </button>
+          <button type="button" onClick={onMarkLow} className="min-h-10 rounded-lg bg-low-fg px-3 font-bold text-low-bg">
+            {item.track_mode === "level" ? "Mark Low" : "Add to the list"}
+          </button>
+        </div>
+      )}
       {open && <ItemDetails item={item} movements={movements} shops={shops} members={members} onSaved={onSaved} />}
     </li>
   );
@@ -385,5 +487,47 @@ function EditItem({ item, shops, onDone }: { item: Item; shops: Shop[]; onDone: 
         </button>
       </div>
     </div>
+  );
+}
+
+const LOCATIONS = ["Store room", "Back verandah", "Dog kennel", "Main house"];
+
+// A tool: where it is, whether it works, and who used it last. "Needs fixing" offers a repair job.
+function ToolRow({ item, members, onTool, onRepair }: { item: Item; members: Member[]; onTool: (change: Partial<Item>) => void; onRepair: () => void }) {
+  const t = item;
+  const broken = t.tool_condition === "needs_fix";
+  const usedBy = members.find((m) => m.id === t.last_used_by)?.name;
+  return (
+    <li className="px-4 py-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="font-bold">{item.name}</span>
+        <span className={`rounded-md px-1.5 text-sm font-bold ${broken ? "bg-low-bg text-low-fg" : "bg-ok-bg text-ok-fg"}`}>{broken ? "! Needs fixing" : "✓ Working"}</span>
+      </div>
+      {usedBy && <p className="text-sm text-muted">Last used by {usedBy}</p>}
+      <div role="radiogroup" aria-label={`Where the ${item.name} is`} className="mt-2 flex flex-wrap gap-2">
+        {LOCATIONS.map((l) => (
+          <button
+            key={l}
+            type="button"
+            role="radio"
+            aria-checked={t.tool_location === l}
+            onClick={() => onTool({ tool_location: l })}
+            className={`min-h-10 rounded-full border px-3 text-sm font-bold ${t.tool_location === l ? "border-brand bg-brand text-brand-contrast" : "border-line"}`}
+          >
+            {l}
+          </button>
+        ))}
+      </div>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <button type="button" onClick={() => onTool({ tool_condition: broken ? "working" : "needs_fix" })} className="min-h-10 rounded-full border border-line px-3 text-sm font-bold">
+          {broken ? "It's fixed" : "Needs fixing or sharpening"}
+        </button>
+        {broken && (
+          <button type="button" onClick={onRepair} className="min-h-10 rounded-full bg-brand px-3 text-sm font-bold text-brand-contrast">
+            Post a repair job
+          </button>
+        )}
+      </div>
+    </li>
   );
 }

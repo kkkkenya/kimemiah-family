@@ -26,7 +26,7 @@ export function SyncStatus() {
       )}
       {rejected > 0 && (
         <p className="text-out-strong">
-          {rejected === 1 ? "1 change wasn't saved." : `${rejected} changes weren't saved.`} See More › Settings.
+          {rejected === 1 ? "1 change wasn't saved." : `${rejected} changes weren't saved.`} See Settings (top right).
         </p>
       )}
     </div>

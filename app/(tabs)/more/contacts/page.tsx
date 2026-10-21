@@ -74,7 +74,6 @@ export default function ContactsPage() {
           ["role", "What they do", "e.g. Plumber"],
           ["phone", "Phone", "e.g. 0722 123 456"],
           ["area", "Area", "e.g. Kahawa Sukari"],
-          ["note", "Note", "e.g. Call before 6pm"],
         ] as const
       ).map(([key, label, hint]) => (
         <label key={key} className="flex flex-col gap-1 text-sm font-bold">
@@ -88,6 +87,16 @@ export default function ContactsPage() {
           />
         </label>
       ))}
+      <label className="flex flex-col gap-1 text-sm font-bold">
+        Description
+        <textarea
+          rows={4}
+          value={form.note}
+          onChange={(e) => setForm({ ...form, note: e.target.value })}
+          placeholder={"Where to find them, how to pay, anything useful.\ne.g. Shop opposite the Shell, Kahawa Sukari\nPaybill 247247, account 0722123456\nCharges KES 500 call-out"}
+          className="w-full rounded-xl border border-line bg-base p-3 font-normal"
+        />
+      </label>
       <label className="flex min-h-12 items-center gap-3">
         <input type="checkbox" checked={form.is_emergency} onChange={(e) => setForm({ ...form, is_emergency: e.target.checked })} className="size-6" />
         Emergency number (shown first)
@@ -109,7 +118,7 @@ export default function ContactsPage() {
   );
 
   return (
-    <Screen title="Contacts" back="/more">
+    <Screen title="Contacts" back="/">
       <div className="flex gap-2">
         <label htmlFor="contact-search" className="sr-only">
           Search contacts

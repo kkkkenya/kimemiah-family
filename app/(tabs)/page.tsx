@@ -1,8 +1,9 @@
 "use client";
 
-import { ContactSearch } from "@/components/ContactSearch";
 import { Avatar } from "@/components/Avatar";
+import { ContactSearch } from "@/components/ContactSearch";
 import { FamilyPhoto } from "@/components/FamilyPhoto";
+import { EssentialsCard, LiveBanners, MyJobs, OpenJobsCard, PeterCard, QuickStrip, SupperPill, UpgradeDealsCard } from "@/components/home/HomeCards";
 import { PresenceCard } from "@/components/Presence";
 import { PushCard } from "@/components/PushCard";
 import { Screen } from "@/components/Screen";
@@ -10,28 +11,28 @@ import { JobAlerts } from "@/components/jobs/JobAlerts";
 import { JobStats } from "@/components/jobs/JobStats";
 import { useMe } from "@/lib/sync/hooks";
 
-function greeting(hour: number) {
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
-}
-
+// Today: what's urgent first, then my jobs, what's needed, and how the house is doing.
 export default function HomePage() {
   const me = useMe();
-  const hello = greeting(new Date().getHours());
-
   return (
-    <Screen title={me ? `${hello}, ${me.name}` : hello}>
+    <Screen title={me ? `Habari, ${me.name}` : "Habari"}>
       {me && (
-        <div className="-mt-2 flex items-center gap-2">
+        <div className="-mt-2 flex flex-wrap items-center gap-3">
           <Avatar avatar={(me as { avatar?: string | null }).avatar} name={me.name} size={44} />
-          <span className="text-sm text-muted">Change your picture, name or Home photo in More › Settings.</span>
+          <SupperPill />
         </div>
       )}
-      <ContactSearch />
+      <PeterCard />
       <JobAlerts link />
+      <LiveBanners />
+      <MyJobs />
+      <QuickStrip />
+      <EssentialsCard />
+      <UpgradeDealsCard />
+      <OpenJobsCard />
       <JobStats />
       <PresenceCard />
+      <ContactSearch />
       <PushCard compact />
       <FamilyPhoto />
     </Screen>

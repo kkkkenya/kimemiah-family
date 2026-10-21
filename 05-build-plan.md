@@ -26,6 +26,7 @@ Each phase ends with a check on two real phones that must pass before the next o
 | **Gate** | **Set the family meeting date** | Phases 2 to 4 pass on two real phones |
 | **5. Home and Meeting (done)** | Home: contact search, job reminders and rescues, 2-week job picture with suggestions and "take it easy", presence, alerts. Meeting: next meeting and rotating host, usual agenda, waiting jobs, notes, decisions to jobs, past meetings. Settings: your job preferences and house settings | A waiting job can be added to the agenda; a decision becomes a job (checked locally 21 Oct 2026) |
 | **6. Contacts (done; Meals dropped)** | Contacts with search, call and copy, emergency first, search from Home. Meals removed: cooking is a job | A contact found from Home dials +254 |
+| **2d. Home, Stock and Shop upgrade (done)** | Tabs Home · Stock · Shop · Jobs · Money; Home essentials, supper headcount, quick strip; receipt reader; tools locator; running-low; Shopping done adds to stock; aisle mode and swap brand; compact cards with sheets; live sync ping | Receipt text read and matched correctly; screens checked at phone width with real data, read-only (22 Oct 2026) |
 | **7. Push alerts (Jobs done)** | Job alerts (urgent, covered, past its time, every-2-hours reminders, handover), quiet hours, on/off per phone, kill switch. Still to add: "going to the market" and "asante" | Android and an installed iPhone get "Water is back!". Nothing arrives at 10pm. (Server side checked 21 Oct 2026: wrong secret refused, quiet hours respected, each alert sent once. Delivery to a real phone not checked yet) |
 | **8. Polish** | Fonts, animation, reduced motion, dark mode | First load under about 250 KB on a slow connection. Reduced motion turns animation off |
 | **9. Launch** | Family meeting 1 (see [03-family-meeting.md](03-family-meeting.md)) | All six people do one thing in the app |
@@ -40,7 +41,7 @@ Each phase ends with a check on two real phones that must pass before the next o
 - At least 5 of the 6 people use the app in week 4.
 - At least 4 different people complete jobs, and no job waits more than 7 days. (Counted from the log for the meeting. Never shown in the app per person.)
 - The app's balance matches real cash and M-Pesa within KES 500, and Dad got the summary.
-- No surprise run-outs of gas, unga, cooking oil or tokens.
+- No surprise run-outs of gas, unga or cooking oil.
 - Meeting 2 happens and its decisions are logged.
 
 ## What I need from you before building

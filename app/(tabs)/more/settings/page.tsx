@@ -69,7 +69,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <Screen title="Settings" back="/more">
+    <Screen title="Settings" back="/">
       <ProfileCard />
       <PushCard />
       <MyJobSettings />

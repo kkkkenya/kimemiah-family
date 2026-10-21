@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { useRouter } from "next/navigation";
 import type { SyncResult } from "@/lib/sync/engine";
 import { readIdentity, syncEngine, wipePhone } from "@/lib/sync/client";
+import { joinHousehold } from "@/lib/sync/realtime";
 import { supabase } from "@/lib/supabase/client";
 
 const ROTA_KEY = "kimemiah-rota-checked";
@@ -40,6 +41,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   const [online, setOnline] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const busy = useRef(false);
+  const live = useRef<ReturnType<typeof joinHousehold> | null>(null);
 
   const syncNow = useCallback(async () => {
     if (busy.current) return undefined;
@@ -51,6 +53,8 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         await wipePhone({ remote: true });
         router.replace("/unlock");
       }
+      // Tell the other open phones to sync now.
+      if (result.ok && result.applied > 0) live.current?.ping();
       // Today's weekly-grid jobs; the server posts each one once however many phones ask.
       if (result.ok && (await postRotaJobs()) > 0) return await syncEngine().syncNow();
       return result;
@@ -77,6 +81,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     if (!ready) return;
     setOnline(navigator.onLine);
     syncNow();
+    live.current = joinHousehold(() => window.setTimeout(() => void syncNow(), 300));
 
     const onOnline = () => {
       setOnline(true);
@@ -94,6 +99,8 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     }, EVERY_MS);
 
     return () => {
+      live.current?.leave();
+      live.current = null;
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);
       document.removeEventListener("visibilitychange", onVisible);

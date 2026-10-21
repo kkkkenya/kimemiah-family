@@ -75,7 +75,6 @@ This list is loaded into the app. The family edits it there: remove what we don'
 | Item | Unit | Min | Shop | Tier |
 |---|---|---|---|---|
 | Cooking gas | 13 kg cylinder | 1 | Gas dealer | E |
-| KPLC tokens | units | 30 | M-Pesa | E |
 | Matches | box | 2 | Supermarket | F |
 | Charcoal (if used) | sack | 1 | Market | F |
 

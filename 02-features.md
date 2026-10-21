@@ -1,6 +1,6 @@
 # Features
 
-Seven sections. The bottom bar on the phone has five tabs: **Home · Shop · Jobs · Money · More**. More holds Meeting, Contacts and Settings. There is no Meals section: cooking for the house is a job like any other.
+The bottom bar has five tabs: **Home · Stock · Shop · Jobs · Money**. Contacts, Meeting and Settings are buttons at the top right of every screen, next to a sync dot (green: synced; amber with a count: saved on the phone, syncs when there's signal). There is no Meals section: cooking for the house is a job like any other. Lists use compact cards (name and tag, one status line, one button); tapping a card opens its details in a sheet from the bottom.
 
 Rules that apply everywhere:
 
@@ -13,16 +13,25 @@ Rules that apply everywhere:
 
 ## 1. Home ("Today")
 
-- A greeting, and a search box for contacts (call or copy straight from the result).
-- "Still yours" reminders and jobs that need rescuing.
-- **Jobs: the last 2 weeks**: each person's time given against an equal share, with a plain label (Just starting, Room to help, Doing your part, Doing a lot, Away), and your own panel: jobs that suit you, or, if you've been doing a lot, the choice to take it easy for a week.
-- Where are you? (At home / Out / Away) and everyone else's.
-- Turn on alerts for this phone, and your picture. A Home photo shows only if you chose one in Settings (none by default, since the family photo doesn't include everyone).
-- Still to come: items that are Out, "Wanjiru is going to the market", money left this month.
+Top to bottom (cards appear only when there's something to show):
 
-## 2. Shop (Catalog, Cart / List, Kitchen stock)
+- "Habari, Greg", your picture, and **tonight's supper headcount** ("🏠 4/5 home for supper (Vinnie out)") with "I'll be out tonight" (resets each day).
+- For Peter, who lives away: money runs coming up and bills to pay, first.
+- Jobs that need rescuing and "Still yours" reminders; urgent jobs ("Water is back!") with **I'm on it**; who's out shopping right now.
+- **Your jobs** with Done.
+- One-tap strip: Water is back, Arrange kitchen, Wash dishes, Mark something out (Stock), Read a receipt, Say asante.
+- **Essentials needed now**: essential items that are Out or Low, each with its Quickmart price, the total, and buttons to the cart.
+- Can-wait upgrades on the list that are on sale this week.
+- Jobs needing people (Light first for anyone with No heavy jobs on), the 2-week job picture, where everyone is, contact search, alerts, and your Home photo if you chose one.
 
-Three views, one switch at the top: **Catalog** (opens first), **Cart / List** and **Kitchen stock**.
+## 2. Stock and Shop (two tabs)
+
+**Stock tab**: everything in the house by category, + / − and OK / Low / Out (details below under Stock), plus:
+- **Read a receipt**: a photo of a Naivas or Quickmart till receipt (read on the phone; the reader loads only when used) or pasted text. Each line is matched to a house item (you can change or skip it), packs are converted (3 L oil = 3 litres), then one tap adds it all to stock, saves the prices paid as usual prices and logs the receipt total as spending.
+- **Tools & equipment**: panga, slasher, hedge shears, jembe, rake, hosepipe, dog brush, extension cable, ladder. Where each one is (Store room, Back verandah, Dog kennel, Main house), working or needs fixing (with "Post a repair job"), and who used it last.
+- **Likely running low?** when an item still marked OK has used 80% of its usual time between restocks: Still OK (asks again in 3 days) or Mark Low / Add to the list.
+
+**Shop tab**: two views, **Catalog** (opens first) and **Cart / List**.
 
 **Catalog**
 - Every Naivas and Quickmart product the scraper finds (about 7,000 today, Quickmart only while Naivas blocks us), kept on the phone and searchable with no signal.
@@ -44,13 +53,15 @@ Three views, one switch at the top: **Catalog** (opens first), **Cart / List** a
 - **No kiosk.** Kiosk prices run 20–40% above the supermarket, so milk, bread, eggs, sugar and tissue belong to the supermarket run.
 - Anyone can add a one-off item and pick how urgent it is in one tap: **Essential**, **Full shop** or **Can wait**.
 - Tick items as you shop; mark "Not found" if the shop is out.
-- **"Put away"** at home adds what you bought to stock and opens a spend entry already filled in with the shop prices. If the receipt differs, one tap fixes the price.
+- **✅ Shopping done · add all to stock (KES X)** adds what you bought to stock, logs the spend at the shop prices (one tap fixes a price), clears the basket and marks the supermarket run done on Jobs. If nothing was ticked, it offers the whole list to untick what you didn't buy. Catalog items not on the house list can be tracked at home from there.
+- **Start shopping in store**: the screen stays on, tick targets get bigger, and a bar shows the trolley total, what's left on the list and money left. "Shelf empty? Swap brand" offers the next cheapest of the same pack.
+- **Plan a supermarket run** posts the 2-person money run on Jobs with the cart's total, which follows the cart until the run.
 
 **Three modes** (top of the list, each with its own estimated total):
 
 | Mode | What's in it | When |
 |---|---|---|
-| **Essentials** | Unga, rice, oil, sugar, milk, bread, salt, eggs, tissue, soap, gas, tokens | Mid-month top-ups, tight weeks |
+| **Essentials** | Unga, rice, oil, sugar, milk, bread, salt, eggs, tissue, soap, gas | Mid-month top-ups, tight weeks |
 | **Full shop** | Essentials plus tea, Royco, spices, margarine, washing powder, dish soap, bleach, drinks | The bi-weekly or monthly bulk run |
 | **+ Upgrades** | Can-wait items: broom, mop, bucket, basin, containers, pegs, bulbs, cloths, mats | When there's room in the budget, or one is on a deep deal |
 
@@ -80,16 +91,18 @@ Naivas blocks automated price tools, so the app shows **Quickmart prices only**.
 - **Team-ups with shares.** "I'll do it" / "Join in" picks a share (20% to 100%), each shown as time: 40% of a 1 h, 2-person job is about 48 min. A job is taken when it's 100% covered by enough people; one person can't fill a 2-person job alone. Optional "my part" notes ("Hold and soap", "Fetch water and rinse"). Joining needs signal, so two people can't take the same share.
 - **Two-stage kitchen.** "Clean counters and arrange dishes" (Light) creates "Wash the arranged dishes" when it's done.
 - **Money jobs** (supermarket and market runs, gas): two people go, planned 2–4 days ahead. They wait under **Upcoming & money** until someone taps "Money is ready" and the day comes.
-- **Bills Peter pays** (KPLC tokens, water bill): "Send to Peter on WhatsApp" with the details, then "Peter paid".
+- **Bills Peter pays** (the water bill): "Send to Peter on WhatsApp" with the details, then "Peter paid".
 - **Reminders.** Every 2 hours (07:00–21:00) a job you're on shows "Still yours" on Home and Jobs, and as a push alert if alerts are on, until you tap Done. They pause while you're Out or Away.
 - **Presence.** Switching to Out or Away while you're on a job offers to hand it to whoever's at home. Rescue cards and "Leave" say who's at home now. Leave asks first.
-- **Stock makes jobs.** Gas marked Out posts "Refill the cooking gas cylinder" (money run, 2 people, urgent). Dog unga Low posts a vet run, and KPLC tokens Low posts "Ask Peter for KPLC tokens". Only one open job per item.
+- **Stock makes jobs.** Gas marked Out posts "Refill the cooking gas cylinder" (money run, 2 people, urgent). Dog unga Low posts a vet run. Only one open job per item.
 - **Weekly sign-up grid** (Meeting screen): who does dishes, cooks supper and feeds the dog on each day. Each day those jobs appear already taken by whoever signed up (or open, with a note, if they're away), with the usual reminders and rescue.
 - **Real times.** "I'm starting" then Done records how long a job really took. After 2 runs, a usual job posts with its real time (the middle of the last 5) and the form shows "Usually takes 1 h 20 min".
 - **Waiting jobs.** A job nobody takes for 3 days shows "Waiting 3 days · on the meeting agenda" and is listed on the Meeting screen. About the job, never about people.
 - **Overdue rescue.** A taken job past its due time goes to the top with "Meant to be done by Vinnie, but it wasn't finished in time." Anyone can **Help them finish** (pick a share; the others' shares shrink to fit) or **Take it over** (the earlier people step back).
 - Lists: **Needs people · In progress · Upcoming & money · Done & Asante**, plus **Light only** and **Team-ups** filters. "At home now" shows who's around to team up with.
 - Repeating jobs come back on their own when done. **Asante** thanks each person who did a job.
+- **Tools**: jobs that use tools (fence, slashing, dog wash, sweeping, tanks) show where the tools are, and Done asks where they went back and whether anything needs fixing (which posts a repair job).
+- **Cook supper** shows how many are eating tonight.
 - **How the work is shared.** Home shows each person's time given to the house in the last 14 days against an equal share (the house's total over the people at home; Peter, who lives away, and anyone set to Away aren't compared). Nothing is judged until the house has finished about 2 hours of jobs. Labels: Room to help (under half a share), Doing your part, Doing a lot (over 1.6 shares). Cooking for the house counts like any job.
 - **Suggestions, not assignments.** Each open job shows "Suggested: Daniel": whoever at home has given least lately and the job suits (not heavy work for someone with No heavy jobs on, not someone taking it easy). That person gets an alert. Joining, or not, stays voluntary.
 - **Choice to ease off.** Someone doing a lot is offered "Take it easy for a week" on Home and by alert at most once a week; no jobs are suggested to them until it ends. Someone with room to help gets, at most once a week, an alert listing jobs that suit them.
@@ -110,7 +123,7 @@ Usual jobs (one tap, all editable when posting):
 | Supermarket run | 3 h × 2 | Medium | Money, 3 days ahead |
 | Market run | 2 h × 2 | Medium | Money, 3 days ahead |
 | Refill the gas cylinder | 1 h × 2 | Heavy | Money, 2 days ahead |
-| Ask Peter for KPLC tokens or the water bill | 10 min × 1 | Light | WhatsApp to Peter |
+| Ask Peter to pay the water bill | 10 min × 1 | Light | WhatsApp to Peter |
 | Scrub the bathroom and toilet | 45 min × 1 | Medium | Weekly |
 | Wash the water tanks | 4 h × 3 | Heavy | Every 3 months |
 
