@@ -14,13 +14,16 @@ export type StockItem = Row & {
   preferred_brand?: string | null;
   brand_flexibility?: "any_cheapest" | "prefer_named" | "strict_named";
   usual_price_kes?: number | null;
-  track_mode?: "count" | "level";
+  track_mode?: "count" | "level" | "tool";
   level?: "ok" | "low" | "out";
   have_qty?: number;
   min_qty?: number;
   actor_id?: string | null;
   last_out_at?: string | null;
   early_depletion_streak?: number;
+  tool_location?: string | null; // tools: where it is
+  tool_condition?: "working" | "needs_fix" | null;
+  last_used_by?: string | null;
 };
 export type ShoppingItem = Row & {
   title: string;

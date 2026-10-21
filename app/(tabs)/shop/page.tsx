@@ -28,7 +28,8 @@ import {
 } from "@/lib/shopping/pricing";
 import { SHOP_HINT, SUPERMARKETS, type Shop, type ShoppingItem, type StockItem } from "@/lib/shopping/shops";
 import type { Product } from "@/lib/shopping/catalog";
-import { autoListItems, putAwayMovements, spendByShop, type PutAwayLine } from "@/lib/shopping/stock";
+import { autoListItems, type PutAwayLine } from "@/lib/shopping/stock";
+import { restockHouse } from "@/lib/sync/workflows";
 import { useStock } from "@/lib/shopping/useStock";
 import { localDB, syncEngine } from "@/lib/sync/client";
 import { useMe, useRows, type Member } from "@/lib/sync/hooks";
@@ -365,37 +366,44 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
     await syncEngine().queue("stock_items", "update", { id: itemId, usual_price_kes: price });
   }
 
-  // Bought amounts go back into stock as movements; the spend is one money entry per shop (insert only).
-  async function putAway(lines: PutAwayLine[], logSpend: boolean) {
-    const engine = syncEngine();
+  // Shopping done: bought amounts into stock, the spend logged, the basket cleared, the run
+  // job marked done (lib/sync/workflows.ts). Catalog items ticked "keep track" join Stock first.
+  async function putAway(lines: PutAwayLine[], logSpend: boolean, track: string[]) {
     const trip = trips.find((t) => isActive(t) && t.member_id === me?.id);
-    for (const m of putAwayMovements(lines)) {
-      if (m.level) await engine.queue("stock_items", "update", { id: m.item_id, level: "ok" });
-      await engine.queue("stock_movements", "insert", { id: crypto.randomUUID(), item_id: m.item_id, delta: m.delta, reason: "put_away", trip_id: trip?.id ?? null });
-    }
-    const spend = logSpend ? spendByShop(lines) : [];
-    const today = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Nairobi" });
-    for (const g of spend) {
-      await engine.queue("money_entries", "insert", {
-        id: crypto.randomUUID(),
-        direction: "out",
-        occurred_on: today,
-        amount_kes: g.total,
-        method: null,
-        spent_by: me?.id ?? null,
-        shop_id: g.shopId,
-        category_id: null,
-        trip_id: trip && trip.shop_id === g.shopId ? trip.id : null,
-        note: g.note,
-        voids_entry_id: null,
+    for (const l of lines.filter((x) => track.includes(x.extraId))) {
+      const row = (items ?? []).find((i) => i.id === l.extraId);
+      const product = products.find((p) => p.id === row?.catalog_product_id);
+      const id = crypto.randomUUID();
+      await syncEngine().queue("stock_items", "insert", {
+        id,
+        name: l.title,
+        category: "other",
+        unit: "piece",
+        min_qty: 1,
+        usual_price_kes: l.price ? Math.round(l.price) : null,
+        shop_id: l.shopId,
+        track_mode: "count",
+        level: "ok",
+        sort: 900,
+        shopping_tier: row?.shopping_tier ?? "standard",
+        canonical_concept: product?.canonical_concept ?? null,
+        canonical_group_key: product?.canonical_group_key ?? null,
       });
+      l.itemId = id;
+      l.perPack = 1;
     }
-    for (const l of lines) await engine.queue("shopping_extras", "delete", { id: l.extraId });
-    if (trip) await engine.queue("shopping_trips", "update", { id: trip.id, finished_at: new Date().toISOString() });
+    const { spent, runsDone } = await restockHouse(lines, {
+      meId: me?.id,
+      logSpend,
+      tripId: trip?.id ?? null,
+      extraIds: lines.map((l) => l.extraId).filter((id) => !id.startsWith("auto:")),
+    });
     void syncNow();
     setPuttingAway(false);
-    const spent = spend.reduce((sum, g) => sum + g.total, 0);
-    setUndo({ id: Date.now(), message: `${lines.length === 1 ? "1 item" : `${lines.length} items`} put away${spent ? ` · ${kes(spent)} logged` : ""}` });
+    setUndo({
+      id: Date.now(),
+      message: `${lines.length === 1 ? "1 item" : `${lines.length} items`} added to stock${spent ? ` · ${kes(spent)} logged` : ""}${runsDone ? " · shopping run done" : ""}`,
+    });
   }
 
   async function startTrip(shop: Shop, keep: StockLike[]) {
@@ -547,29 +555,32 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
         </p>
       )}
 
-      {bought.length > 0 &&
-        (puttingAway ? (
-          <PutAway
-            bought={bought}
-            stockById={stockById}
-            shops={shops}
-            matches={matches}
-            toLine={toLine}
-            onFixPrice={fixPrice}
-            onDone={putAway}
-            onCancel={() => setPuttingAway(false)}
-          />
-        ) : (
-          <section className="rounded-xl border border-line p-4">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="font-bold">In the basket ({bought.length})</h2>
-              <button type="button" onClick={() => setPuttingAway(true)} className="min-h-12 rounded-xl bg-brand px-4 font-bold text-brand-contrast">
-                Put away
-              </button>
-            </div>
-            <ul className="mt-1 divide-y divide-line">{bought.map((i) => row(i, ""))}</ul>
-          </section>
-        ))}
+      {puttingAway ? (
+        <PutAway
+          bought={bought.length ? bought : visible}
+          stockById={stockById}
+          shops={shops}
+          matches={matches}
+          toLine={toLine}
+          onFixPrice={fixPrice}
+          onDone={putAway}
+          onCancel={() => setPuttingAway(false)}
+        />
+      ) : bought.length > 0 ? (
+        <section className="rounded-xl border border-line p-4">
+          <h2 className="font-bold">In the basket ({bought.length})</h2>
+          <ul className="mt-1 divide-y divide-line">{bought.map((i) => row(i, ""))}</ul>
+          <button type="button" onClick={() => setPuttingAway(true)} className="mt-2 min-h-14 w-full rounded-xl bg-brand px-4 font-bold text-brand-contrast tabular">
+            ✅ Shopping done · add all to stock ({kes(estimate(bought.map(toLine), matches).total)})
+          </button>
+        </section>
+      ) : (
+        visible.length > 0 && (
+          <button type="button" onClick={() => setPuttingAway(true)} className="min-h-12 rounded-xl border border-brand px-4 font-bold text-brand">
+            ✅ Shopping done · add what you bought to stock
+          </button>
+        )
+      )}
 
       <DealRestock stock={stock as StockLike[]} matches={matches} onList={onList} onAdd={(s, deal) => addItem(s.name, { itemId: s.id, catalog: deal })} />
 

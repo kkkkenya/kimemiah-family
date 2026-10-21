@@ -33,7 +33,7 @@ export type StockLike = {
   preferred_brand?: string | null;
   brand_flexibility?: Flex;
   usual_price_kes?: number | null;
-  track_mode?: "count" | "level";
+  track_mode?: "count" | "level" | "tool";
   level?: "ok" | "low" | "out";
   have_qty?: number;
   min_qty?: number;
