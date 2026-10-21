@@ -55,3 +55,7 @@ family*.jpg
 family*.jpeg
 family*.png
 family*.heic
+
+.vercel
+.env*
+!.env.example
