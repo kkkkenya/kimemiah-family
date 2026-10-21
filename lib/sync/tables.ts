@@ -19,9 +19,6 @@ export const SYNC_TABLES = [
   "meetings",
   "agenda_items",
   "decisions",
-  "meals",
-  "meal_ingredients",
-  "meal_slots",
   "contacts",
   "activity",
 ] as const;

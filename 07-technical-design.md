@@ -52,21 +52,20 @@ All tables have: `id` (made on the phone), `created_at`, `updated_at`, `deleted_
 | Table | Purpose |
 |---|---|
 | settings | Days before a job is flagged, ground rules, push kill switch, PIN version |
-| members | The six people, and `presence` (at_home / out / away), which each person sets for themselves |
+| members | The six people; `presence` (at_home / out / away), `no_heavy` and `ease_until`, which each person sets for themselves; `ease_offered_at` and `nudged_at` (alert bookkeeping) |
 | devices | Signed-in phones, their member, revoked or not |
 | auth_failures | Failed PIN attempts (hashed IP) |
 | shops | Supermarket, market, mama mboga, wholesaler |
 | stock_items | Name, category, unit, minimum, price, shop, count or OK/Low/Out mode |
 | stock_movements | +/− changes to stock |
-| shopping_extras | One-off shopping items, optionally for a meal |
+| shopping_extras | One-off shopping items and the cart |
 | shopping_trips, trip_lines | "I'm going to", ticked items, put away |
 | jobs | Jobs: category, `strain` (light / medium / heavy), `duration_min`, `people_needed`, urgent, `due_at`, repeat, two-stage `next_stage`, money fields (`requires_funds`, `estimated_cost_kes`, `funds_status`, `planned_for`), done by / at |
 | job_participants | Who is on a job and their `effort_pct` share, a part note, and `status` (active, rescuer, unable). Written only by the server functions `join_job`, `leave_job`, `rescue_job` (migration `0010`), which lock the job so shares never pass 100% |
-| thanks | Asante to a person for a job, meal or money in |
+| thanks | Asante to a person for a job or money in |
 | money_entries | Money in and out, insert only, voids |
 | budget_categories, budgets | Monthly budget per category |
 | meetings, agenda_items, decisions | Family meetings |
-| meals, meal_ingredients, meal_slots | Saved meals and the week grid |
 | contacts | House phone book |
 | activity | Feed for Home and push alerts |
 | push_subscriptions | Each phone's push address |
@@ -89,7 +88,9 @@ Views: `shopping_needed`, `money_balance`, `budget_vs_actual`.
 - A job's status is worked out on the phone from facts, not stored: done if `done_at`; upcoming while a money job waits for money or its day; overdue once someone is on it and `due_at` has passed; taken when shares reach 100% with at least `people_needed` people; otherwise part-taken or open. No scheduled server job is needed and the board is right offline.
 - Size is `duration_min × people_needed` (person-minutes): up to 30 Quick, up to 90 Small, under 240 Medium, 240 or more Big. A share's time is that times its percent.
 - When a job is marked done, trigger `job_done_followups` creates its next stage and, for repeating jobs, the next one.
-- Reminders run in the app (every 2 hours, 07:00–21:00 Nairobi) until push alerts arrive in Phase 7.
+- Reminders show in the app (every 2 hours, 07:00–21:00 Nairobi) and as push alerts.
+- **Sharing the work** (`lib/jobs/stats.ts`, tested): time given = the work in each finished share over 14 days. An equal share is the house total over the people at home (not remote, not Away). Bands: under 0.5 share Room to help, over 1.6 Doing a lot, else Doing your part; nothing judged under 2 hours of house work. `suggestFor` picks, among people the job suits (at home, not easing off, not heavy for `no_heavy`, room left), whoever has given least; none on a tie. The same rules drive the Home card, the job tags and the push alerts.
+- **Meals removed** (migration `0014`): the three meal tables were empty and are dropped; `0015` leaves empty stand-in views so phones on the older version keep syncing. Drop those views once every phone has updated.
 
 ## Supermarket prices
 
@@ -139,7 +140,7 @@ Never typed into chat, never committed.
 
 ```
 app/(tabs)/home  shop  jobs  money        Budget is a tab inside money
-app/more/meals  meeting  contacts  settings
+app/more/meeting  contacts  settings
 app/unlock  app/who                      PIN screen, "Who are you?"
 app/api/unlock  app/api/revoke
 lib/sync/      db.ts outbox.ts pull.ts claims.ts

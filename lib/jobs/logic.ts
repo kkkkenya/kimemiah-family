@@ -189,38 +189,3 @@ export function waitingDays(job: Job, parts: Participant[], now = Date.now()): n
 
 export const forAgenda = (jobs: Job[], parts: Participant[], after = 3, now = Date.now()) =>
   jobs.filter((j) => !isUpcoming(j, now) && waitingDays(j, parts, now) >= after);
-
-// ---------------------------------------------------------------- meeting summary
-
-export type MealSlot = { day: string; cook_id?: string | null; deleted_at?: string | null };
-export type MemberLine = { memberId: string; jobsDone: number; minutes: number; rescues: number; meals: number };
-
-/**
- * The last N days for the family meeting: per person, jobs finished (and the work in their
- * share), rescues and meals cooked for the house; plus house totals. Order is the family
- * order, never by count.
- */
-export function meetingSummary(jobs: Job[], parts: Participant[], meals: MealSlot[], memberIds: string[], now = Date.now(), days = 14) {
-  const since = now - days * 86400_000;
-  const doneJobs = jobs.filter((j) => j.done_at && !j.deleted_at && Date.parse(j.done_at) >= since);
-  const byId = new Map(doneJobs.map((j) => [j.id, j]));
-  const lines: MemberLine[] = memberIds.map((memberId) => ({ memberId, jobsDone: 0, minutes: 0, rescues: 0, meals: 0 }));
-  const line = new Map(lines.map((l) => [l.memberId, l]));
-  for (const p of parts) {
-    const job = byId.get(p.job_id);
-    const l = line.get(p.member_id);
-    if (!job || !l || p.deleted_at || p.status === "unable") continue;
-    l.jobsDone++;
-    l.minutes += shareMinutes(job, num(p.effort_pct));
-    if (p.status === "rescuer") l.rescues++;
-  }
-  const sinceDay = new Date(since + 3 * 3600_000).toISOString().slice(0, 10);
-  const today = nairobiDate(now);
-  for (const m of meals) {
-    if (m.deleted_at || !m.cook_id || m.day < sinceDay || m.day > today) continue;
-    const l = line.get(m.cook_id);
-    if (l) l.meals++;
-  }
-  const rescued = doneJobs.filter((j) => parts.some((p) => p.job_id === j.id && !p.deleted_at && p.status === "rescuer")).length;
-  return { lines, jobsDone: doneJobs.length, rescued };
-}

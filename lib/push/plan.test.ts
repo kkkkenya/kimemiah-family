@@ -5,12 +5,12 @@ const NOW = Date.parse("2026-10-22T09:00:00Z"); // 12:00 Nairobi
 const ago = (h: number) => new Date(NOW - h * 3600_000).toISOString();
 
 const members: PushMember[] = [
-  { id: "juliet", name: "Juliet", presence: "at_home" },
-  { id: "peter", name: "Peter", presence: "away", is_remote: true },
-  { id: "wanini", name: "Wanini", presence: "at_home" },
-  { id: "daniel", name: "Daniel", presence: "out" },
-  { id: "vinnie", name: "Vinnie", presence: "at_home" },
-  { id: "greg", name: "Greg", presence: "at_home" },
+  { id: "juliet", name: "Juliet", sort: 1, presence: "at_home" },
+  { id: "peter", name: "Peter", sort: 2, presence: "away", is_remote: true },
+  { id: "wanini", name: "Wanini", sort: 3, presence: "at_home", no_heavy: true },
+  { id: "daniel", name: "Daniel", sort: 4, presence: "out" },
+  { id: "vinnie", name: "Vinnie", sort: 5, presence: "at_home" },
+  { id: "greg", name: "Greg", sort: 6, presence: "at_home" },
 ];
 const job = (o: Partial<PushJob> & { id: string }): PushJob => ({
   title: o.id,
@@ -96,7 +96,43 @@ describe("grouping", () => {
       { kind: "urgent", jobId: "a", to: ["greg", "vinnie"], title: "Water is back!", body: "x" },
       { kind: "reminder", jobId: "b", to: ["greg"], title: "Still yours: Dishes", body: "y" },
     ]);
-    expect(g.get("vinnie")).toEqual({ title: "Water is back!", body: "x", tag: "urgent-a" });
-    expect(g.get("greg")).toEqual({ title: "2 job updates", body: "Water is back! · Still yours: Dishes", tag: "jobs" });
+    expect(g.get("vinnie")).toEqual({ title: "Water is back!", body: "x", tag: "urgent-a", url: "/jobs" });
+    expect(g.get("greg")).toEqual({ title: "2 job updates", body: "Water is back! · Still yours: Dishes", tag: "jobs", url: "/jobs" });
+  });
+});
+
+describe("performance alerts", () => {
+  // Two weeks: Greg 6 h, Vinnie 2 h, Juliet 1 h 30, Wanini nothing (Daniel is out; Peter lives away).
+  const history: PushJob[] = [
+    job({ id: "fence", duration_min: 360, done_at: ago(48) }),
+    job({ id: "dog", duration_min: 120, done_at: ago(30) }),
+    job({ id: "cook", duration_min: 90, done_at: ago(20) }),
+  ];
+  const done = [part({ job_id: "fence", member_id: "greg" }), part({ job_id: "dog", member_id: "vinnie" }), part({ job_id: "cook", member_id: "juliet" })];
+
+  it("suggest a new job to whoever has given least, never to the poster", () => {
+    const sweep = job({ id: "sweep", actor_id: "juliet" });
+    const a = planAlerts([sweep], done, members, NOW, history).find((x) => x.kind === "suggested");
+    expect(a).toMatchObject({ to: ["wanini"], title: "Suggested for you: sweep" });
+    // Heavy work isn't suggested to Wanini; Juliet (1 h 30) is next but posted it, so nobody is sent it.
+    const heavy = job({ id: "slash", strain: "heavy", actor_id: "juliet" });
+    expect(planAlerts([heavy], done, members, NOW, history).find((x) => x.kind === "suggested")?.to).toEqual([]);
+  });
+
+  it("offer the person doing a lot a week off, once a week", () => {
+    const ease = planAlerts([], done, members, NOW, history).filter((x) => x.kind === "ease");
+    expect(ease.map((x) => x.to)).toEqual([["greg"]]);
+    const offered = members.map((m) => (m.id === "greg" ? { ...m, ease_offered_at: ago(24) } : m));
+    expect(planAlerts([], done, offered, NOW, history).filter((x) => x.kind === "ease")).toEqual([]);
+    const easing = members.map((m) => (m.id === "greg" ? { ...m, ease_until: ago(-48) } : m));
+    expect(planAlerts([], done, easing, NOW, history).filter((x) => x.kind === "ease")).toEqual([]);
+  });
+
+  it("tell someone with room to help which jobs suit them, once a week", () => {
+    const open = [job({ id: "feed", title: "Feed the dog", strain: "light", suggested_notified_at: ago(1) })];
+    const nudge = planAlerts(open, done, members, NOW, history).filter((x) => x.kind === "nudge");
+    expect(nudge).toMatchObject([{ to: ["wanini"], title: "A job that suits you", body: "Feed the dog. Joining is up to you." }]);
+    const nudged = members.map((m) => (m.id === "wanini" ? { ...m, nudged_at: ago(48) } : m));
+    expect(planAlerts(open, done, nudged, NOW, history).filter((x) => x.kind === "nudge")).toEqual([]);
   });
 });

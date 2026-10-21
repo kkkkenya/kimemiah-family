@@ -2,21 +2,25 @@
 // quiet hours 21:00-07:00 Nairobi, nothing older than an hour, never the person who did it,
 // people who are out or away don't get reminders, and alerts never mention money.
 
-import { jobStatus, workers, type Job, type Participant } from "@/lib/jobs/logic";
+import { formatMinutes, jobStatus, workers, type Job, type Participant } from "@/lib/jobs/logic";
+import { contribution, easing, suggestFor, suitableFor, type Person } from "@/lib/jobs/stats";
 
-export type PushMember = { id: string; name: string; presence?: string | null; is_remote?: boolean };
+export type PushMember = Person & { ease_offered_at?: string | null; nudged_at?: string | null };
 export type PushJob = Job & {
   actor_id?: string | null;
   urgent_notified_at?: string | null;
   covered_notified_at?: string | null;
   overdue_notified_at?: string | null;
+  suggested_notified_at?: string | null;
 };
 export type PushPart = Participant & { last_reminded_at?: string | null; handover_notified_at?: string | null; updated_at?: string };
 
 export type Alert = {
-  kind: "urgent" | "covered" | "overdue" | "reminder" | "handover";
-  jobId: string;
+  kind: "urgent" | "covered" | "overdue" | "reminder" | "handover" | "suggested" | "nudge" | "ease";
+  jobId?: string;
   partId?: string; // for reminders and handovers: the participant row it's about
+  memberId?: string; // for nudge and ease: the person it's about (marked once a week)
+  url?: string;
   to: string[]; // member ids (empty: just mark it handled, e.g. too old to send)
   title: string;
   body: string;
@@ -26,8 +30,13 @@ const HOUR = 3600_000;
 const nairobiHour = (t: number) => new Date(t + 3 * HOUR).getUTCHours();
 export const isQuiet = (now: number) => nairobiHour(now) < 7 || nairobiHour(now) >= 21;
 
-export function planAlerts(jobs: PushJob[], parts: PushPart[], members: PushMember[], now = Date.now()): Alert[] {
+/**
+ * `jobs` are the open ones; `history` adds jobs finished in the last 14 days, used to compare
+ * how much each person has given (for suggestions and the weekly how-you're-doing alerts).
+ */
+export function planAlerts(jobs: PushJob[], parts: PushPart[], members: PushMember[], now = Date.now(), history: PushJob[] = []): Alert[] {
   if (isQuiet(now)) return [];
+  const stats = contribution([...jobs, ...history], parts, members, now);
   const name = (id?: string | null) => members.find((m) => m.id === id)?.name ?? "Someone";
   const atHome = (except: (string | null | undefined)[]) =>
     members.filter((m) => !m.is_remote && (m.presence ?? "at_home") === "at_home" && !except.includes(m.id)).map((m) => m.id);
@@ -48,6 +57,18 @@ export function planAlerts(jobs: PushJob[], parts: PushPart[], members: PushMemb
         to: fresh(job.created_at) ? atHome([job.actor_id, ...ids]) : [],
         title: job.title,
         body: `${name(job.actor_id)} posted this. Can you help?`,
+      });
+    }
+
+    // A new job nobody has taken: suggest it to whoever at home has given least lately.
+    if (!job.urgent && !job.suggested_notified_at && !people.length && status === "open") {
+      const who = fresh(job.created_at) ? suggestFor(job, parts, members, stats.lines, stats.enough, now) : null;
+      alerts.push({
+        kind: "suggested",
+        jobId: job.id,
+        to: who && who !== job.actor_id ? [who] : [],
+        title: `Suggested for you: ${job.title}`,
+        body: `About ${formatMinutes(job.duration_min)}. Join if you can; it's up to you.`,
       });
     }
 
@@ -108,20 +129,51 @@ export function planAlerts(jobs: PushJob[], parts: PushPart[], members: PushMemb
       body: `${name(p.member_id)} handed over their ${p.effort_pct}%. Can you take it?`,
     });
   }
+  // Once a week at most: how you're doing, as an offer, never an order.
+  const WEEK = 7 * 24 * HOUR;
+  const due = (iso?: string | null) => !iso || now - Date.parse(iso) >= WEEK;
+  if (stats.enough) {
+    for (const line of stats.lines) {
+      const m = members.find((p) => p.id === line.memberId);
+      if (!m || (m.presence ?? "at_home") !== "at_home" || easing(m, now)) continue;
+      if (line.band === "lot" && due(m.ease_offered_at)) {
+        alerts.push({
+          kind: "ease",
+          memberId: m.id,
+          to: [m.id],
+          url: "/",
+          title: "Thank you for all you've done",
+          body: `${formatMinutes(line.minutes)} for the house in 2 weeks, more than an equal share. Want to take it easy this week? Tap to choose.`,
+        });
+      }
+      if (line.band === "room" && due(m.nudged_at)) {
+        const fits = suitableFor(jobs, parts, m, now);
+        if (fits.length) {
+          alerts.push({
+            kind: "nudge",
+            memberId: m.id,
+            to: [m.id],
+            title: fits.length === 1 ? "A job that suits you" : `${fits.length} jobs that suit you`,
+            body: `${fits.slice(0, 2).map((j) => j.title).join(", ")}. Joining is up to you.`,
+          });
+        }
+      }
+    }
+  }
   return alerts;
 }
 
 /** One notification per person: several alerts at once become one summary. */
-export function groupByPerson(alerts: Alert[]): Map<string, { title: string; body: string; tag: string }> {
+export function groupByPerson(alerts: Alert[]): Map<string, { title: string; body: string; tag: string; url: string }> {
   const per = new Map<string, Alert[]>();
   for (const a of alerts) for (const m of a.to) per.set(m, [...(per.get(m) ?? []), a]);
-  const out = new Map<string, { title: string; body: string; tag: string }>();
+  const out = new Map<string, { title: string; body: string; tag: string; url: string }>();
   for (const [m, list] of per) {
     out.set(
       m,
       list.length === 1
-        ? { title: list[0].title, body: list[0].body, tag: `${list[0].kind}-${list[0].jobId}` }
-        : { title: `${list.length} job updates`, body: list.map((a) => a.title).join(" · "), tag: "jobs" },
+        ? { title: list[0].title, body: list[0].body, tag: `${list[0].kind}-${list[0].jobId ?? list[0].memberId}`, url: list[0].url ?? "/jobs" }
+        : { title: `${list.length} job updates`, body: list.map((a) => a.title).join(" · "), tag: "jobs", url: "/jobs" },
     );
   }
   return out;

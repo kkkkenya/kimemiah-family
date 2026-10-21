@@ -39,9 +39,10 @@ type Props = {
   onMessage: (text: string, undo?: () => void) => void;
   homeNames?: string[]; // others at home right now, to suggest for rescues and handovers
   agendaAfter?: number; // days with nobody on it before it goes on the meeting agenda
+  suggestedFor?: string | null; // member suggested for this job (has given least lately); never assigned
 };
 
-export function JobCard({ job, parts, meId, nameOf, thanked, onMessage, homeNames = [], agendaAfter = 3 }: Props) {
+export function JobCard({ job, parts, meId, nameOf, thanked, onMessage, homeNames = [], agendaAfter = 3, suggestedFor = null }: Props) {
   const { online, syncNow } = useSync();
   const [joining, setJoining] = useState<"join" | "help" | null>(null);
   const [pct, setPct] = useState(0);
@@ -104,6 +105,11 @@ export function JobCard({ job, parts, meId, nameOf, thanked, onMessage, homeName
         {job.people_needed > 1 && <span className="rounded-full border border-line px-2 py-0.5">💪 Team-up</span>}
         {job.parent_job_id && <span className="rounded-full border border-line px-2 py-0.5">Step 2</span>}
         {job.rota_date && <span className="rounded-full border border-line px-2 py-0.5">Weekly grid</span>}
+        {suggestedFor && !job.done_at && (
+          <span className={`rounded-full px-2 py-0.5 ${suggestedFor === meId ? "bg-brand text-brand-contrast" : "border border-brand text-brand"}`}>
+            {suggestedFor === meId ? "Suggested for you" : `Suggested: ${nameOf(suggestedFor)}`}
+          </span>
+        )}
         {waiting >= 1 && (
           <span className={`rounded-full px-2 py-0.5 ${waiting >= agendaAfter ? "bg-low-bg text-low-fg" : "border border-line"}`}>
             Waiting {waiting === 1 ? "1 day" : `${waiting} days`}

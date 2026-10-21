@@ -5,7 +5,7 @@
 Send these to the family group. The answers become the app's starter data.
 
 - [ ] Which shops do we really use? (Naivas, Quickmart, Carrefour, which market, which mama mboga, any wholesaler.)
-- [ ] Which 10 to 15 meals do we cook most, and what goes in each?
+- [x] ~~Which 10 to 15 meals do we cook most?~~ Dropped: the app has no meal planner; cooking for the house is a job.
 - [ ] Which contacts should be in the house phone book? (Fundi, plumber, landlord or caretaker, gas delivery, water vendor, clinic.)
 - [ ] Who logs spending: whoever spends, or one person?
 - [ ] How many days can a job wait before it goes on the meeting agenda? (Suggestion: 3.)
@@ -22,4 +22,4 @@ Send these to the family group. The answers become the app's starter data.
 - [ ] How often do we meet, and who hosts next?
 - [ ] Are there jobs that need a regular owner anyway, such as bills with fixed dates?
 - [ ] Who sends Dad the monthly summary?
-- [ ] Do we plan meals together on a set day, for example Sunday evening?
+- [x] ~~Do we plan meals together on a set day?~~ Dropped with the meal planner. Cooking goes on the weekly sign-up grid instead.

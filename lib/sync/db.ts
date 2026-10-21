@@ -17,6 +17,9 @@ export type OutboxEntry = {
 export type MetaEntry = { key: string; value: unknown };
 
 // Tables added after the first version get their own Dexie version below.
+// Tables the first version had that the app no longer syncs (removed in version 6).
+const REMOVED = ["meals", "meal_ingredients", "meal_slots"];
+
 const LATER: ReadonlySet<SyncTable> = new Set<SyncTable>(["job_participants", "job_rota"]);
 
 export class LocalDB extends Dexie {
@@ -29,7 +32,7 @@ export class LocalDB extends Dexie {
       outbox: "++seq, id, status, table",
       meta: "key",
     };
-    for (const t of SYNC_TABLES) if (!LATER.has(t)) stores[t] = "id, updated_at";
+    for (const t of [...SYNC_TABLES, ...REMOVED]) if (!LATER.has(t as SyncTable)) stores[t] = "id, updated_at";
     this.version(1).stores(stores);
     // Supermarket prices kept offline: a few hundred rows from offline_price_matches.
     this.version(2).stores({ local_catalog_matches: "id, store, canonical_concept, canonical_group_key" });
@@ -42,6 +45,8 @@ export class LocalDB extends Dexie {
     this.version(4).stores({ job_participants: "id, updated_at, job_id" });
     // The weekly sign-up grid for daily jobs.
     this.version(5).stores({ job_rota: "id, updated_at" });
+    // Meals were removed (cooking is a job): drop the local copies.
+    this.version(6).stores({ meals: null, meal_ingredients: null, meal_slots: null });
   }
 
   get catalog(): Table<Row, string> {

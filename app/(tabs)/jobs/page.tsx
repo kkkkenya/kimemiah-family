@@ -11,6 +11,7 @@ import { JobForm } from "@/components/jobs/JobForm";
 import { fromTemplate, postJob, type NewJob } from "@/lib/jobs/actions";
 import { sendAlertsNow } from "@/lib/push/client";
 import { jobStatus, learnedDuration, sortBoard, type Job, type Participant } from "@/lib/jobs/logic";
+import { contribution, suggestFor, type Person } from "@/lib/jobs/stats";
 import { TEMPLATES } from "@/lib/jobs/templates";
 import { syncEngine } from "@/lib/sync/client";
 import { useMe, useRows, type Member } from "@/lib/sync/hooks";
@@ -43,6 +44,9 @@ export default function JobsPage() {
   const thanks = useRows<Thanks>("thanks") ?? [];
   const settings = useRows<Row & { volunteer_after_days?: number }>("settings") ?? [];
   const agendaAfter = settings[0]?.volunteer_after_days ?? 3;
+  // Suggest each open job to whoever at home has given least lately (joining stays voluntary).
+  const stats = contribution(jobs, parts, members as Person[]);
+  const suggestion = (j: Job) => suggestFor(j, parts, members as Person[], stats.lines, stats.enough);
   // Usual jobs follow how long they really take once there are 2 real times.
   const learned = (key: string) => learnedDuration(jobs, key);
 
@@ -145,7 +149,7 @@ export default function JobsPage() {
       {shown.length ? (
         <ul className="flex flex-col gap-3">
           {shown.map((j) => (
-            <JobCard key={j.id} job={j} parts={parts} meId={me?.id} nameOf={nameOf} thanked={thanked} onMessage={message} homeNames={home} agendaAfter={agendaAfter} />
+            <JobCard key={j.id} job={j} parts={parts} meId={me?.id} nameOf={nameOf} thanked={thanked} onMessage={message} homeNames={home} agendaAfter={agendaAfter} suggestedFor={suggestion(j)} />
           ))}
         </ul>
       ) : (

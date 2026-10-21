@@ -9,7 +9,6 @@ import {
   jobSize,
   jobStatus,
   meantToDoIt,
-  meetingSummary,
   shareChoices,
   shareMinutes,
   sortBoard,
@@ -132,27 +131,6 @@ describe("reminders", () => {
   it("never between 21:00 and 07:00 Nairobi time", () => {
     const night = Date.parse("2026-10-22T19:30:00Z"); // 22:30 in Nairobi
     expect(dueReminders(jobs, ps, "greg", night)).toEqual([]);
-  });
-});
-
-describe("meeting summary", () => {
-  it("counts finished jobs, the work in each share, rescues and house meals, in family order", () => {
-    const jobs = [job({ id: "dog", people_needed: 2, done_at: hrs(-24) }), job({ id: "old", done_at: hrs(-24 * 20) })];
-    const ps = [
-      part({ job_id: "dog", member_id: "greg", effort_pct: 60 }),
-      part({ job_id: "dog", member_id: "vinnie", effort_pct: 40, status: "rescuer" }),
-      part({ job_id: "dog", member_id: "daniel", effort_pct: 50, status: "unable" }),
-      part({ job_id: "old", member_id: "greg", effort_pct: 100 }),
-    ];
-    const meals = [{ day: "2026-10-20", cook_id: "juliet" }, { day: "2026-09-01", cook_id: "juliet" }];
-    const s = meetingSummary(jobs, ps, meals, ["juliet", "daniel", "vinnie", "greg"], NOW);
-    expect(s.lines).toEqual([
-      { memberId: "juliet", jobsDone: 0, minutes: 0, rescues: 0, meals: 1 },
-      { memberId: "daniel", jobsDone: 0, minutes: 0, rescues: 0, meals: 0 },
-      { memberId: "vinnie", jobsDone: 1, minutes: 48, rescues: 1, meals: 0 },
-      { memberId: "greg", jobsDone: 1, minutes: 72, rescues: 0, meals: 0 },
-    ]);
-    expect(s).toMatchObject({ jobsDone: 1, rescued: 1 });
   });
 });
 
