@@ -2,15 +2,16 @@
 
 **Goal:** agree together how the house will run, and introduce the app as a tool the family chose, not something forced on anyone.
 
-**When:** a weekend afternoon or evening when all five are home. Not straight after an argument.
+**When:** a weekend afternoon or evening when all five are home, once Stock, Jobs and Money work on two phones (see [05-build-plan.md](05-build-plan.md)). Not straight after an argument.
 **Length:** about 60 minutes for the first one. Later meetings: 30 to 45 minutes.
-**Bring:** phones, something to drink and snack on, this plan.
+**Bring:** phones charged and with data, something to drink and snack on, this plan.
 
 ## Before the meeting
 
+- **Walk Mom through it privately first.** Her support matters most, and she knows how the house really runs. Show her the app on your phone and ask what she'd change. She can help demo at the meeting.
+- **Send the WhatsApp poll** (questions in [06-open-questions.md](06-open-questions.md)) so the app already has our shops, meals and contacts. Nobody should open an empty app.
 - Tell everyone a few days ahead: "Let's sit down on Sunday at 5pm and sort out how we run the house. I want to hear what everyone thinks."
-- Ask Mom privately first. Her support matters most, and she knows how the house really runs.
-- Consider telling Dad. He doesn't need to attend, but he may like to know there will be a clear money record.
+- Tell Dad. He doesn't need to attend, but he'll get the link and can see the money record live.
 
 ## Ground rules (read these out at the start)
 
@@ -25,12 +26,14 @@
 | Time | Item | Notes |
 |---|---|---|
 | 5 min | Welcome and ground rules | Say why: "I want the house to run easier for all of us, especially Mom." |
-| 10 min | Appreciation round | Each person thanks someone in the house for something specific. |
+| 10 min | Install the app | Share the link in the family WhatsApp group. Everyone adds it to the home screen (check each iPhone), enters the PIN, picks their name. Explain the 3 alerts and that nothing comes at night, *then* everyone taps Allow. |
+| 10 min | Appreciation round | Each person thanks someone out loud, and taps **Asante** in the app for them at the same time. Their phone buzzes. |
 | 10 min | What's working, what's not | Each person names one thing that frustrates them about the house and one thing that works. Write them down without arguing. |
-| 10 min | The volunteer idea | Explain: jobs go on a board, anyone picks them up, thank-yous instead of scores. Ask: "Would this work for us? What would make it fair?" |
-| 10 min | Dad's money | Agree that money in and out gets logged, so everyone can see it. Agree who usually does the market and supermarket runs for now. |
-| 10 min | Walk through the app | Show Stock, Shopping, Jobs and Money on a phone. Everyone opens the link and taps one thing. |
-| 5 min | Decisions and next meeting | Read back what was agreed. Pick the next date and the next host. |
+| 10 min | The volunteer idea | Explain: jobs go on a board, anyone picks them up, thank-yous instead of scores. Ask: "Would this work for us? What would make it fair?" Each person taps one item they know is low and watches it reach everyone's shopping list. |
+| 10 min | Dad's money | Agree that money in and out gets logged. Log Dad's latest transfer together. Agree who usually does the market and supermarket runs for now. |
+| 5 min | Decisions and next meeting | Read back what was agreed and log it in the app. Pick the next date and the next host. |
+
+**After the meeting:** send Dad the link on WhatsApp with three screenshots. Send the PIN in a separate message.
 
 ## Host notes
 
