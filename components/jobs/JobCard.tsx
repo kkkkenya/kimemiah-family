@@ -11,6 +11,7 @@ import {
   meantToDoIt,
   shareChoices,
   shareMinutes,
+  waitingDays,
   workers,
   type Job,
   type Participant,
@@ -35,14 +36,17 @@ type Props = {
   nameOf: (id: string | null | undefined) => string;
   thanked: (jobId: string, to: string) => boolean;
   onMessage: (text: string, undo?: () => void) => void;
+  homeNames?: string[]; // others at home right now, to suggest for rescues and handovers
+  agendaAfter?: number; // days with nobody on it before it goes on the meeting agenda
 };
 
-export function JobCard({ job, parts, meId, nameOf, thanked, onMessage }: Props) {
+export function JobCard({ job, parts, meId, nameOf, thanked, onMessage, homeNames = [], agendaAfter = 3 }: Props) {
   const { online, syncNow } = useSync();
   const [joining, setJoining] = useState<"join" | "help" | null>(null);
   const [pct, setPct] = useState(0);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   const status = jobStatus(job, parts);
   const size = jobSize(job);
@@ -52,6 +56,8 @@ export function JobCard({ job, parts, meId, nameOf, thanked, onMessage }: Props)
   const { choices, suggested } = shareChoices(job, parts, meId);
   const missingPeople = Math.max(0, job.people_needed - people.length);
   const strain = STRAIN[job.strain];
+  const waiting = waitingDays(job, parts);
+  const home = homeNames.filter((n) => !people.some((p) => nameOf(p.member_id) === n));
 
   async function run(action: () => Promise<string | null>, ok: string) {
     setBusy(true);
@@ -59,6 +65,7 @@ export function JobCard({ job, parts, meId, nameOf, thanked, onMessage }: Props)
     setBusy(false);
     if (err) return onMessage(err);
     setJoining(null);
+    setLeaving(false);
     setNote("");
     onMessage(ok);
     void syncNow();
@@ -83,6 +90,7 @@ export function JobCard({ job, parts, meId, nameOf, thanked, onMessage }: Props)
         <p className="mb-2 rounded-lg bg-low-bg px-3 py-2 text-sm text-low-fg">
           <strong>⚠️ Meant to be done by {meantToDoIt(job.id, parts).map(nameOf).join(" and ") || "someone"}</strong>, but it wasn&apos;t finished in time. You can
           jump in to help, or take it over (with anyone willing to help).
+          {home.length > 0 && <> At home now: {home.join(", ")}.</>}
         </p>
       )}
 
@@ -94,6 +102,13 @@ export function JobCard({ job, parts, meId, nameOf, thanked, onMessage }: Props)
         {job.urgent && !job.done_at && <span className="rounded-full bg-out-bg px-2 py-0.5 text-out-fg">Urgent</span>}
         {job.people_needed > 1 && <span className="rounded-full border border-line px-2 py-0.5">💪 Team-up</span>}
         {job.parent_job_id && <span className="rounded-full border border-line px-2 py-0.5">Step 2</span>}
+        {job.rota_date && <span className="rounded-full border border-line px-2 py-0.5">Weekly grid</span>}
+        {waiting >= 1 && (
+          <span className={`rounded-full px-2 py-0.5 ${waiting >= agendaAfter ? "bg-low-bg text-low-fg" : "border border-line"}`}>
+            Waiting {waiting === 1 ? "1 day" : `${waiting} days`}
+            {waiting >= agendaAfter && " · on the meeting agenda"}
+          </span>
+        )}
       </div>
       <h3 className="mt-1 text-lg font-bold">{job.title}</h3>
       <p className="text-sm tabular">
@@ -104,6 +119,7 @@ export function JobCard({ job, parts, meId, nameOf, thanked, onMessage }: Props)
       </p>
       {job.notes && <p className="text-sm text-muted">{job.notes}</p>}
       {!job.done_at && job.due_at && <p className="text-sm text-muted">Due {when(job.due_at)}</p>}
+      {!job.done_at && job.started_at && <p className="text-sm text-ok-fg">Started {when(job.started_at)}</p>}
 
       {job.requires_funds && !job.done_at && (
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-base px-3 py-2 text-sm">
@@ -242,15 +258,40 @@ export function JobCard({ job, parts, meId, nameOf, thanked, onMessage }: Props)
               I&apos;ll go
             </button>
           )}
-          {mine && (
+          {mine && leaving && (
+            <div className="flex w-full flex-col gap-2 rounded-xl border border-line p-3">
+              <p>
+                Leave your {mine.effort_pct}%? It goes back on the board
+                {home.length ? ` for whoever's at home (${home.join(", ")})` : ""}.
+              </p>
+              <div className="flex gap-2">
+                <button type="button" disabled={!online || busy} onClick={() => run(() => leaveJob(job.id), `You left ${job.title}. It's back on the board.`)} className="min-h-12 rounded-xl bg-brand px-4 font-bold text-brand-contrast disabled:opacity-50">
+                  Leave it
+                </button>
+                <button type="button" onClick={() => setLeaving(false)} className="min-h-12 rounded-xl px-4 font-bold text-brand">
+                  Keep it
+                </button>
+              </div>
+            </div>
+          )}
+          {mine && !leaving && (
             <>
+              {!job.started_at && (
+                <button
+                  type="button"
+                  onClick={() => updateJob(job.id, { started_at: new Date().toISOString() }).then(() => (void syncNow(), onMessage(`Started ${job.title}`)))}
+                  className="min-h-12 rounded-xl border border-brand px-4 font-bold text-brand"
+                >
+                  ▶ I&apos;m starting
+                </button>
+              )}
               <button type="button" onClick={markDone} className="min-h-12 rounded-xl bg-brand px-4 font-bold text-brand-contrast">
                 ✓ Done
               </button>
               <button type="button" disabled={!online} onClick={() => openJoin("join")} className="min-h-12 rounded-xl border border-line px-3 font-bold disabled:opacity-50">
                 Change share
               </button>
-              <button type="button" disabled={!online || busy} onClick={() => run(() => leaveJob(job.id), `You left ${job.title}`)} className="min-h-12 rounded-xl px-3 font-bold text-muted disabled:opacity-50">
+              <button type="button" disabled={!online} onClick={() => setLeaving(true)} className="min-h-12 rounded-xl px-3 font-bold text-muted disabled:opacity-50">
                 Leave
               </button>
             </>

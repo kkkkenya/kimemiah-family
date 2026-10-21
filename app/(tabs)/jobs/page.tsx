@@ -9,7 +9,7 @@ import { JobAlerts } from "@/components/jobs/JobAlerts";
 import { JobCard } from "@/components/jobs/JobCard";
 import { JobForm } from "@/components/jobs/JobForm";
 import { fromTemplate, postJob, type NewJob } from "@/lib/jobs/actions";
-import { jobStatus, sortBoard, type Job, type Participant } from "@/lib/jobs/logic";
+import { jobStatus, learnedDuration, sortBoard, type Job, type Participant } from "@/lib/jobs/logic";
 import { TEMPLATES } from "@/lib/jobs/templates";
 import { syncEngine } from "@/lib/sync/client";
 import { useMe, useRows, type Member } from "@/lib/sync/hooks";
@@ -40,6 +40,10 @@ export default function JobsPage() {
   const parts = (useRows<Participant & { id: string }>("job_participants") ?? []) as Participant[];
   const members = (useRows<Member & { presence?: Presence }>("members") ?? []).sort((a, b) => a.sort - b.sort);
   const thanks = useRows<Thanks>("thanks") ?? [];
+  const settings = useRows<Row & { volunteer_after_days?: number }>("settings") ?? [];
+  const agendaAfter = settings[0]?.volunteer_after_days ?? 3;
+  // Usual jobs follow how long they really take once there are 2 real times.
+  const learned = (key: string) => learnedDuration(jobs, key);
 
   const [tab, setTab] = useState<Tab>("needs");
   const [effort, setEffort] = useState<Effort>("all");
@@ -94,7 +98,7 @@ export default function JobsPage() {
         </h2>
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
           {TEMPLATES.filter((t) => t.chip).map((t) => (
-            <button key={t.id} type="button" onClick={() => post(fromTemplate(t))} className="min-h-12 shrink-0 rounded-full border border-brand bg-raised px-4 text-sm font-bold text-brand">
+            <button key={t.id} type="button" onClick={() => post(fromTemplate(t, Date.now(), learned(t.id)?.minutes))} className="min-h-12 shrink-0 rounded-full border border-brand bg-raised px-4 text-sm font-bold text-brand">
               {t.chip}
             </button>
           ))}
@@ -110,7 +114,7 @@ export default function JobsPage() {
         )}
       </section>
 
-      {adding && <JobForm onPost={post} onCancel={() => setAdding(false)} />}
+      {adding && <JobForm onPost={post} onCancel={() => setAdding(false)} learned={learned} />}
 
       <div role="tablist" aria-label="Jobs" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
         {TABS.map((t) => (
@@ -137,7 +141,7 @@ export default function JobsPage() {
       {shown.length ? (
         <ul className="flex flex-col gap-3">
           {shown.map((j) => (
-            <JobCard key={j.id} job={j} parts={parts} meId={me?.id} nameOf={nameOf} thanked={thanked} onMessage={message} />
+            <JobCard key={j.id} job={j} parts={parts} meId={me?.id} nameOf={nameOf} thanked={thanked} onMessage={message} homeNames={home} agendaAfter={agendaAfter} />
           ))}
         </ul>
       ) : (

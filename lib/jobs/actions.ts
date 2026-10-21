@@ -51,6 +51,7 @@ export type NewJob = {
   estimated_cost_kes?: number | null;
   planned_for?: string | null;
   next_stage?: NextStage | null;
+  template_key?: string | null;
 };
 
 export async function postJob(j: NewJob): Promise<string> {
@@ -72,19 +73,21 @@ export async function postJob(j: NewJob): Promise<string> {
     funds_status: j.requires_funds ? "discussing" : "not_needed",
     planned_for: j.requires_funds ? (j.planned_for ?? null) : null,
     next_stage: j.next_stage ?? null,
+    template_key: j.template_key ?? null,
     done_at: null,
     done_by: null,
   });
   return id;
 }
 
-export function fromTemplate(t: Template, now = Date.now()): NewJob {
+export function fromTemplate(t: Template, now = Date.now(), learnedMinutes?: number): NewJob {
   const planned = t.requires_funds ? dayPlus(t.daysAhead ?? 3, now) : null;
   return {
     title: t.title,
     category: t.category,
     strain: t.strain,
-    duration_min: t.duration_min,
+    duration_min: learnedMinutes ?? t.duration_min,
+    template_key: t.id,
     people_needed: t.people_needed,
     urgent: t.urgent,
     due_at: planned ? dueOnDay(planned) : t.dueInHours ? new Date(now + t.dueInHours * 3600_000).toISOString() : endOfToday(now),

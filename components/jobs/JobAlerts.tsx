@@ -29,7 +29,8 @@ export function JobAlerts({ link = false }: { link?: boolean }) {
     return () => window.clearInterval(t);
   }, []);
 
-  const reminders = dueReminders(jobs, parts, me?.id, now, shown);
+  const presence = (me as { presence?: string } | undefined)?.presence ?? "at_home";
+  const reminders = dueReminders(jobs, parts, me?.id, now, shown, presence);
   const rescue = jobs.filter((j) => !j.deleted_at && jobStatus(j, parts, now) === "overdue" && !workers(j.id, parts).some((p) => p.member_id === me?.id));
   if (!reminders.length && !rescue.length) return null;
 

@@ -22,7 +22,9 @@ const pill = (on: boolean) => `min-h-12 rounded-xl border px-3 text-sm font-bold
 
 // Anyone can post a job. How long it takes and how many people it needs set its size;
 // Light / Medium / Heavy says how physically hard it is.
-export function JobForm({ onPost, onCancel }: { onPost: (job: NewJob) => void; onCancel: () => void }) {
+type Learned = (key: string) => { minutes: number; samples: number } | null;
+
+export function JobForm({ onPost, onCancel, learned }: { onPost: (job: NewJob) => void; onCancel: () => void; learned?: Learned }) {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("house_cleaning");
   const [duration, setDuration] = useState(30);
@@ -34,6 +36,8 @@ export function JobForm({ onPost, onCancel }: { onPost: (job: NewJob) => void; o
   const [funds, setFunds] = useState(false);
   const [cost, setCost] = useState("");
   const [notes, setNotes] = useState("");
+  const [templateKey, setTemplateKey] = useState<string | null>(null);
+  const real = templateKey ? learned?.(templateKey) : null;
 
   const size = jobSize({ duration_min: duration, people_needed: people });
 
@@ -41,8 +45,9 @@ export function JobForm({ onPost, onCancel }: { onPost: (job: NewJob) => void; o
     const t = TEMPLATES.find((x) => x.id === id);
     if (!t) return;
     setTitle(t.title);
+    setTemplateKey(t.id);
     setCategory(t.category);
-    setDuration(t.duration_min);
+    setDuration(learned?.(t.id)?.minutes ?? t.duration_min);
     setPeople(t.people_needed);
     setStrain(t.strain);
     setRepeat(t.repeat ?? "none");
@@ -80,6 +85,7 @@ export function JobForm({ onPost, onCancel }: { onPost: (job: NewJob) => void; o
       requires_funds: funds,
       estimated_cost_kes: funds && amount > 0 ? amount : null,
       planned_for: funds ? (day ?? dayPlus(0)) : null,
+      template_key: templateKey,
     });
   }
 
@@ -117,8 +123,13 @@ export function JobForm({ onPost, onCancel }: { onPost: (job: NewJob) => void; o
 
       <fieldset className="flex flex-col gap-1">
         <legend className="text-sm font-bold">How long does it take?</legend>
+        {real && (
+          <p className="text-sm text-ok-fg">
+            Usually takes {formatMinutes(real.minutes)} (the last {real.samples} times)
+          </p>
+        )}
         <div className="flex flex-wrap gap-2">
-          {DURATIONS.map((d) => (
+          {[...new Set([...DURATIONS, duration])].sort((x, y) => x - y).map((d) => (
             <button key={d} type="button" aria-pressed={duration === d} onClick={() => setDuration(d)} className={pill(duration === d)}>
               {formatMinutes(d)}
             </button>

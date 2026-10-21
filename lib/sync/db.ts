@@ -17,7 +17,7 @@ export type OutboxEntry = {
 export type MetaEntry = { key: string; value: unknown };
 
 // Tables added after the first version get their own Dexie version below.
-const LATER: ReadonlySet<SyncTable> = new Set<SyncTable>(["job_participants"]);
+const LATER: ReadonlySet<SyncTable> = new Set<SyncTable>(["job_participants", "job_rota"]);
 
 export class LocalDB extends Dexie {
   outbox!: Table<OutboxEntry, number>;
@@ -40,6 +40,8 @@ export class LocalDB extends Dexie {
     });
     // Who is doing each job and their share (written only through the server's join functions).
     this.version(4).stores({ job_participants: "id, updated_at, job_id" });
+    // The weekly sign-up grid for daily jobs.
+    this.version(5).stores({ job_rota: "id, updated_at" });
   }
 
   get catalog(): Table<Row, string> {

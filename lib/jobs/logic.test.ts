@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   coverage,
   dueReminders,
+  forAgenda,
   formatMinutes,
+  learnedDuration,
+  waitingDays,
   jobSize,
   jobStatus,
   meantToDoIt,
@@ -120,6 +123,12 @@ describe("reminders", () => {
     expect(dueReminders(jobs, ps, "vinnie", NOW)).toEqual([]);
     expect(dueReminders([{ ...jobs[0], done_at: hrs(-1) }], ps, "greg", NOW)).toEqual([]);
   });
+  it("pause while I'm out or away", () => {
+    expect(dueReminders(jobs, ps, "greg", NOW, {}, "out")).toEqual([]);
+    expect(dueReminders(jobs, ps, "greg", NOW, {}, "away")).toEqual([]);
+    expect(dueReminders(jobs, ps, "greg", NOW, {}, "at_home")).toHaveLength(1);
+  });
+
   it("never between 21:00 and 07:00 Nairobi time", () => {
     const night = Date.parse("2026-10-22T19:30:00Z"); // 22:30 in Nairobi
     expect(dueReminders(jobs, ps, "greg", night)).toEqual([]);
@@ -144,5 +153,34 @@ describe("meeting summary", () => {
       { memberId: "greg", jobsDone: 1, minutes: 72, rescues: 0, meals: 0 },
     ]);
     expect(s).toMatchObject({ jobsDone: 1, rescued: 1 });
+  });
+});
+
+describe("learned times", () => {
+  const run = (id: string, minutes: number, daysAgo: number) =>
+    job({ id, template_key: "dog", started_at: hrs(-24 * daysAgo), done_at: new Date(Date.parse(hrs(-24 * daysAgo)) + minutes * 60_000).toISOString() });
+
+  it("needs 2 real times, then uses the middle of the last 5", () => {
+    expect(learnedDuration([run("a", 80, 1)], "dog")).toBeNull();
+    expect(learnedDuration([run("a", 80, 1), run("b", 70, 2)], "dog")).toEqual({ minutes: 75, samples: 2 });
+    const many = [run("a", 80, 1), run("b", 70, 2), run("c", 90, 3), run("d", 85, 4), run("e", 60, 5), run("f", 10, 6)];
+    expect(learnedDuration(many, "dog")).toEqual({ minutes: 80, samples: 5 }); // the 6th (oldest) is dropped
+  });
+
+  it("ignores a forgotten Done and other jobs", () => {
+    const jobs = [run("a", 80, 1), run("b", 70, 2), run("c", 60 * 20, 3), { ...run("d", 30, 1), template_key: "dishes" }];
+    expect(learnedDuration(jobs, "dog")).toEqual({ minutes: 75, samples: 2 });
+  });
+});
+
+describe("waiting jobs", () => {
+  it("count days with nobody on it, and go on the agenda at 3", () => {
+    const old = job({ id: "old", created_at: hrs(-24 * 3.5) });
+    const fresh = job({ id: "fresh", created_at: hrs(-24) });
+    const taken = job({ id: "taken", created_at: hrs(-24 * 5) });
+    const ps = [part({ job_id: "taken", member_id: "g", effort_pct: 100 })];
+    expect(waitingDays(old, ps, NOW)).toBe(3);
+    expect(waitingDays(taken, ps, NOW)).toBe(0);
+    expect(forAgenda([old, fresh, taken], ps, 3, NOW).map((j) => j.id)).toEqual(["old"]);
   });
 });

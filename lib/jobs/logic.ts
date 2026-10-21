@@ -23,6 +23,10 @@ export type Job = {
   next_stage?: unknown;
   done_at?: string | null;
   done_by?: string | null;
+  started_at?: string | null;
+  template_key?: string | null;
+  rota_date?: string | null;
+  source_item_id?: string | null;
   created_at?: string;
   deleted_at?: string | null;
 };
@@ -130,9 +134,19 @@ export const meantToDoIt = (jobId: string, parts: Participant[]) =>
 
 const TWO_HOURS = 2 * 3600_000;
 
-/** My open jobs that haven't nagged me for 2 hours, only between 07:00 and 21:00 Nairobi time. */
-export function dueReminders(jobs: Job[], parts: Participant[], meId: string | undefined, now = Date.now(), lastShown: Record<string, number> = {}): Job[] {
-  if (!meId) return [];
+/**
+ * My open jobs that haven't nagged me for 2 hours, only between 07:00 and 21:00 Nairobi time,
+ * and only while I'm at home: being out (errands, school) or away pauses them.
+ */
+export function dueReminders(
+  jobs: Job[],
+  parts: Participant[],
+  meId: string | undefined,
+  now = Date.now(),
+  lastShown: Record<string, number> = {},
+  presence: string = "at_home",
+): Job[] {
+  if (!meId || presence !== "at_home") return [];
   const hour = new Date(now + 3 * 3600_000).getUTCHours();
   if (hour < 7 || hour >= 21) return [];
   return jobs.filter((j) => {
@@ -143,6 +157,38 @@ export function dueReminders(jobs: Job[], parts: Participant[], meId: string | u
     return now - since >= TWO_HOURS;
   });
 }
+
+// ---------------------------------------------------------------- learning real times
+
+/**
+ * How long a usual job really takes: the middle of the last 5 times someone tapped
+ * "I'm starting" and then Done (5 min to 8 h, so a forgotten Done doesn't count).
+ * Null until it has 2 real times.
+ */
+export function learnedDuration(jobs: Job[], templateKey: string): { minutes: number; samples: number } | null {
+  const times = jobs
+    .filter((j) => j.template_key === templateKey && j.started_at && j.done_at && !j.deleted_at)
+    .sort((a, b) => b.done_at!.localeCompare(a.done_at!))
+    .map((j) => (Date.parse(j.done_at!) - Date.parse(j.started_at!)) / 60_000)
+    .filter((m) => m >= 5 && m <= 480)
+    .slice(0, 5)
+    .sort((a, b) => a - b);
+  if (times.length < 2) return null;
+  const mid = times.length / 2;
+  const median = times.length % 2 ? times[Math.floor(mid)] : (times[mid - 1] + times[mid]) / 2;
+  return { minutes: Math.max(5, Math.round(median / 5) * 5), samples: times.length };
+}
+
+// ---------------------------------------------------------------- waiting jobs
+
+/** Days a job has sat with nobody on it; at `after` days it goes on the meeting agenda. */
+export function waitingDays(job: Job, parts: Participant[], now = Date.now()): number {
+  if (job.done_at || job.deleted_at || !job.created_at || workers(job.id, parts).length) return 0;
+  return Math.floor((now - Date.parse(job.created_at)) / 86400_000);
+}
+
+export const forAgenda = (jobs: Job[], parts: Participant[], after = 3, now = Date.now()) =>
+  jobs.filter((j) => !isUpcoming(j, now) && waitingDays(j, parts, now) >= after);
 
 // ---------------------------------------------------------------- meeting summary
 
