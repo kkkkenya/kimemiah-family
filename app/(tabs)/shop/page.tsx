@@ -7,13 +7,16 @@ import { useSync } from "@/components/SyncProvider";
 import { UndoBar, type UndoState } from "@/components/UndoBar";
 import { CatalogSearch } from "@/components/shop/CatalogSearch";
 import { DealRestock } from "@/components/shop/DealRestock";
+import { PutAway } from "@/components/shop/PutAway";
 import { ItemPrice } from "@/components/shop/ItemPrice";
 import { ModeBar } from "@/components/shop/ModeBar";
+import { StockView } from "@/components/shop/StockView";
 import { StoreCompare } from "@/components/shop/StoreCompare";
-import { TripCheck, type Trip } from "@/components/shop/TripCheck";
+import { TripCheck, isActive, type Trip } from "@/components/shop/TripCheck";
 import {
   estimate,
   inMode,
+  kes,
   isCounted,
   stockStatus,
   moneyLeftThisMonth,
@@ -25,6 +28,7 @@ import {
   type Tier,
 } from "@/lib/shopping/pricing";
 import { SHOP_HINT, SUPERMARKETS, sortShops, type Shop, type ShoppingItem, type StockItem } from "@/lib/shopping/shops";
+import { autoListItems, putAwayMovements, spendByShop, withLocalCounts, type Movement, type PutAwayLine } from "@/lib/shopping/stock";
 import { localDB, syncEngine } from "@/lib/sync/client";
 import { useMe, useRows, type Member } from "@/lib/sync/hooks";
 
@@ -46,14 +50,65 @@ function savedMode(): Mode {
   return { base: "full", upgrades: false };
 }
 
+const VIEW_KEY = "kimemiah-shop-view";
+type View = "stock" | "list";
+
+// Shop tab: Stock (what's at home) and the Shopping list, one switch apart.
 export default function ShopPage() {
-  const { syncNow } = useSync();
+  const [view, setViewState] = useState<View>("list");
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(VIEW_KEY) === "stock") setViewState("stock");
+    } catch {}
+  }, []);
+  const setView = (v: View) => {
+    setViewState(v);
+    try {
+      localStorage.setItem(VIEW_KEY, v);
+    } catch {}
+  };
+
   const me = useMe();
   const shops = sortShops(useRows<Shop>("shops") ?? []);
   const stockRows = useRows<StockItem>("stock_items");
-  const stock = useMemo(() => stockRows ?? [], [stockRows]);
-  const items = useRows<ShoppingItem>("shopping_extras");
+  const movementRows = useRows<Movement & { id: string }>("stock_movements");
+  const movements = useMemo(() => movementRows ?? [], [movementRows]);
+  // Counts include this phone's unsynced +/-, the same sum the server keeps.
+  const stock = useMemo(() => withLocalCounts(stockRows ?? [], movements, me?.id), [stockRows, movements, me?.id]);
   const members = useRows<Member>("members") ?? [];
+
+  const switcher = (
+    <div role="tablist" aria-label="Shop" className="grid grid-cols-2 gap-1 rounded-full border border-line bg-raised p-1">
+      {(["stock", "list"] as View[]).map((v) => (
+        <button
+          key={v}
+          type="button"
+          role="tab"
+          aria-selected={view === v}
+          onClick={() => setView(v)}
+          className={`min-h-12 rounded-full font-bold ${view === v ? "bg-brand text-brand-contrast" : "text-ink"}`}
+        >
+          {v === "stock" ? "Stock" : "Shopping list"}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (view === "stock") {
+    return (
+      <Screen title="Stock">
+        {switcher}
+        <StockView stock={stock} movements={movements} shops={shops} members={members} meId={me?.id} />
+      </Screen>
+    );
+  }
+  return <ShoppingList switcher={switcher} stock={stock} shops={shops} members={members} />;
+}
+
+function ShoppingList({ switcher, stock, shops, members }: { switcher: React.ReactNode; stock: StockItem[]; shops: Shop[]; members: Member[] }) {
+  const { syncNow } = useSync();
+  const me = useMe();
+  const items = useRows<ShoppingItem>("shopping_extras");
   const trips = useRows<Trip>("shopping_trips") ?? [];
   const money = useRows<MoneyEntry & { id: string }>("money_entries") ?? [];
   const matches = (useLiveQuery(() => localDB().catalog.toArray(), [], []) ?? []) as unknown as CatalogMatch[];
@@ -67,6 +122,7 @@ export default function ShopPage() {
   const [note, setNote] = useState<string | null>(null);
   const [undo, setUndo] = useState<UndoState>(null);
   const [showHouseList, setShowHouseList] = useState(false);
+  const [puttingAway, setPuttingAway] = useState(false);
   const closeUndo = useCallback(() => setUndo(null), []);
 
   const setMode = (m: Mode) => {
@@ -77,7 +133,22 @@ export default function ShopPage() {
   };
 
   const stockById = useMemo(() => new Map(stock.map((s) => [s.id, s])), [stock]);
-  const needed = useMemo(() => (items ?? []).filter((i) => !i.bought_at).sort(byNewest), [items]);
+  // Low / Out items join the list on their own until someone ticks them into the basket.
+  const auto = useMemo<ShoppingItem[]>(
+    () =>
+      autoListItems(stock as (StockItem & StockLike)[], items ?? []).map((s) => ({
+        id: `auto:${s.id}`,
+        title: s.name,
+        qty: null,
+        shop_id: s.shop_id,
+        item_id: s.id,
+        bought_at: null,
+        shopping_tier: s.shopping_tier,
+        auto: true,
+      })),
+    [stock, items],
+  );
+  const needed = useMemo(() => [...auto, ...(items ?? []).filter((i) => !i.bought_at).sort(byNewest)], [auto, items]);
   const bought = useMemo(() => (items ?? []).filter((i) => i.bought_at).sort(byNewest), [items]);
   const toLine = (i: ShoppingItem): ListLine => ({
     id: i.id,
@@ -153,6 +224,13 @@ export default function ShopPage() {
   }
 
   async function toggle(i: ShoppingItem) {
+    if (i.auto) {
+      // An automatic line becomes a real one once it's in the basket.
+      const id = crypto.randomUUID();
+      await change("insert", { id, title: i.title, qty: null, shop_id: i.shop_id, item_id: i.item_id, bought_at: new Date().toISOString(), shopping_tier: i.shopping_tier });
+      setUndo({ id: Date.now(), message: `${i.title} in the basket`, undo: () => change("delete", { id }) });
+      return;
+    }
     const bought_at = i.bought_at ? null : new Date().toISOString();
     await change("update", { id: i.id, bought_at });
     if (bought_at) setUndo({ id: Date.now(), message: `${i.title} in the basket`, undo: () => change("update", { id: i.id, bought_at: null }) });
@@ -178,11 +256,41 @@ export default function ShopPage() {
     });
   }
 
-  async function clearBought() {
-    const done = [...bought];
-    for (const i of done) await syncEngine().queue("shopping_extras", "delete", { id: i.id });
+  async function fixPrice(itemId: string, price: number) {
+    await syncEngine().queue("stock_items", "update", { id: itemId, usual_price_kes: price });
+  }
+
+  // Bought amounts go back into stock as movements; the spend is one money entry per shop (insert only).
+  async function putAway(lines: PutAwayLine[], logSpend: boolean) {
+    const engine = syncEngine();
+    const trip = trips.find((t) => isActive(t) && t.member_id === me?.id);
+    for (const m of putAwayMovements(lines)) {
+      if (m.level) await engine.queue("stock_items", "update", { id: m.item_id, level: "ok" });
+      await engine.queue("stock_movements", "insert", { id: crypto.randomUUID(), item_id: m.item_id, delta: m.delta, reason: "put_away", trip_id: trip?.id ?? null });
+    }
+    const spend = logSpend ? spendByShop(lines) : [];
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Nairobi" });
+    for (const g of spend) {
+      await engine.queue("money_entries", "insert", {
+        id: crypto.randomUUID(),
+        direction: "out",
+        occurred_on: today,
+        amount_kes: g.total,
+        method: null,
+        spent_by: me?.id ?? null,
+        shop_id: g.shopId,
+        category_id: null,
+        trip_id: trip && trip.shop_id === g.shopId ? trip.id : null,
+        note: g.note,
+        voids_entry_id: null,
+      });
+    }
+    for (const l of lines) await engine.queue("shopping_extras", "delete", { id: l.extraId });
+    if (trip) await engine.queue("shopping_trips", "update", { id: trip.id, finished_at: new Date().toISOString() });
     void syncNow();
-    setUndo({ id: Date.now(), message: done.length === 1 ? "1 bought item cleared" : `${done.length} bought items cleared` });
+    setPuttingAway(false);
+    const spent = spend.reduce((sum, g) => sum + g.total, 0);
+    setUndo({ id: Date.now(), message: `${lines.length === 1 ? "1 item" : `${lines.length} items`} put away${spent ? ` · ${kes(spent)} logged` : ""}` });
   }
 
   async function startTrip(shop: Shop, keep: StockLike[]) {
@@ -218,13 +326,14 @@ export default function ShopPage() {
   };
 
   const row = (i: ShoppingItem, who: string) => (
-    <ItemRow key={i.id} item={i} who={who} badge={i.bought_at ? null : badgeFor(i)} onToggle={() => toggle(i)} onRemove={() => remove(i)}>
+    <ItemRow key={i.id} item={i} who={who} badge={i.bought_at ? null : badgeFor(i)} onToggle={() => toggle(i)} onRemove={i.auto ? undefined : () => remove(i)}>
       {!i.bought_at && <ItemPrice line={toLine(i)} matches={matches} />}
     </ItemRow>
   );
 
   return (
     <Screen title="Shopping list">
+      {switcher}
       <ModeBar mode={mode} onChange={setMode} totals={totals} estimate={current.total} unpriced={current.unpriced} moneyLeft={moneyLeft} />
 
       <TripCheck
@@ -333,17 +442,29 @@ export default function ShopPage() {
         </p>
       )}
 
-      {bought.length > 0 && (
-        <section className="rounded-xl border border-line p-4">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="font-bold">In the basket ({bought.length})</h2>
-            <button type="button" onClick={clearBought} className="min-h-12 rounded-xl px-3 font-bold text-brand">
-              Done shopping
-            </button>
-          </div>
-          <ul className="mt-1 divide-y divide-line">{bought.map((i) => row(i, ""))}</ul>
-        </section>
-      )}
+      {bought.length > 0 &&
+        (puttingAway ? (
+          <PutAway
+            bought={bought}
+            stockById={stockById}
+            shops={shops}
+            matches={matches}
+            toLine={toLine}
+            onFixPrice={fixPrice}
+            onDone={putAway}
+            onCancel={() => setPuttingAway(false)}
+          />
+        ) : (
+          <section className="rounded-xl border border-line p-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-bold">In the basket ({bought.length})</h2>
+              <button type="button" onClick={() => setPuttingAway(true)} className="min-h-12 rounded-xl bg-brand px-4 font-bold text-brand-contrast">
+                Put away
+              </button>
+            </div>
+            <ul className="mt-1 divide-y divide-line">{bought.map((i) => row(i, ""))}</ul>
+          </section>
+        ))}
 
       <DealRestock stock={stock as StockLike[]} matches={matches} onList={onList} onAdd={(s, deal) => addItem(s.name, { itemId: s.id, catalog: deal })} />
 
@@ -405,7 +526,7 @@ function ItemRow({
   who: string;
   badge?: string | null;
   onToggle: () => void;
-  onRemove: () => void;
+  onRemove?: () => void;
   children?: React.ReactNode;
 }) {
   const done = Boolean(item.bought_at);
@@ -434,11 +555,13 @@ function ItemRow({
         {(item.qty || who) && <span className="block text-sm text-muted">{[item.qty, who && `added by ${who}`].filter(Boolean).join(" · ")}</span>}
         {children}
       </div>
-      <button type="button" onClick={onRemove} aria-label={`Remove ${item.title}`} className="flex size-12 shrink-0 items-center justify-center text-muted">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-          <path d="M6 6l12 12M18 6 6 18" />
-        </svg>
-      </button>
+      {onRemove && (
+        <button type="button" onClick={onRemove} aria-label={`Remove ${item.title}`} className="flex size-12 shrink-0 items-center justify-center text-muted">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="M6 6l12 12M18 6 6 18" />
+          </svg>
+        </button>
+      )}
     </li>
   );
 }

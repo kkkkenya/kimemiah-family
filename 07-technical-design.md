@@ -73,6 +73,14 @@ All tables have: `id` (made on the phone), `created_at`, `updated_at`, `deleted_
 
 Views: `shopping_needed`, `money_balance`, `budget_vs_actual`.
 
+**Stock (Phase 2b, migration `0007_stock_totals.sql`)**
+- `have_qty` is kept by a trigger as the sum of the item's `stock_movements`. Phones never write it. On the phone the Stock screen shows the same sum over its local movements, so unsynced +/− taps show straight away.
+- Movement `reason`: `used` (−), `adjust` (+), `undo`, `put_away`. An OK / Low / Out item that is put away gets a 0 `put_away` movement as a marker.
+- When an item changes to Out, a trigger sets `last_out_at`. For bulk items (not fast movers) it also updates `early_depletion_streak`: +1 if it ran out more than 4 days before the next planned bulk run. Otherwise it goes back to 0. Each run counts once. The planned run is the item's last put away plus `settings.bulk_run_every_days` (14 for now, with no screen to change it yet). The note shows at a streak of 2.
+- Low / Out items that someone has checked appear on the shopping list as automatic lines, not saved rows, so two phones can't add the same item twice. Ticking one saves a `shopping_extras` row linked by `item_id`; the item stays off the list while that row exists.
+- "Put away" adds the bought amounts as `put_away` movements, sets OK / Low / Out items back to OK, writes one `money_entries` row (`out`) per shop from catalog or usual prices, removes the basket rows and finishes the shopper's trip. Fixing a price saves it as the item's `usual_price_kes`. Money is insert-only, so put away has no Undo. Corrections come with Phase 4.
+- OK / Low / Out history comes from `audit_log` and needs signal. +/− history comes from the phone's movements.
+
 `stock_items` also carries `shopping_tier` (essential / standard / qol), `is_fast_mover`, `canonical_group_key` (exact pack, e.g. `cooking-oil-2l`), `canonical_concept` (product family, e.g. `cooking-oil`), `preferred_brand`, `brand_flexibility` (any_cheapest / prefer_named / strict_named), `last_out_at` and `early_depletion_streak`. `shopping_extras` carries `shopping_tier`, `catalog_product_id` and `preferred_store`.
 
 ## Supermarket prices

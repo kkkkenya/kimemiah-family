@@ -18,6 +18,9 @@ export type StockItem = Row & {
   level?: "ok" | "low" | "out";
   have_qty?: number;
   min_qty?: number;
+  actor_id?: string | null;
+  last_out_at?: string | null;
+  early_depletion_streak?: number;
 };
 export type ShoppingItem = Row & {
   title: string;
@@ -31,6 +34,7 @@ export type ShoppingItem = Row & {
   created_at?: string;
   actor_id?: string | null;
   _local?: boolean;
+  auto?: boolean; // a Low / Out stock item shown on the list, not a saved row
 };
 
 // Supermarkets first, market separate: they're different trips. No kiosk (prices run 20-40% higher).
