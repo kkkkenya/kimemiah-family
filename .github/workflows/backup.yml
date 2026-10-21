@@ -1,0 +1,45 @@
+name: Nightly backup
+
+# 03:30 Nairobi time. Also keeps the free Supabase project from pausing.
+on:
+  schedule:
+    - cron: "30 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Install age
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq age
+
+      - name: Dump and encrypt the database
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_AGE_RECIPIENT: ${{ secrets.BACKUP_AGE_RECIPIENT }}
+        run: |
+          set -euo pipefail
+          stamp=$(date -u +%Y-%m-%d)
+          docker run --rm -e PGURL="$SUPABASE_DB_URL" postgres:17 \
+            sh -c 'pg_dump "$PGURL" --schema=public --schema=app_meta --no-owner --no-privileges' \
+            | gzip -9 \
+            | age -r "$BACKUP_AGE_RECIPIENT" > "kimemiah-$stamp.sql.gz.age"
+          test -s "kimemiah-$stamp.sql.gz.age"
+          echo "STAMP=$stamp" >> "$GITHUB_ENV"
+
+      - name: Keep the project awake
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: curl -fsS -o /dev/null "$SUPABASE_URL/rest/v1/settings?select=id" -H "apikey: $SUPABASE_ANON_KEY"
+
+      - name: Store the encrypted backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: kimemiah-backup-${{ env.STAMP }}
+          path: kimemiah-*.sql.gz.age
+          retention-days: 30
