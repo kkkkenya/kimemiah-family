@@ -26,7 +26,7 @@ Each phase ends with a check on two real phones that must pass before the next o
 | **Gate** | **Set the family meeting date** | Phases 2 to 4 pass on two real phones |
 | **5. Home and Meeting** | Today cards, agenda with waiting jobs added, notes, decisions to jobs | A waiting job appears on the agenda |
 | **6. Meals and Contacts** | Week grid, I'll cook, copy last week, add ingredients. Contacts with call and copy | Githeri with beans Out adds "beans · for githeri" and skips onions |
-| **7. Push alerts** | The 3 alerts, quiet hours, on/off, kill switch | Android and an installed iPhone get "going to the market". Nothing arrives at 10pm |
+| **7. Push alerts (Jobs done)** | Job alerts (urgent, covered, past its time, every-2-hours reminders, handover), quiet hours, on/off per phone, kill switch. Still to add: "going to the market" and "asante" | Android and an installed iPhone get "Water is back!". Nothing arrives at 10pm. (Server side checked 21 Oct 2026: wrong secret refused, quiet hours respected, each alert sent once. Delivery to a real phone not checked yet) |
 | **8. Polish** | Fonts, animation, reduced motion, dark mode | First load under about 250 KB on a slow connection. Reduced motion turns animation off |
 | **9. Launch** | Family meeting 1 (see [03-family-meeting.md](03-family-meeting.md)) | All six people do one thing in the app |
 

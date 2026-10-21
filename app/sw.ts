@@ -25,3 +25,41 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+// ---------------------------------------------------------------- push alerts
+
+type Alert = { title?: string; body?: string; tag?: string; url?: string };
+
+self.addEventListener("push", (event) => {
+  let data: Alert = {};
+  try {
+    data = event.data?.json() ?? {};
+  } catch {
+    data = { body: event.data?.text() };
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title ?? "Kimemiah Home", {
+      body: data.body,
+      tag: data.tag,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      data: { url: data.url ?? "/" },
+    }),
+  );
+});
+
+// Tapping an alert opens the app on the right tab (reusing an open window if there is one).
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = (event.notification.data as { url?: string } | undefined)?.url ?? "/";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(async (windows) => {
+      const open = windows[0];
+      if (open) {
+        await open.navigate(url).catch(() => undefined);
+        return open.focus();
+      }
+      return self.clients.openWindow(url);
+    }),
+  );
+});

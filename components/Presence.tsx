@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSync } from "@/components/SyncProvider";
 import { leaveJob } from "@/lib/jobs/actions";
 import { workers, type Job, type Participant } from "@/lib/jobs/logic";
+import { sendAlertsNow } from "@/lib/push/client";
 import { syncEngine } from "@/lib/sync/client";
 import { useMe, useRows, type Member } from "@/lib/sync/hooks";
 
@@ -43,6 +44,7 @@ export function PresenceCard() {
     if (!handover) return;
     const errors = (await Promise.all(handover.map((j) => leaveJob(j.id)))).filter(Boolean);
     void syncNow();
+    if (errors.length < handover.length) void sendAlertsNow();
     setHandover(null);
     setNote(errors.length ? errors[0] : "Back on the board for whoever's at home.");
   }

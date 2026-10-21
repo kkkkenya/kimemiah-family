@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSync } from "@/components/SyncProvider";
 import { joinJob, leaveJob, rescueJob, sendThanks, updateJob } from "@/lib/jobs/actions";
+import { sendAlertsNow } from "@/lib/push/client";
 import {
   coverage,
   formatMinutes,
@@ -265,7 +266,7 @@ export function JobCard({ job, parts, meId, nameOf, thanked, onMessage, homeName
                 {home.length ? ` for whoever's at home (${home.join(", ")})` : ""}.
               </p>
               <div className="flex gap-2">
-                <button type="button" disabled={!online || busy} onClick={() => run(() => leaveJob(job.id), `You left ${job.title}. It's back on the board.`)} className="min-h-12 rounded-xl bg-brand px-4 font-bold text-brand-contrast disabled:opacity-50">
+                <button type="button" disabled={!online || busy} onClick={() => run(async () => (await leaveJob(job.id)) ?? (void sendAlertsNow(), null), `You left ${job.title}. It's back on the board.`)} className="min-h-12 rounded-xl bg-brand px-4 font-bold text-brand-contrast disabled:opacity-50">
                   Leave it
                 </button>
                 <button type="button" onClick={() => setLeaving(false)} className="min-h-12 rounded-xl px-4 font-bold text-brand">

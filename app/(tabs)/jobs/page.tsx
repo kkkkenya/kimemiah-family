@@ -9,6 +9,7 @@ import { JobAlerts } from "@/components/jobs/JobAlerts";
 import { JobCard } from "@/components/jobs/JobCard";
 import { JobForm } from "@/components/jobs/JobForm";
 import { fromTemplate, postJob, type NewJob } from "@/lib/jobs/actions";
+import { sendAlertsNow } from "@/lib/push/client";
 import { jobStatus, learnedDuration, sortBoard, type Job, type Participant } from "@/lib/jobs/logic";
 import { TEMPLATES } from "@/lib/jobs/templates";
 import { syncEngine } from "@/lib/sync/client";
@@ -77,7 +78,10 @@ export default function JobsPage() {
 
   async function post(job: NewJob) {
     const id = await postJob(job);
-    void syncNow();
+    // Urgent jobs ("Water is back!") alert everyone at home now, not at the next 5-minute round.
+    void syncNow().then((r) => {
+      if (r?.ok && job.urgent) void sendAlertsNow();
+    });
     setAdding(false);
     setTab(job.requires_funds ? "upcoming" : "needs");
     message(`Posted: ${job.title}`, async () => {

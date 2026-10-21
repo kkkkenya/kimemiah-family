@@ -113,9 +113,11 @@ Views: `shopping_needed`, `money_balance`, `budget_vs_actual`.
 
 ## Push alerts
 
-- A new `activity` row triggers `notify` (Edge Function) with a shared secret.
-- `notify` skips the person who did the action, respects quiet hours (21:00 to 07:00 Nairobi), each person's on/off setting and the kill switch, groups bursts per person over about a minute, skips events older than an hour (old offline changes syncing), and removes dead subscriptions.
-- Alert text never includes money amounts.
+- Each phone subscribes (Web Push, VAPID) and saves its address with `save_push_subscription` (migration `0012`). The service worker (`app/sw.ts`) shows alerts and opens the Jobs tab on tap.
+- Every 5 minutes `pg_cron` runs `push_tick()`, which uses `pg_net` to POST to the app's `/api/push/tick` with the shared secret. The URL and secret are in Supabase Vault (`scripts/push-setup.mjs`, `npm run push:setup`), never in migrations. A phone can also call the route right away with its own sign-in token, after posting an urgent job or handing one over.
+- The route (`lib/server/push.ts`) posts today's weekly-grid jobs, works out alerts with `planAlerts` (`lib/push/plan.ts`, tested), claims each one with a conditional update (`urgent_notified_at`, `covered_notified_at`, `overdue_notified_at`, `last_reminded_at`, `handover_notified_at`) so two rounds never send twice, groups them per person and sends. Dead addresses (404/410) are removed.
+- Rules: quiet hours 21:00–07:00 Nairobi, nothing older than an hour, never the person who did it, reminders only for people At home, kill switch in `settings.push_kill_switch`, no money amounts.
+- This replaced the planned `notify` Edge Function: the route deploys with the app and needs no separate service.
 
 ## Backups
 

@@ -2,6 +2,7 @@
 
 import { FamilyPhoto } from "@/components/FamilyPhoto";
 import { PresenceCard } from "@/components/Presence";
+import { PushCard } from "@/components/PushCard";
 import { Card, Empty, Screen } from "@/components/Screen";
 import { JobAlerts } from "@/components/jobs/JobAlerts";
 import { useMe } from "@/lib/sync/hooks";
@@ -21,6 +22,7 @@ export default function HomePage() {
       <JobAlerts link />
       <FamilyPhoto />
       <PresenceCard />
+      <PushCard compact />
       <Card>
         <h2 className="font-bold">Today</h2>
         <p className="text-muted">Items running out, shop runs, today&apos;s meals and money left will show here.</p>

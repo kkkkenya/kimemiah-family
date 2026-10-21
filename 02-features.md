@@ -82,7 +82,12 @@ Naivas blocks automated price tools, so the app shows **Quickmart prices only**.
 - **Two-stage kitchen.** "Clean counters and arrange dishes" (Light) creates "Wash the arranged dishes" when it's done.
 - **Money jobs** (supermarket and market runs, gas): two people go, planned 2–4 days ahead. They wait under **Upcoming & money** until someone taps "Money is ready" and the day comes.
 - **Bills Peter pays** (KPLC tokens, water bill): "Send to Peter on WhatsApp" with the details, then "Peter paid".
-- **Reminders.** Every 2 hours (07:00–21:00) a job you're on shows "Still yours" on Home and Jobs until you tap Done. In the app for now; push alerts with the same rule come in Phase 7.
+- **Reminders.** Every 2 hours (07:00–21:00) a job you're on shows "Still yours" on Home and Jobs, and as a push alert if alerts are on, until you tap Done. They pause while you're Out or Away.
+- **Presence.** Switching to Out or Away while you're on a job offers to hand it to whoever's at home. Rescue cards and "Leave" say who's at home now. Leave asks first.
+- **Stock makes jobs.** Gas marked Out posts "Refill the cooking gas cylinder" (money run, 2 people, urgent). Dog unga Low posts a vet run, and KPLC tokens Low posts "Ask Peter for KPLC tokens". Only one open job per item.
+- **Weekly sign-up grid** (Meeting screen): who does dishes, cooks supper and feeds the dog on each day. Each day those jobs appear already taken by whoever signed up (or open, with a note, if they're away), with the usual reminders and rescue.
+- **Real times.** "I'm starting" then Done records how long a job really took. After 2 runs, a usual job posts with its real time (the middle of the last 5) and the form shows "Usually takes 1 h 20 min".
+- **Waiting jobs.** A job nobody takes for 3 days shows "Waiting 3 days · on the meeting agenda" and is listed on the Meeting screen. About the job, never about people.
 - **Overdue rescue.** A taken job past its due time goes to the top with "Meant to be done by Vinnie, but it wasn't finished in time." Anyone can **Help them finish** (pick a share; the others' shares shrink to fit) or **Take it over** (the earlier people step back).
 - Lists: **Needs people · In progress · Upcoming & money · Done & Asante**, plus **Light only** and **Team-ups** filters. "At home now" shows who's around to team up with.
 - Repeating jobs come back on their own when done. **Asante** thanks each person who did a job.
@@ -156,15 +161,19 @@ See [03-family-meeting.md](03-family-meeting.md) for the first meeting.
 
 ## Push alerts
 
-Three at launch:
+Turn them on per phone (Home or Settings > Alerts on this phone). Built so far, for Jobs:
 
-1. "Wanjiru is going to the market, add requests"
-2. "Gas is out" / "KPLC tokens are out"
-3. "Mom said asante for Clean bathroom"
+1. **Urgent jobs** ("Water is back! Fill the tanks"): everyone at home except whoever posted it, straight away.
+2. **"You're covered"**: when the last share of a team job comes in, the people already on it hear who joined.
+3. **Past its time**: the people on a job hear once when it passes its due time, before the house sees the rescue banner.
+4. **"Still yours"**: every 2 hours while you're on a job, only while you're At home.
+5. **Handover**: when someone leaves a job or hands it over, whoever's at home is asked to take it.
 
-Nothing is sent between 9pm and 7am. Alerts never show money amounts. Each person can turn alerts off. Unpicked jobs never trigger nagging alerts; they go to the meeting agenda instead.
+Still to come from the original three: "going to the market, add requests" and "asante" alerts.
 
-On Android, alerts work in Chrome. **On iPhone, alerts only work on iOS 16.4 or newer, and only after adding the app to the home screen.** Without alerts, the app still works fully.
+Nothing is sent between 21:00 and 07:00 or about something older than an hour. Several at once become one alert. Alerts never show money amounts. Each phone can turn alerts off, and the kill switch in settings stops them all. Jobs nobody took don't nag anyone; they go to the meeting agenda instead.
+
+On Android, alerts work in Chrome. **On iPhone, alerts only work on iOS 16.4 or newer, and only after adding the app to the home screen.** Without alerts, the app still works fully, with the same reminders shown inside the app.
 
 ## Later (release 1.1 and after)
 
