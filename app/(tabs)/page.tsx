@@ -1,5 +1,6 @@
 "use client";
 
+import { FamilyPhoto } from "@/components/FamilyPhoto";
 import { Card, Empty, Screen } from "@/components/Screen";
 import { useMe } from "@/lib/sync/hooks";
 
@@ -15,6 +16,7 @@ export default function HomePage() {
 
   return (
     <Screen title={me ? `${hello}, ${me.name}` : hello}>
+      <FamilyPhoto />
       <Card>
         <h2 className="font-bold">Today</h2>
         <p className="text-muted">Items running out, shop runs, today&apos;s meals and money left will show here.</p>
