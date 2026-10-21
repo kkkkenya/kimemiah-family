@@ -3,7 +3,7 @@
 import { Avatar } from "@/components/Avatar";
 import { ContactSearch } from "@/components/ContactSearch";
 import { FamilyPhoto } from "@/components/FamilyPhoto";
-import { EssentialsCard, LiveBanners, MyJobs, OpenJobsCard, PeterCard, QuickStrip, SupperPill } from "@/components/home/HomeCards";
+import { EssentialsCard, LiveBanners, MyJobs, OpenJobsCard, PeterCard, QuickStrip, SupperPill, UpgradeDealsCard } from "@/components/home/HomeCards";
 import { PresenceCard } from "@/components/Presence";
 import { PushCard } from "@/components/PushCard";
 import { Screen } from "@/components/Screen";
@@ -28,6 +28,7 @@ export default function HomePage() {
       <MyJobs />
       <QuickStrip />
       <EssentialsCard />
+      <UpgradeDealsCard />
       <OpenJobsCard />
       <JobStats />
       <PresenceCard />

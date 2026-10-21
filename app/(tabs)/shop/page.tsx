@@ -7,6 +7,7 @@ import { useSync } from "@/components/SyncProvider";
 import { UndoBar, type UndoState } from "@/components/UndoBar";
 import { CatalogView } from "@/components/shop/CatalogView";
 import { DealRestock } from "@/components/shop/DealRestock";
+import { AisleBar, SwapBrand, useWakeLock } from "@/components/shop/Aisle";
 import { PutAway } from "@/components/shop/PutAway";
 import { ItemPrice } from "@/components/shop/ItemPrice";
 import { ModeBar } from "@/components/shop/ModeBar";
@@ -30,6 +31,10 @@ import { SHOP_HINT, SUPERMARKETS, type Shop, type ShoppingItem, type StockItem }
 import type { Product } from "@/lib/shopping/catalog";
 import { autoListItems, type PutAwayLine } from "@/lib/shopping/stock";
 import { restockHouse } from "@/lib/sync/workflows";
+import { fromTemplate, postJob, updateJob } from "@/lib/jobs/actions";
+import type { Job } from "@/lib/jobs/logic";
+import { TEMPLATES } from "@/lib/jobs/templates";
+import { upgradeDeals } from "@/lib/shopping/predict";
 import { useStock } from "@/lib/shopping/useStock";
 import { localDB, syncEngine } from "@/lib/sync/client";
 import { useMe, useRows, type Member } from "@/lib/sync/hooks";
@@ -244,6 +249,9 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
   const [undo, setUndo] = useState<UndoState>(null);
   const [showHouseList, setShowHouseList] = useState(false);
   const [puttingAway, setPuttingAway] = useState(false);
+  const [aisle, setAisle] = useState(false);
+  useWakeLock(aisle);
+  const jobs = (useRows<Job & { id: string }>("jobs") ?? []) as Job[];
   const closeUndo = useCallback(() => setUndo(null), []);
 
   const setMode = (m: Mode) => {
@@ -438,16 +446,72 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
     return s.is_fast_mover ? `Fast-mover · ${word}` : word;
   };
 
+  // Can-wait upgrades with a 12%+ deal this week.
+  const deals = new Map(
+    upgradeDeals(
+      visible.map((i) => ({ ...i, concept: i.item_id ? stockById.get(i.item_id)?.canonical_concept : null })),
+      matches,
+    ).map((d) => [d.line.id, d.deal]),
+  );
+  const myTrip = trips.find((t) => isActive(t) && t.member_id === me?.id);
+  const tripStore = shops.find((s) => s.id === myTrip?.shop_id)?.name === "Naivas" ? "naivas" : "quickmart";
+
+  async function swap(i: ShoppingItem, product: CatalogMatch) {
+    await change("update", { id: i.id, catalog_product_id: product.id, preferred_store: product.store });
+    setUndo({ id: Date.now(), message: `Swapped to ${product.brand ?? product.title}` });
+  }
+
   const row = (i: ShoppingItem, who: string) => (
-    <ItemRow key={i.id} item={i} who={who} badge={i.bought_at ? null : badgeFor(i)} onToggle={() => toggle(i)} onRemove={i.auto ? undefined : () => remove(i)}>
+    <ItemRow key={i.id} item={i} who={who} big={aisle} badge={i.bought_at ? null : badgeFor(i)} onToggle={() => toggle(i)} onRemove={i.auto ? undefined : () => remove(i)}>
+      {!i.bought_at && deals.get(i.id) && (
+        <span className="mt-1 inline-block rounded-md bg-ok-bg px-1.5 text-xs font-bold text-ok-fg">
+          ✨ On sale this week: −{Math.round(deals.get(i.id)!.discount_pct)}% ({kes(deals.get(i.id)!.effective_price)})
+        </span>
+      )}
       {!i.bought_at && <ItemPrice line={toLine(i)} matches={matches} />}
+      {!i.bought_at && !i.auto && aisle && <SwapBrand line={toLine(i)} matches={matches} store={tripStore} onSwap={(p) => swap(i, p)} />}
     </ItemRow>
   );
+
+  // The supermarket run on the Jobs board, with its cost following the cart.
+  const run = jobs.find((j) => !j.done_at && !j.deleted_at && j.template_key === "funded");
+  const fullTotal = totals.full;
+  useEffect(() => {
+    if (run && fullTotal > 0 && Math.abs(Number(run.estimated_cost_kes ?? 0) - fullTotal) >= 50) {
+      void updateJob(run.id, { estimated_cost_kes: Math.round(fullTotal) });
+    }
+  }, [run, fullTotal]);
+
+  async function planRun() {
+    const t = TEMPLATES.find((x) => x.id === "funded")!;
+    await postJob({ ...fromTemplate(t), estimated_cost_kes: Math.round(fullTotal) || null });
+    void syncNow();
+    setUndo({ id: Date.now(), message: "Supermarket run posted on Jobs (2 people, in 3 days)" });
+  }
 
   return (
     <Screen title="Cart / List">
       {switcher}
       <ModeBar mode={mode} onChange={setMode} totals={totals} estimate={current.total} unpriced={current.unpriced} moneyLeft={moneyLeft} />
+      {needed.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {!aisle && (
+            <button type="button" onClick={() => setAisle(true)} className="min-h-12 rounded-xl bg-brand px-4 font-bold text-brand-contrast">
+              🛒 Start shopping in store
+            </button>
+          )}
+          {run ? (
+            <a href="/jobs" className="flex min-h-12 items-center rounded-xl border border-line px-4 text-sm font-bold">
+              📅 Run planned{run.planned_for ? ` for ${run.planned_for}` : ""}
+              {run.estimated_cost_kes ? ` · about ${kes(run.estimated_cost_kes)}` : ""}
+            </a>
+          ) : (
+            <button type="button" onClick={planRun} className="min-h-12 rounded-xl border border-brand px-4 font-bold text-brand">
+              📅 Plan a supermarket run
+            </button>
+          )}
+        </div>
+      )}
 
       <TripCheck
         supermarkets={supermarkets}
@@ -627,6 +691,17 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
         Find more in the catalog
       </button>
 
+      {aisle && (
+        <AisleBar
+          inTrolley={estimate(bought.map(toLine), matches).total}
+          ticked={bought.length}
+          total={bought.length + visible.length}
+          remaining={current.total}
+          moneyLeft={moneyLeft}
+          onDone={() => setAisle(false)}
+        />
+      )}
+      {aisle && <div className="h-20" aria-hidden="true" />}
       <UndoBar state={undo} onClose={closeUndo} />
     </Screen>
   );
@@ -638,9 +713,11 @@ function ItemRow({
   badge,
   onToggle,
   onRemove,
+  big = false,
   children,
 }: {
   item: ShoppingItem;
+  big?: boolean; // aisle mode: bigger targets for one hand on a trolley
   who: string;
   badge?: string | null;
   onToggle: () => void;
@@ -652,17 +729,17 @@ function ItemRow({
   const tierTag = item.shopping_tier === "essential" ? "Essential" : item.shopping_tier === "qol" ? "Can wait" : null;
   return (
     <li className="flex items-start gap-1">
-      <button type="button" aria-pressed={done} onClick={onToggle} aria-label={`${done ? "Untick" : "Tick"} ${item.title}`} className="flex min-h-14 shrink-0 items-center px-4 py-2">
+      <button type="button" aria-pressed={done} onClick={onToggle} aria-label={`${done ? "Untick" : "Tick"} ${item.title}`} className={`flex shrink-0 items-center px-4 py-2 ${big ? "min-h-20" : "min-h-14"}`}>
         <span
           aria-hidden="true"
-          className={`flex size-7 items-center justify-center rounded-full border-2 ${done ? "border-brand bg-brand text-brand-contrast" : "border-muted"}`}
+          className={`flex items-center justify-center rounded-full border-2 ${big ? "size-11 text-xl" : "size-7"} ${done ? "border-brand bg-brand text-brand-contrast" : "border-muted"}`}
         >
           {done && "✓"}
         </span>
       </button>
       <div className="min-w-0 flex-1 py-3">
         <button type="button" onClick={onToggle} className="block text-left">
-          <span className={`font-bold ${done ? "text-muted line-through" : ""}`}>{item.title}</span>
+          <span className={`font-bold ${big ? "text-lg" : ""} ${done ? "text-muted line-through" : ""}`}>{item.title}</span>
           {badge && (
             <span className={`ml-2 rounded-md px-1.5 text-xs font-bold ${badge.endsWith("Out") ? "bg-out-bg text-out-fg" : "bg-low-bg text-low-fg"}`}>
               {badge.endsWith("Out") ? "✕ " : "! "}

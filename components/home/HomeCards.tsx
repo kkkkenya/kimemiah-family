@@ -12,6 +12,7 @@ import { TEMPLATES } from "@/lib/jobs/templates";
 import { sendAlertsNow } from "@/lib/push/client";
 import { kes, linePrice, stockStatus, type CatalogMatch, type StockLike } from "@/lib/shopping/pricing";
 import type { Shop, StockItem } from "@/lib/shopping/shops";
+import { upgradeDeals } from "@/lib/shopping/predict";
 import { localDB, syncEngine } from "@/lib/sync/client";
 import { useMe, useRows } from "@/lib/sync/hooks";
 
@@ -264,5 +265,33 @@ export function PeterCard() {
         </p>
       ))}
     </section>
+  );
+}
+
+/** Can-wait upgrades on the list with a 12%+ deal this week: the week to buy them. */
+export function UpgradeDealsCard() {
+  const extras = (useRows<{ id: string; title: string; shopping_tier?: string; catalog_product_id?: string | null; item_id?: string | null; bought_at?: string | null }>("shopping_extras") ?? []).filter(
+    (e) => e.shopping_tier === "qol" && !e.bought_at,
+  );
+  const stock = useRows<StockItem>("stock_items") ?? [];
+  const concepts = [...new Set(extras.map((e) => stock.find((s) => s.id === e.item_id)?.canonical_concept).filter((c): c is string => !!c))];
+  const ids = extras.map((e) => e.catalog_product_id).filter((x): x is string => !!x);
+  const products = (useLiveQuery(
+    async () => [
+      ...(concepts.length ? await localDB().catalog.where("canonical_concept").anyOf(concepts).toArray() : []),
+      ...(ids.length ? await localDB().catalog.bulkGet(ids) : []).filter(Boolean),
+    ],
+    [concepts.join("|"), ids.join("|")],
+    [],
+  ) ?? []) as unknown as CatalogMatch[];
+  const deals = upgradeDeals(
+    extras.map((e) => ({ ...e, concept: stock.find((s) => s.id === e.item_id)?.canonical_concept ?? null })),
+    products,
+  );
+  if (!deals.length) return null;
+  return (
+    <Link href="/shop?view=list" className="block rounded-xl bg-ok-bg px-4 py-3 text-ok-fg">
+      ✨ <strong>Upgrade on sale this week:</strong> {deals.map((d) => `${d.line.title} (−${Math.round(d.deal.discount_pct)}%)`).join(", ")} ›
+    </Link>
   );
 }
