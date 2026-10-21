@@ -40,7 +40,7 @@ Each phase ends with a check on two real phones that must pass before the next o
 - At least 5 of the 6 people use the app in week 4.
 - At least 4 different people complete jobs, and no job waits more than 7 days. (Counted from the log for the meeting. Never shown in the app per person.)
 - The app's balance matches real cash and M-Pesa within KES 500, and Dad got the summary.
-- No surprise run-outs of gas, unga, cooking oil or tokens.
+- No surprise run-outs of gas, unga or cooking oil.
 - Meeting 2 happens and its decisions are logged.
 
 ## What I need from you before building

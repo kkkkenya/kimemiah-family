@@ -12,7 +12,7 @@ Five adults:
 | Vinnie (brother), 25 | Trading forex, not yet profitable. Cuts the fence, compound work, washes dishes |
 | Greg | Not earning yet. Washes the dog, does much of the cooking |
 
-Peter (Dad, "Mguu Kubwa") lives elsewhere and sends money for shopping and the market, and pays utilities (KPLC tokens, water bill) directly. He uses the app too, with the same access as everyone else.
+Peter (Dad, "Mguu Kubwa") lives elsewhere and sends money for shopping and the market, and pays the water bill directly. He uses the app too, with the same access as everyone else.
 
 Each person sets where they are in the app: **At home**, **Out** (errands, school) or **Away from home**.
 
@@ -26,7 +26,7 @@ Each person sets where they are in the app: **At home**, **Out** (errands, schoo
 
 1. **Freedom with collaboration.** Nobody is ordered around. People volunteer for jobs and help each other.
 2. **Fairness people can see.** Open jobs, who picked them up, and thank-yous are visible to all, without scores or rankings.
-3. **No surprises at home.** Gas, unga, cooking oil and tokens don't run out unexpectedly.
+3. **No surprises at home.** Gas, unga and cooking oil don't run out unexpectedly.
 4. **Clear money.** Everyone, and Dad, can see what came in, what was spent and what's left.
 5. **A regular family meeting** where we sort things out calmly and write down what we agreed.
 

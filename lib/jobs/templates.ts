@@ -66,7 +66,7 @@ export const TEMPLATES: Template[] = [
   { id: "feed", title: "Feed the dog and clean the kennel area", category: "dogs_pets", strain: "light", duration_min: 15, people_needed: 1 },
   { id: "market", title: "Market run", category: "shopping_errand", strain: "medium", duration_min: 120, people_needed: 2, requires_funds: true, daysAhead: 3 },
   { id: "gas", title: "Refill the cooking gas cylinder", category: "shopping_errand", strain: "heavy", duration_min: 60, people_needed: 2, requires_funds: true, daysAhead: 2 },
-  { id: "tokens", title: "Ask Peter for KPLC tokens or the water bill", category: "utilities_dad", strain: "light", duration_min: 10, people_needed: 1 },
+  { id: "water-bill", title: "Ask Peter to pay the water bill", category: "utilities_dad", strain: "light", duration_min: 10, people_needed: 1 },
   { id: "bathroom", title: "Scrub the bathroom and toilet", category: "house_cleaning", strain: "medium", duration_min: 45, people_needed: 1, repeat: "weekly" },
   { id: "tanks", title: "Wash the water tanks", category: "water_tanks", strain: "heavy", duration_min: 240, people_needed: 3, repeat: "quarterly" },
 ];

@@ -50,7 +50,7 @@ Three views, one switch at the top: **Catalog** (opens first), **Cart / List** a
 
 | Mode | What's in it | When |
 |---|---|---|
-| **Essentials** | Unga, rice, oil, sugar, milk, bread, salt, eggs, tissue, soap, gas, tokens | Mid-month top-ups, tight weeks |
+| **Essentials** | Unga, rice, oil, sugar, milk, bread, salt, eggs, tissue, soap, gas | Mid-month top-ups, tight weeks |
 | **Full shop** | Essentials plus tea, Royco, spices, margarine, washing powder, dish soap, bleach, drinks | The bi-weekly or monthly bulk run |
 | **+ Upgrades** | Can-wait items: broom, mop, bucket, basin, containers, pegs, bulbs, cloths, mats | When there's room in the budget, or one is on a deep deal |
 
@@ -80,10 +80,10 @@ Naivas blocks automated price tools, so the app shows **Quickmart prices only**.
 - **Team-ups with shares.** "I'll do it" / "Join in" picks a share (20% to 100%), each shown as time: 40% of a 1 h, 2-person job is about 48 min. A job is taken when it's 100% covered by enough people; one person can't fill a 2-person job alone. Optional "my part" notes ("Hold and soap", "Fetch water and rinse"). Joining needs signal, so two people can't take the same share.
 - **Two-stage kitchen.** "Clean counters and arrange dishes" (Light) creates "Wash the arranged dishes" when it's done.
 - **Money jobs** (supermarket and market runs, gas): two people go, planned 2–4 days ahead. They wait under **Upcoming & money** until someone taps "Money is ready" and the day comes.
-- **Bills Peter pays** (KPLC tokens, water bill): "Send to Peter on WhatsApp" with the details, then "Peter paid".
+- **Bills Peter pays** (the water bill): "Send to Peter on WhatsApp" with the details, then "Peter paid".
 - **Reminders.** Every 2 hours (07:00–21:00) a job you're on shows "Still yours" on Home and Jobs, and as a push alert if alerts are on, until you tap Done. They pause while you're Out or Away.
 - **Presence.** Switching to Out or Away while you're on a job offers to hand it to whoever's at home. Rescue cards and "Leave" say who's at home now. Leave asks first.
-- **Stock makes jobs.** Gas marked Out posts "Refill the cooking gas cylinder" (money run, 2 people, urgent). Dog unga Low posts a vet run, and KPLC tokens Low posts "Ask Peter for KPLC tokens". Only one open job per item.
+- **Stock makes jobs.** Gas marked Out posts "Refill the cooking gas cylinder" (money run, 2 people, urgent). Dog unga Low posts a vet run. Only one open job per item.
 - **Weekly sign-up grid** (Meeting screen): who does dishes, cooks supper and feeds the dog on each day. Each day those jobs appear already taken by whoever signed up (or open, with a note, if they're away), with the usual reminders and rescue.
 - **Real times.** "I'm starting" then Done records how long a job really took. After 2 runs, a usual job posts with its real time (the middle of the last 5) and the form shows "Usually takes 1 h 20 min".
 - **Waiting jobs.** A job nobody takes for 3 days shows "Waiting 3 days · on the meeting agenda" and is listed on the Meeting screen. About the job, never about people.
@@ -110,7 +110,7 @@ Usual jobs (one tap, all editable when posting):
 | Supermarket run | 3 h × 2 | Medium | Money, 3 days ahead |
 | Market run | 2 h × 2 | Medium | Money, 3 days ahead |
 | Refill the gas cylinder | 1 h × 2 | Heavy | Money, 2 days ahead |
-| Ask Peter for KPLC tokens or the water bill | 10 min × 1 | Light | WhatsApp to Peter |
+| Ask Peter to pay the water bill | 10 min × 1 | Light | WhatsApp to Peter |
 | Scrub the bathroom and toilet | 45 min × 1 | Medium | Weekly |
 | Wash the water tanks | 4 h × 3 | Heavy | Every 3 months |
 

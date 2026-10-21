@@ -93,7 +93,6 @@ from (values
   ('Toothpaste', 'bathroom', 'tube', 1, 'Supermarket', 'count', 52),
   ('Petroleum jelly / lotion', 'bathroom', 'tub', 1, 'Supermarket', 'count', 53),
   ('Cooking gas', 'utilities', '13 kg cylinder', 1, 'Gas dealer', 'count', 60),
-  ('KPLC tokens', 'utilities', 'units', 30, 'M-Pesa', 'count', 61),
   ('Matches', 'utilities', 'box', 2, 'Kiosk', 'count', 62),
   ('Charcoal', 'utilities', 'sack', 1, 'Market', 'count', 63)
 ) as v(name, category, unit, min_qty, shop, track_mode, sort)
@@ -153,7 +152,6 @@ from (values
   ('Toothpaste', 'standard', false, null, 'toothpaste'),
   ('Petroleum jelly / lotion', 'standard', false, null, 'petroleum-jelly'),
   ('Cooking gas', 'essential', false, null, null),
-  ('KPLC tokens', 'essential', false, null, null),
   ('Matches', 'standard', false, null, 'matches')
 ) as v(name, tier, fast, key, concept)
 where s.name = v.name;

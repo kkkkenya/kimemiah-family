@@ -56,5 +56,5 @@ export const SHOP_HINT: Record<string, string> = {
   "Mama mboga": "Sukuma, dhania",
   "Gas dealer": "Gas refill",
   "Water vendor": "Drinking water",
-  "M-Pesa": "KPLC tokens",
+  "M-Pesa": "Bills paid by M-Pesa",
 };

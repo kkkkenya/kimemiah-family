@@ -203,7 +203,7 @@ export function JobForm({ onPost, onCancel, learned }: { onPost: (job: NewJob) =
 
       <label className="flex flex-col gap-1 text-sm font-bold">
         Notes (optional)
-        <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. meter number for tokens" className={field} />
+        <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. account number for the water bill" className={field} />
       </label>
 
       <div className="flex gap-2">
