@@ -24,7 +24,7 @@ export function Screen({ title, back, children }: { title: string; back?: string
 }
 
 export function Card({ children }: { children: ReactNode }) {
-  return <section className="rounded-xl bg-raised p-4 shadow-[0_1px_3px_rgba(42,33,27,.08)]">{children}</section>;
+  return <section className="rounded-xl bg-raised p-4 shadow-[0_1px_3px_rgba(10,51,35,.10)]">{children}</section>;
 }
 
 export function Empty({ children }: { children: ReactNode }) {

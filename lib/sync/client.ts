@@ -3,6 +3,7 @@
 import { LocalDB } from "./db";
 import { createSyncEngine, type SyncEngine } from "./engine";
 import { supabaseRemote } from "./remote";
+import { resetSupabase } from "@/lib/supabase/client";
 
 let db: LocalDB | null = null;
 let engine: SyncEngine | null = null;
@@ -26,10 +27,22 @@ export async function readIdentity(): Promise<PhoneIdentity> {
   return { deviceId: deviceId?.value as string | undefined, memberId: memberId?.value as string | undefined };
 }
 
-// Forget everything on this phone (after being signed out).
-export async function wipePhone(): Promise<void> {
+const SIGNED_OUT_NOTE = "kimemiah-signed-out";
+
+// Forget everything on this phone. `remote` means someone else signed it out,
+// so the unlock screen explains why.
+export async function wipePhone({ remote = false } = {}): Promise<void> {
+  if (remote) sessionStorage.setItem(SIGNED_OUT_NOTE, "1");
   localStorage.removeItem("kimemiah-auth");
+  resetSupabase();
   await localDB().delete();
   db = null;
   engine = null;
+}
+
+// Read once: true if this phone was just signed out from elsewhere.
+export function takeSignedOutNote(): boolean {
+  const note = sessionStorage.getItem(SIGNED_OUT_NOTE) === "1";
+  sessionStorage.removeItem(SIGNED_OUT_NOTE);
+  return note;
 }

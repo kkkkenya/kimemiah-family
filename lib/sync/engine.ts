@@ -26,6 +26,7 @@ const BATCH = 100;
 const PAGE = 1000;
 // Pull a little before the last cursor so rows committed slightly out of order aren't missed.
 const OVERLAP_MS = 60_000;
+const PULL_CONCURRENCY = 6;
 
 const cursorKey = (t: SyncTable) => `cursor:${t}`;
 
@@ -110,23 +111,32 @@ export function createSyncEngine(db: LocalDB, remote: Remote) {
     return { applied, rejected };
   }
 
+  // Tables are pulled a few at a time: each is a round trip to the server.
   async function pull(): Promise<number> {
+    const counts: number[] = [];
+    const queue = [...SYNC_TABLES];
+    const worker = async () => {
+      for (let t = queue.shift(); t; t = queue.shift()) counts.push(await pullTable(t));
+    };
+    await Promise.all(Array.from({ length: PULL_CONCURRENCY }, worker));
+    return counts.reduce((a, b) => a + b, 0);
+  }
+
+  async function pullTable(t: SyncTable): Promise<number> {
     let pulled = 0;
-    for (const t of SYNC_TABLES) {
-      const cursor = await getMeta<string>(db, cursorKey(t));
-      let since: string | null = cursor ? new Date(Date.parse(cursor) - OVERLAP_MS).toISOString() : null;
-      let newest = cursor;
-      for (;;) {
-        const rows = await remote.pull(t, since, PAGE);
-        if (rows.length === 0) break;
-        await db.rows(t).bulkPut(rows);
-        pulled += rows.length;
-        for (const r of rows) newest = laterOf(newest, r.updated_at);
-        if (rows.length < PAGE) break;
-        since = rows[rows.length - 1].updated_at ?? since;
-      }
-      if (newest && newest !== cursor) await setMeta(db, cursorKey(t), newest);
+    const cursor = await getMeta<string>(db, cursorKey(t));
+    let since: string | null = cursor ? new Date(Date.parse(cursor) - OVERLAP_MS).toISOString() : null;
+    let newest = cursor;
+    for (;;) {
+      const rows = await remote.pull(t, since, PAGE);
+      if (rows.length === 0) break;
+      await db.rows(t).bulkPut(rows);
+      pulled += rows.length;
+      for (const r of rows) newest = laterOf(newest, r.updated_at);
+      if (rows.length < PAGE) break;
+      since = rows[rows.length - 1].updated_at ?? since;
     }
+    if (newest && newest !== cursor) await setMeta(db, cursorKey(t), newest);
     return pulled;
   }
 

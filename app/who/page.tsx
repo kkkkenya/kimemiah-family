@@ -39,7 +39,8 @@ export default function WhoPage() {
       );
     }
     await setMeta(localDB(), "memberId", person.id);
-    await syncEngine().syncNow();
+    await localDB().rows("members").put({ ...person, active: true, deleted_at: null });
+    void syncEngine().syncNow(); // the rest arrives in the background
     router.replace("/");
   }
 
@@ -61,7 +62,7 @@ export default function WhoPage() {
               type="button"
               disabled={picking !== null}
               onClick={() => pick(p)}
-              className="flex min-h-14 w-full items-center justify-between rounded-xl bg-raised px-4 text-left text-lg font-bold shadow-[0_1px_3px_rgba(42,33,27,.08)] disabled:opacity-60"
+              className="flex min-h-14 w-full items-center justify-between rounded-xl bg-raised px-4 text-left text-lg font-bold shadow-[0_1px_3px_rgba(10,51,35,.10)] disabled:opacity-60"
             >
               <span>{p.name}</span>
               <span className="text-sm font-normal text-muted">{picking === p.id ? "Saving…" : p.is_remote ? "Away from home" : ""}</span>

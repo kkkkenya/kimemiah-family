@@ -1,14 +1,17 @@
 "use client";
 
-import { Suspense, useState, type FormEvent } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { localDB } from "@/lib/sync/client";
+import { localDB, takeSignedOutNote } from "@/lib/sync/client";
 import { setMeta } from "@/lib/sync/db";
 
 function UnlockForm() {
   const router = useRouter();
-  const signedOut = useSearchParams().get("signedOut") === "1";
+  const [signedOut, setSignedOut] = useState(false);
+  useEffect(() => {
+    if (takeSignedOutNote()) setSignedOut(true); // only ever turns on, so a repeated effect can't hide it
+  }, []);
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -88,9 +91,7 @@ export default function UnlockPage() {
     <main className="flex min-h-dvh flex-col items-center justify-center gap-8 px-4 py-10">
       <div className="kanga h-1 w-24" />
       <h1 className="font-display text-3xl">Kimemiah Home</h1>
-      <Suspense>
-        <UnlockForm />
-      </Suspense>
+      <UnlockForm />
     </main>
   );
 }

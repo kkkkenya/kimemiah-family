@@ -57,7 +57,12 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         error: "wrong_pin",
-        message: remaining > 0 ? `Wrong PIN. ${remaining} tries left.` : "Wrong PIN. Wait 15 minutes and try again.",
+        message:
+          remaining > 1
+            ? `Wrong PIN. ${remaining} tries left.`
+            : remaining === 1
+              ? "Wrong PIN. 1 try left."
+              : "Wrong PIN. Wait 15 minutes and try again.",
       },
       { status: 401 },
     );

@@ -34,8 +34,8 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     try {
       const result = await syncEngine().syncNow();
       if (!result.ok && result.reason === "not_unlocked") {
-        await wipePhone();
-        router.replace("/unlock?signedOut=1");
+        await wipePhone({ remote: true });
+        router.replace("/unlock");
       }
       return result;
     } finally {

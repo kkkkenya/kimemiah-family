@@ -4,25 +4,27 @@ A warm Nairobi home, not a generic app. Agreed by the council on 2026-10-21.
 
 ## Identity
 
-- **Jacaranda purple** is the brand colour, so red, amber and green can mean only Out, Low and OK.
-- **Warm paper** background in light mode, **charcoal** in dark mode, **chai** as a decoration-only accent.
-- A thin **kanga stripe** (drawn in CSS, no image) on the header and on thank-you cards only. Appreciation is the most decorated thing in the app.
+- The palette comes from a lotus pond: **dark green**, **moss green**, **beige**, **rosy brown** and **midnight green**.
+- **Beige** background in light mode, **dark green** in dark mode. **Midnight green** is the main colour for buttons and the active tab (a lighter moss in dark mode).
+- **Rosy brown** and **moss** are decoration only, in the thin stripe on the header and thank-you cards. Appreciation is the most decorated thing in the app.
+- OK, Low and Out keep clear green, amber and red, tuned to sit with the palette, so a status is never mistaken for decoration.
 
 ## Colour tokens
 
 | Token | Light | Dark |
 |---|---|---|
-| surface-base | #F6EFE4 | #1C1714 |
-| surface-raised | #FFFAF2 | #27201B |
-| text-primary | #2A211B | #F1E8DC |
-| text-muted | #6B5D52 | #B8AA9C |
-| brand (jacaranda) | #5B3F8C | #B9A3E3 |
-| accent-chai (decoration only) | #C8893B | #D9A35C |
-| ok | #2F6B3A on #E3EFE0 | #7BC48A on #1F2E22 |
-| low | #8A5A00 on #F5E2B8 | #E8B64C on #33280F |
-| out | #FFFFFF on #B3261E | #1C1714 on #F07A6E |
+| surface-base | #F7F4D5 beige | #0A3323 dark green |
+| surface-raised | #FCFAEA | #114130 |
+| text-primary | #0A3323 dark green | #F7F4D5 beige |
+| text-muted | #4A5E4F | #B7C29E |
+| brand | #105666 midnight green | #A9BF7C light moss |
+| rosy (decoration only) | #D3968C | #D3968C |
+| moss (decoration only) | #839958 | #839958 |
+| ok | #2C5A1E on #E3EACD | #B5CF86 on #173F2C |
+| low | #7A4E00 on #F4E3B4 | #EBC66E on #36310F |
+| out | #FFFFFF on #A63D30 | #0A3323 on #E9958A |
 
-Contrast figures were worked out by hand; they get checked with a tool before the build.
+Every text pairing was checked and meets WCAG AA (4.5:1 or better). The exact moss #839958 behind dark green text only reaches 4.4:1, so dark mode uses the lighter moss #A9BF7C for buttons.
 
 ## Type
 

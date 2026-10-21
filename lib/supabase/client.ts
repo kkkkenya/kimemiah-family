@@ -13,3 +13,8 @@ export function supabase(): SupabaseClient {
   }
   return client;
 }
+
+// Drop the in-memory session too (after this phone is signed out).
+export function resetSupabase(): void {
+  client = null;
+}

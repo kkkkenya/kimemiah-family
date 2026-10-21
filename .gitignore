@@ -49,3 +49,9 @@ public/swe-worker-*.js
 # local backups / keys
 *.age
 backup-identity.txt
+
+# family photos stay off GitHub
+family*.jpg
+family*.jpeg
+family*.png
+family*.heic

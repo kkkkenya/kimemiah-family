@@ -12,6 +12,8 @@ import { generateIdentity, identityToRecipient } from "age-encryption";
 import { readEnv, writeEnv, ENV_FILE } from "./env.mjs";
 
 const REPO = "kkkkenya/kimemiah-family";
+// Session pooler host for this project (dashboard › Connect › Session pooler). Not a secret.
+const POOLER_HOST = "aws-0-eu-west-2.pooler.supabase.com";
 
 if (!process.stdin.isTTY) {
   console.error("This script needs a real terminal for hidden input. Run it in PowerShell or Windows Terminal: npm run setup");
@@ -56,10 +58,10 @@ function prompt(question, { hidden = false, current } = {}) {
   });
 }
 
-async function askChecked(label, { hidden, current, check, help }) {
+async function askChecked(label, { hidden, current, check, help, clean = (v) => v.trim() }) {
   if (help) console.log(`\n${help}`);
   for (;;) {
-    const value = await prompt(label, { hidden, current });
+    const value = clean(await prompt(label, { hidden, current }));
     if (!value) {
       console.log("  A value is needed here.");
       continue;
@@ -70,40 +72,59 @@ async function askChecked(label, { hidden, current, check, help }) {
       return value;
     }
     console.log(`  ✗ ${problem}`);
-    if (value === current) current = undefined; // existing value is bad; make them type a new one
+    // An existing value that is wrong (not just unreachable) shouldn't be offered again.
+    if (value === current && !/Couldn't reach/.test(problem)) current = undefined;
   }
 }
 
 // ---------------------------------------------------------------- checks
 
+// Accepts the URL with extras people often copy along (…/rest/v1/, a trailing slash).
+function normaliseUrl(url) {
+  return url.trim().replace(/\/(rest|auth)\/v1\/?.*$/, "").replace(/\/+$/, "");
+}
+
+// One retry, so a brief network hiccup doesn't look like a wrong value.
+async function get(url, headers) {
+  try {
+    return await fetch(url, { headers });
+  } catch {
+    try {
+      return await fetch(url, { headers });
+    } catch (err) {
+      return { networkError: err.cause?.code ?? err.message };
+    }
+  }
+}
+
+// Legacy keys are JWTs (eyJ…) and also go in the Authorization header; new sb_ keys go in apikey only.
+const keyHeaders = (key) => (key.startsWith("eyJ") ? { apikey: key, authorization: `Bearer ${key}` } : { apikey: key });
+
 async function checkUrl(url) {
   if (!/^https:\/\/[a-z0-9]{20}\.supabase\.co$/.test(url)) {
-    return "Should look like https://abcdefghijklmnopqrst.supabase.co (Project Settings › API › Project URL), with no slash at the end.";
+    return "Should look like https://abcdefghijklmnopqrst.supabase.co (Project Settings › API › Project URL).";
   }
-  try {
-    const res = await fetch(`${url}/auth/v1/health`);
-    if (res.status >= 500) return `Supabase answered ${res.status}. Is the project still starting up? Wait a minute and retry.`;
-  } catch {
-    return "Couldn't reach that address. Check the URL and your connection.";
-  }
+  const res = await get(`${url}/auth/v1/health`, {});
+  if (res.networkError) return `Couldn't reach that address (${res.networkError}). Check the URL and your connection.`;
+  if (res.status >= 500) return `Supabase answered ${res.status}. Is the project still starting up? Wait a minute and retry.`;
   return null;
 }
 
 async function checkAnon(url, key) {
-  const res = await fetch(`${url}/rest/v1/`, { headers: { apikey: key } }).catch(() => null);
-  if (!res) return "Couldn't reach Supabase.";
-  if (res.status === 401 || res.status === 403) return `Key rejected (${res.status}). Copy the "anon" / publishable key, not the service key.`;
+  if (key.startsWith("sb_secret_")) return "That's the secret key. Here we need the publishable (or legacy anon) key.";
+  const res = await get(`${url}/auth/v1/settings`, keyHeaders(key));
+  if (res.networkError) return `Couldn't reach Supabase (${res.networkError}). Check your connection and try again.`;
+  if (res.status === 401 || res.status === 403) return `Key rejected (${res.status}). Copy the publishable key (sb_publishable_…) or the legacy "anon" key.`;
   if (!res.ok) return `Unexpected answer ${res.status} from Supabase.`;
   return null;
 }
 
 async function checkService(url, key) {
-  const res = await fetch(`${url}/auth/v1/admin/users?page=1&per_page=1`, {
-    headers: { apikey: key, authorization: `Bearer ${key}` },
-  }).catch(() => null);
-  if (!res) return "Couldn't reach Supabase.";
+  if (key.startsWith("sb_publishable_")) return "That's the publishable key. Here we need the secret key (sb_secret_…) or the legacy service_role key.";
+  const res = await get(`${url}/auth/v1/admin/users?page=1&per_page=1`, keyHeaders(key));
+  if (res.networkError) return `Couldn't reach Supabase (${res.networkError}). Check your connection and try again.`;
   if (res.status === 401 || res.status === 403) {
-    return `Service key rejected (${res.status}). Copy the "service_role" / secret key, not the anon key.`;
+    return `Key rejected (${res.status}). Copy the secret key (sb_secret_…) or the legacy "service_role" key.`;
   }
   if (!res.ok) return `Unexpected answer ${res.status} from Supabase.`;
   return null;
@@ -158,36 +179,53 @@ function ghSecret(name, value) {
 // ---------------------------------------------------------------- main
 
 const env = readEnv();
+// Save each answer as soon as it checks out, so quitting halfway loses nothing.
+const save = (key, value) => {
+  env[key] = value;
+  writeEnv(env);
+};
 console.log("Kimemiah family app setup");
 console.log(`Values are saved to ${ENV_FILE} (git-ignored). Secret answers are shown as *.`);
 
 const url = await askChecked("Supabase Project URL", {
   current: env.NEXT_PUBLIC_SUPABASE_URL,
   check: checkUrl,
+  clean: normaliseUrl,
   help: "Supabase dashboard › your project › Project Settings › API › Project URL",
 });
+save("NEXT_PUBLIC_SUPABASE_URL", url);
 const projectRef = url.match(/^https:\/\/([a-z0-9]{20})\./)?.[1];
 
 const anon = await askChecked("Supabase anon (publishable) key", {
   hidden: true,
   current: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   check: (k) => checkAnon(url, k),
-  help: 'Same page › Project API keys › "anon public" (or the publishable key).',
+  help: 'Project Settings › API Keys › the publishable key (sb_publishable_…), or Legacy › "anon public".',
 });
+save("NEXT_PUBLIC_SUPABASE_ANON_KEY", anon);
 
 const service = await askChecked("Supabase service_role (secret) key", {
   hidden: true,
   current: env.SUPABASE_SERVICE_ROLE_KEY,
   check: (k) => checkService(url, k),
-  help: 'Same page › "service_role" secret key. This one must never be shared.',
+  help: 'Same page › the secret key (sb_secret_…), or Legacy › "service_role". This one must never be shared.',
 });
+save("SUPABASE_SERVICE_ROLE_KEY", service);
 
-const dbUrl = await askChecked("Database connection string (Session pooler)", {
+// Accepts either the full Session pooler URI or just the database password.
+const toDbUrl = (v) =>
+  /^postgres(ql)?:\/\//.test(v.trim())
+    ? v.trim()
+    : `postgresql://postgres.${projectRef}:${encodeURIComponent(v)}@${POOLER_HOST}:5432/postgres`;
+
+const dbUrl = await askChecked("Database password", {
   hidden: true,
   current: env.SUPABASE_DB_URL,
   check: (v) => checkDbUrl(v, projectRef),
-  help: 'Dashboard › Connect (top bar) › "Session pooler" › copy the URI and put your database password in it.',
+  clean: (v) => (v === env.SUPABASE_DB_URL ? v : v ? toDbUrl(v) : ""),
+  help: "The database password you set for this project (Project Settings › Database › Reset password if you've lost it).",
 });
+save("SUPABASE_DB_URL", dbUrl);
 
 let pinHash = env.FAMILY_PIN_HASH;
 console.log(pinHash ? "\nFamily PIN is already set. Type a new one to change it, or press Enter to keep it." : "\nChoose the family PIN (6+ digits). Everyone types it once on their phone.");
