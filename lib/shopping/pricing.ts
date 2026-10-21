@@ -50,8 +50,11 @@ export type ListLine = {
   title: string;
   shopping_tier?: Tier;
   catalog_product_id?: string | null;
+  quantity?: number; // how many to buy; totals multiply by it
   item?: StockLike; // the stock item it came from, if any
 };
+
+const qtyOf = (l: ListLine) => (Number(l.quantity) > 0 ? Number(l.quantity) : 1);
 
 // ---------------------------------------------------------------- modes
 
@@ -155,7 +158,7 @@ export function estimate(lines: ListLine[], matches: CatalogMatch[]): { total: n
   for (const l of lines) {
     const p = linePrice(l, matches);
     if (p == null) unpriced++;
-    else total += p;
+    else total += p * qtyOf(l);
   }
   return { total, unpriced };
 }
@@ -175,11 +178,11 @@ export function storeTotals(lines: ListLine[], matches: CatalogMatch[]): StoreTo
         t.missing++;
         continue;
       }
-      t.total += num(o.effective_price);
+      t.total += num(o.effective_price) * qtyOf(l);
       t.priced++;
       if (o.is_on_sale && o.sale_price != null) {
         t.deals++;
-        t.saves += num(o.regular_price) - num(o.sale_price);
+        t.saves += (num(o.regular_price) - num(o.sale_price)) * qtyOf(l);
       }
     }
     return t;
@@ -200,8 +203,8 @@ export function smartSplit(lines: ListLine[], matches: CatalogMatch[], threshold
   const atQuickmart: string[] = [];
   for (const l of comparable) {
     const o = optionsFor(l, matches);
-    const n = num(pick(l, o, "naivas")!.effective_price);
-    const q = num(pick(l, o, "quickmart")!.effective_price);
+    const n = num(pick(l, o, "naivas")!.effective_price) * qtyOf(l);
+    const q = num(pick(l, o, "quickmart")!.effective_price) * qtyOf(l);
     naivas += n;
     quickmart += q;
     split += Math.min(n, q);

@@ -30,10 +30,15 @@ export class LocalDB extends Dexie {
     this.version(1).stores(stores);
     // Supermarket prices kept offline: a few hundred rows from offline_price_matches.
     this.version(2).stores({ local_catalog_matches: "id, store, canonical_concept, canonical_group_key" });
+    // The whole Naivas / Quickmart catalog, kept up to date with only the rows whose price changed.
+    this.version(3).stores({
+      local_catalog_matches: null,
+      catalog_products: "id, store, category_group, canonical_concept, canonical_group_key",
+    });
   }
 
   get catalog(): Table<Row, string> {
-    return this.table("local_catalog_matches");
+    return this.table("catalog_products");
   }
 
   rows(table: SyncTable): Table<Row, string> {

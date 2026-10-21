@@ -101,6 +101,12 @@ describe("totals", () => {
     expect(estimate(lines, all)).toEqual({ total: 545 + 290 + 250, unpriced: 1 });
   });
 
+  it("multiplies by how many are in the cart", () => {
+    const three = lines.map((l) => (l.id === "l2" ? { ...l, quantity: 3 } : l));
+    expect(estimate(three, all).total).toBe(545 + 290 * 3 + 250);
+    expect(storeTotals(three, all)[1]).toMatchObject({ total: 599 + 290 * 3, saves: 50 * 3 });
+  });
+
   it("compares store baskets with deals and savings", () => {
     const [naivas, quickmart] = storeTotals(lines, all);
     expect(naivas).toMatchObject({ store: "naivas", total: 545 + 330, deals: 1, saves: 85 });

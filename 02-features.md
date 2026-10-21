@@ -21,7 +21,17 @@ Rules that apply everywhere:
   - Today's meals, with an "I'll cook" button
   - Money left this month (opens Money)
 
-## 2. Shop (Stock and Shopping)
+## 2. Shop (Catalog, Cart / List, Kitchen stock)
+
+Three views, one switch at the top: **Catalog** (opens first), **Cart / List** and **Kitchen stock**.
+
+**Catalog**
+- Every Naivas and Quickmart product the scraper finds (about 7,000 today, Quickmart only while Naivas blocks us), kept on the phone and searchable with no signal.
+- Search by name, brand or size. Aisles: On sale, House usuals, Unga rice and oil, Dairy bread and eggs, Liquor, Tea coffee and drinks, Cleaning, Toiletries, Home and upgrades, Market and mama mboga (house items, since market prices aren't online).
+- Sort by house usuals, best value per kg / litre / piece, biggest discount, lowest price, or A to Z. Filter by store deals, where it's cheaper, or tier.
+- Each card shows the Naivas and Quickmart price side by side, with the cheaper one marked. Cards group every brand of the same pack; "Show all brands" lists them one by one.
+- **+ Add** puts it in the family cart with its tier (the house item's tier, else the catalog's), then shows Essential / Full shop / Upgrade and a − 1 + stepper right on the card.
+- A cart bar stays at the bottom: items, the total at each store, and "View cart".
 
 **Stock**
 - Packaged items (unga, oil, sugar, soap) use **+ / −** counts.
@@ -60,7 +70,7 @@ Below the modes: "Estimated: KES 3,450 · Money left this month: KES 6,200", in 
 - **Bulk value** tip when a bigger pack is at least 8% cheaper per kg or litre.
 - **Supermarket basket**: Naivas total vs Quickmart total for the current mode, deals and savings, and a "split the run" option when buying some items at each store saves KES 300 or more.
 - **Tracked staples on offer this week**: items fine at home but 15%+ off, to restock early.
-- **Search the supermarket catalog** (needs signal) for anything not on the house list.
+- **Find more in the catalog** from the list opens the Catalog view, which works offline.
 
 Naivas currently blocks automated price tools, so its online prices may be missing; Quickmart prices come through weekly. Receipt prices from "Put away" fill the gap.
 

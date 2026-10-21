@@ -38,7 +38,7 @@ export function PutAway({ bought, stockById, shops, matches, toLine, onFixPrice,
         title: i.title,
         shopId: i.shop_id,
         level: item?.track_mode === "level",
-        qty: parseQty(i.qty) ?? 1,
+        qty: Number(i.quantity) > 1 ? Number(i.quantity) : (parseQty(i.qty) ?? 1),
         price: startPrice(toLine(i), shops.find((s) => s.id === i.shop_id), matches),
       };
     }),

@@ -81,20 +81,22 @@ Views: `shopping_needed`, `money_balance`, `budget_vs_actual`.
 - "Put away" adds the bought amounts as `put_away` movements, sets OK / Low / Out items back to OK, writes one `money_entries` row (`out`) per shop from catalog or usual prices, removes the basket rows and finishes the shopper's trip. Fixing a price saves it as the item's `usual_price_kes`. Money is insert-only, so put away has no Undo. Corrections come with Phase 4.
 - OK / Low / Out history comes from `audit_log` and needs signal. +/− history comes from the phone's movements.
 
-`stock_items` also carries `shopping_tier` (essential / standard / qol), `is_fast_mover`, `canonical_group_key` (exact pack, e.g. `cooking-oil-2l`), `canonical_concept` (product family, e.g. `cooking-oil`), `preferred_brand`, `brand_flexibility` (any_cheapest / prefer_named / strict_named), `last_out_at` and `early_depletion_streak`. `shopping_extras` carries `shopping_tier`, `catalog_product_id` and `preferred_store`.
+`stock_items` also carries `shopping_tier` (essential / standard / qol), `is_fast_mover`, `canonical_group_key` (exact pack, e.g. `cooking-oil-2l`), `canonical_concept` (product family, e.g. `cooking-oil`), `preferred_brand`, `brand_flexibility` (any_cheapest / prefer_named / strict_named), `last_out_at` and `early_depletion_streak`. `shopping_extras` carries `shopping_tier`, `catalog_product_id`, `preferred_store` and `quantity` (the cart stepper; totals multiply by it).
 
 ## Supermarket prices
 
 | Part | What it does |
 |---|---|
-| `catalog_products` | Naivas and Quickmart products: brand, pack size, normalized quantity (kg / litre / unit), regular and sale price, `effective_price` and `discount_pct` (generated), unit price, product family. Unique per store and SKU. Read-only to phones. Only the scraper writes, with the service key |
+| `catalog_products` | Naivas and Quickmart products: brand, pack size, normalized quantity (kg / litre / unit), regular and sale price, `effective_price` and `discount_pct` (generated), unit price, product family, `default_tier`. Unique per store and SKU. Read-only to phones. Only the scraper writes, with the service key |
+| `price_changed_at` | Moves only when price, sale, stock, title or tier changes (trigger `catalog_price_change_check`, migration `0008`). The weekly upsert of unchanged rows leaves it alone |
 | `scrape_runs` | One row per store per run: status, items, items on sale, errors |
-| `offline_price_matches` view | What phones keep offline: for each product family the house tracks, the 10 cheapest per store (exact pack first), anything linked from the list, and the 100 steepest 15%+ deals. A few hundred rows |
-| Dexie `local_catalog_matches` | The phone's copy of that view, replaced every 6 hours when online. All price comparisons, the brand drawer and mode totals run on it with no signal |
-| Catalog search | Online only. Queries `catalog_products` directly and caches picked products on the phone |
+| Dexie `catalog_products` | The whole catalog on the phone, text and numbers only (no images or links). The first sync downloads the in-stock rows in pages of 1,000 in the background. After that, at most once an hour, it asks for rows with `price_changed_at` later than the newest it has, usually a few hundred a week. Items that leave the shelf arrive with `in_stock = false` and are hidden |
+| Catalog view | Search, aisles, sorting and filters run on the phone with no signal. Results load 40 cards at a time as you scroll. List prices and mode totals use only the products the house tracks or has on the list |
+| `offline_price_matches` view | No longer used by the app (the phone now keeps the whole catalog). Left in place |
 
 **Weekly scraper** (`scripts/scrape-supermarkets.mjs`, `.github/workflows/scrape-supermarkets.yml`, Thursday 23:00 UTC = Friday 02:00 in Nairobi, plus manual runs):
 - Runs on GitHub's free runner, never on Vercel or Supabase.
+- Gives each product a `default_tier`: core food and hygiene are Essentials, home goods and plastics are Upgrades, everything else is Full shop (`tierFor` in the parser, same lists as migration `0008`).
 - Identifies itself honestly (`KimemiahFamilyPriceBot/1.0`), waits 1.5–2.5 s between requests, retries with backoff, and walks an allowlist of categories: food, drinks and alcohol, cleaning, toiletries and household goods. Electronics, appliances, furniture, toys, clothing and hardware are blocked by category and by title.
 - `scripts/lib/product-parser.mjs` extracts the brand (Kenyan brand list, then the words before the product noun), the pack size and unit price, and the product family. It has its own tests.
 - **Quickmart** prices by branch. The scraper picks the branch nearest central Nairobi the same way a shopper does (set `QUICKMART_LAT` / `QUICKMART_LNG` to change it).

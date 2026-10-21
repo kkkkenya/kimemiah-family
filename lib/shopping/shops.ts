@@ -25,6 +25,7 @@ export type StockItem = Row & {
 export type ShoppingItem = Row & {
   title: string;
   qty: string | null;
+  quantity?: number; // how many, from the catalog stepper
   shop_id: string | null;
   item_id: string | null;
   bought_at: string | null;

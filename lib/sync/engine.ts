@@ -13,8 +13,8 @@ export interface Remote {
   hasAccess(): Promise<boolean>;
   applyMutations(mutations: Mutation[]): Promise<ApplyResult>;
   pull(table: SyncTable, since: string | null, limit: number): Promise<Row[]>;
-  /** The curated supermarket price rows for offline use (replaces the local copy). */
-  pullCatalog?(): Promise<Row[]>;
+  /** Catalog rows whose price, sale or stock changed after `since` (all in-stock rows when null), oldest change first. */
+  pullCatalog?(since: string | null, offset: number, limit: number): Promise<Row[]>;
 }
 
 export class NotUnlockedError extends Error {
@@ -29,7 +29,7 @@ const PAGE = 1000;
 // Pull a little before the last cursor so rows committed slightly out of order aren't missed.
 const OVERLAP_MS = 60_000;
 const PULL_CONCURRENCY = 6;
-const CATALOG_EVERY_MS = 6 * 60 * 60 * 1000; // prices change weekly; refresh a few times a day
+const CATALOG_EVERY_MS = 60 * 60 * 1000; // prices change weekly; a check that finds nothing costs one tiny request
 
 const cursorKey = (t: SyncTable) => `cursor:${t}`;
 
@@ -143,18 +143,25 @@ export function createSyncEngine(db: LocalDB, remote: Remote) {
     return pulled;
   }
 
-  // Supermarket prices: swap in the latest curated set every few hours.
+  // Supermarket prices: the whole catalog once, then only rows whose price, sale or stock changed.
   async function refreshCatalog(force = false): Promise<number> {
     if (!remote.pullCatalog) return 0;
     const last = await getMeta<number>(db, "catalogFetchedAt");
     if (!force && last && Date.now() - last < CATALOG_EVERY_MS) return 0;
-    const rows = await remote.pullCatalog();
-    await db.transaction("rw", db.catalog, db.meta, async () => {
-      await db.catalog.clear();
-      await db.catalog.bulkPut(rows);
-      await db.meta.put({ key: "catalogFetchedAt", value: Date.now() });
-    });
-    return rows.length;
+    const since = (await getMeta<string>(db, "catalogChangedAt")) ?? null;
+    let newest = since ?? undefined;
+    let pulled = 0;
+    for (;;) {
+      const rows = await remote.pullCatalog(since, pulled, PAGE);
+      if (rows.length) await db.catalog.bulkPut(rows);
+      pulled += rows.length;
+      for (const r of rows) newest = laterOf(newest, r.price_changed_at as string | undefined);
+      if (rows.length < PAGE) break;
+    }
+    // Saved only after every page arrived, so an interrupted download starts again from the same point.
+    if (newest) await setMeta(db, "catalogChangedAt", newest);
+    await setMeta(db, "catalogFetchedAt", Date.now());
+    return pulled;
   }
 
   // After a pull overwrites rows with the server's copy, put back changes not yet accepted.
