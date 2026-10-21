@@ -13,6 +13,8 @@ export interface Remote {
   hasAccess(): Promise<boolean>;
   applyMutations(mutations: Mutation[]): Promise<ApplyResult>;
   pull(table: SyncTable, since: string | null, limit: number): Promise<Row[]>;
+  /** The curated supermarket price rows for offline use (replaces the local copy). */
+  pullCatalog?(): Promise<Row[]>;
 }
 
 export class NotUnlockedError extends Error {
@@ -27,6 +29,7 @@ const PAGE = 1000;
 // Pull a little before the last cursor so rows committed slightly out of order aren't missed.
 const OVERLAP_MS = 60_000;
 const PULL_CONCURRENCY = 6;
+const CATALOG_EVERY_MS = 6 * 60 * 60 * 1000; // prices change weekly; refresh a few times a day
 
 const cursorKey = (t: SyncTable) => `cursor:${t}`;
 
@@ -140,6 +143,20 @@ export function createSyncEngine(db: LocalDB, remote: Remote) {
     return pulled;
   }
 
+  // Supermarket prices: swap in the latest curated set every few hours.
+  async function refreshCatalog(force = false): Promise<number> {
+    if (!remote.pullCatalog) return 0;
+    const last = await getMeta<number>(db, "catalogFetchedAt");
+    if (!force && last && Date.now() - last < CATALOG_EVERY_MS) return 0;
+    const rows = await remote.pullCatalog();
+    await db.transaction("rw", db.catalog, db.meta, async () => {
+      await db.catalog.clear();
+      await db.catalog.bulkPut(rows);
+      await db.meta.put({ key: "catalogFetchedAt", value: Date.now() });
+    });
+    return rows.length;
+  }
+
   // After a pull overwrites rows with the server's copy, put back changes not yet accepted.
   async function reapplyPending(): Promise<void> {
     const pending = await db.outbox.where("status").equals("pending").sortBy("seq");
@@ -155,6 +172,7 @@ export function createSyncEngine(db: LocalDB, remote: Remote) {
       const { applied, rejected } = await flush();
       const pulled = await pull();
       await reapplyPending();
+      await refreshCatalog();
       await setMeta(db, "lastSyncedAt", new Date().toISOString());
       await db.meta.delete("lastError");
       return { ok: true, applied, rejected, pulled };
@@ -176,7 +194,7 @@ export function createSyncEngine(db: LocalDB, remote: Remote) {
     await db.outbox.delete(seq);
   }
 
-  return { queue, flush, pull, reapplyPending, syncNow, dismissRejected };
+  return { queue, flush, pull, reapplyPending, refreshCatalog, syncNow, dismissRejected };
 }
 
 export type SyncEngine = ReturnType<typeof createSyncEngine>;

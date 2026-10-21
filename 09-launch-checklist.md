@@ -40,3 +40,11 @@ Test phones: a low-end Android (2-3 GB RAM), a mid-range Samsung, and a family i
 **iPhone:** open the link in Safari, Share > Add to Home Screen, open from the new icon, then enter the PIN, pick your name and allow alerts. Alerts need iOS 16.4 or newer. On older iPhones the app works without alerts.
 
 **Dad:** same steps on his phone, or install from Chrome or Edge on a laptop.
+
+## Shopping prices
+
+- [ ] The phone's offline price copy (`local_catalog_matches`) stays under about 1,000 rows and 200 KB.
+- [ ] In airplane mode, switching Essentials / Full shop / + Upgrades changes the list and the totals correctly.
+- [ ] In airplane mode, "Compare brands and sizes" opens and shows both stores.
+- [ ] The weekly scraper run shows `success` for Quickmart in `scrape_runs`, and no electronics or appliances appear in `catalog_products`.
+- [ ] "I'm going to Quickmart" with milk marked Low offers milk before the trip starts.

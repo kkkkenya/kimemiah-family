@@ -58,6 +58,13 @@ class FakeRemote implements Remote {
     return result;
   }
 
+  catalog: Row[] = [];
+  catalogCalls = 0;
+  async pullCatalog() {
+    this.catalogCalls++;
+    return this.catalog;
+  }
+
   async pull(t: SyncTable, since: string | null) {
     return [...this.table(t).values()]
       .filter((r) => !since || Date.parse(r.updated_at!) > Date.parse(since))
@@ -185,5 +192,18 @@ describe("sync engine", () => {
     const [a, b] = await Promise.all([engine.syncNow(), engine.syncNow()]);
     expect(a).toBe(b);
     expect(remote.calls).toBe(1);
+  });
+
+  it("keeps supermarket prices offline and refreshes them at most every few hours", async () => {
+    const engine = createSyncEngine(db, remote);
+    remote.catalog = [{ id: "p1", store: "quickmart", title: "Rina Vegetable Cooking Oil 2L" }];
+    await engine.syncNow();
+    expect(await db.catalog.count()).toBe(1);
+
+    remote.catalog = [{ id: "p2", store: "quickmart", title: "Fresh Fri Vegetable Cooking Oil 2L" }];
+    await engine.syncNow();
+    expect(remote.catalogCalls).toBe(1); // not stale yet
+    await engine.refreshCatalog(true);
+    expect((await db.catalog.toArray()).map((r) => r.id)).toEqual(["p2"]); // replaced, not merged
   });
 });

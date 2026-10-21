@@ -99,3 +99,85 @@ from (values
 ) as v(name, category, unit, min_qty, shop, track_mode, sort)
 join public.shops s on s.name = v.shop
 on conflict (id) do nothing;
+
+-- ---------------------------------------------------------------- smart shopping (migration 0005)
+
+-- Supermarkets by name, plus "either" for when it doesn't matter.
+insert into public.shops (id, name, kind, sort) values
+  ('00000000-0000-0000-0002-000000000010', 'Naivas', 'supermarket', 1),
+  ('00000000-0000-0000-0002-000000000011', 'Quickmart', 'supermarket', 2)
+on conflict (id) do nothing;
+update public.shops set name = 'Supermarket (either)', sort = 3
+ where id = '00000000-0000-0000-0002-000000000001' and name <> 'Supermarket (either)';
+
+-- No kiosk: kiosk prices run 20-40% higher, so fast movers belong to the supermarket run.
+update public.stock_items set shop_id = '00000000-0000-0000-0002-000000000001'
+ where shop_id = '00000000-0000-0000-0002-000000000006';
+update public.shopping_extras set shop_id = '00000000-0000-0000-0002-000000000001'
+ where shop_id = '00000000-0000-0000-0002-000000000006';
+update public.shops set deleted_at = now()
+ where id = '00000000-0000-0000-0002-000000000006' and deleted_at is null;
+
+-- Tier, fast mover and product family for the starter list.
+update public.stock_items s set
+  shopping_tier = v.tier,
+  is_fast_mover = v.fast,
+  canonical_group_key = v.key,
+  canonical_concept = v.concept
+from (values
+  ('Maize flour (unga)', 'essential', true, 'maize-flour-2kg', 'maize-flour'),
+  ('Wheat flour (chapati)', 'standard', false, 'wheat-flour-2kg', 'wheat-flour'),
+  ('Rice', 'essential', false, 'rice-2kg', 'rice'),
+  ('Sugar', 'essential', true, 'sugar-2kg', 'sugar'),
+  ('Cooking oil', 'essential', false, 'cooking-oil-2l', 'cooking-oil'),
+  ('Salt', 'essential', false, 'salt-500g', 'salt'),
+  ('Spaghetti', 'standard', false, 'spaghetti-500g', 'spaghetti'),
+  ('Royco / stock cubes', 'standard', false, 'stock-cubes-200g', 'stock-cubes'),
+  ('Spices (curry, pilau masala)', 'standard', false, null, 'spices'),
+  ('Tomato paste', 'standard', false, null, 'tomato-paste'),
+  ('Eggs', 'essential', true, 'eggs-30pk', 'eggs'),
+  ('Milk', 'essential', true, 'milk-500ml', 'milk'),
+  ('Tea leaves', 'standard', false, 'tea-leaves-500g', 'tea-leaves'),
+  ('Bread', 'essential', true, 'bread-400g', 'bread'),
+  ('Margarine (Blue Band)', 'standard', false, 'margarine-500g', 'margarine'),
+  ('Drinking water', 'essential', false, null, null),
+  ('Washing powder (Omo)', 'standard', false, 'washing-powder-1kg', 'washing-powder'),
+  ('Bar soap', 'essential', false, 'bar-soap-800g', 'bar-soap'),
+  ('Dishwashing liquid', 'standard', false, 'dish-liquid-500ml', 'dish-liquid'),
+  ('Bleach (Jik)', 'standard', false, 'bleach-750ml', 'bleach'),
+  ('Steel wool / sponge', 'standard', false, null, 'steel-wool'),
+  ('Floor cleaner', 'standard', false, 'floor-cleaner-1l', 'floor-cleaner'),
+  ('Bin liners', 'standard', false, null, 'bin-liners'),
+  ('Toilet paper', 'essential', true, 'toilet-tissue-10pk', 'toilet-tissue'),
+  ('Bathing soap', 'essential', false, null, 'bathing-soap'),
+  ('Toothpaste', 'standard', false, null, 'toothpaste'),
+  ('Petroleum jelly / lotion', 'standard', false, null, 'petroleum-jelly'),
+  ('Cooking gas', 'essential', false, null, null),
+  ('KPLC tokens', 'essential', false, null, null),
+  ('Matches', 'standard', false, null, 'matches')
+) as v(name, tier, fast, key, concept)
+where s.name = v.name;
+
+-- Drinks and household upgrades. Minimum 0: they never show as Low; add them to the list when wanted.
+insert into public.stock_items (id, name, category, unit, min_qty, shop_id, track_mode, sort, shopping_tier, canonical_group_key, canonical_concept)
+select md5('stock:' || v.name)::uuid, v.name, v.category, v.unit, 0, '00000000-0000-0000-0002-000000000001', 'count', v.sort, v.tier, v.key, v.concept
+from (values
+  ('Beer (lager)', 'drinks_alcohol', '500 ml', 70, 'standard', 'lager-beer-500ml', 'lager-beer'),
+  ('Wine', 'drinks_alcohol', '750 ml bottle', 71, 'standard', 'red-wine-750ml', 'red-wine'),
+  ('Gin', 'drinks_alcohol', '750 ml bottle', 72, 'standard', 'gin-750ml', 'gin'),
+  ('Soft broom', 'home_upgrades', 'piece', 80, 'qol', 'soft-broom', 'soft-broom'),
+  ('Mop', 'home_upgrades', 'piece', 81, 'qol', null, 'mop'),
+  ('Bucket (20 L, with lid)', 'home_upgrades', 'piece', 82, 'qol', 'bucket-20l', 'bucket'),
+  ('Basin', 'home_upgrades', 'piece', 83, 'qol', null, 'basin'),
+  ('Food storage containers', 'home_upgrades', 'set', 84, 'qol', null, 'food-container'),
+  ('Clothes pegs', 'home_upgrades', 'pack', 85, 'qol', null, 'clothes-pegs'),
+  ('LED bulb', 'home_upgrades', 'piece', 86, 'qol', null, 'led-bulb'),
+  ('Kitchen cloths', 'home_upgrades', 'pack', 87, 'qol', null, 'kitchen-cloth'),
+  ('Doormat', 'home_upgrades', 'piece', 88, 'qol', null, 'doormat')
+) as v(name, category, unit, sort, tier, key, concept)
+on conflict (id) do nothing;
+
+-- Family names aligned with the spec (lager-beer, red-wine, soft-broom).
+update public.stock_items set canonical_group_key = 'lager-beer-500ml', canonical_concept = 'lager-beer' where name = 'Beer (lager)' and canonical_concept = 'beer';
+update public.stock_items set canonical_group_key = 'red-wine-750ml', canonical_concept = 'red-wine' where name = 'Wine' and canonical_concept = 'wine';
+update public.stock_items set canonical_group_key = 'soft-broom', canonical_concept = 'soft-broom' where name = 'Soft broom' and canonical_concept = 'broom';

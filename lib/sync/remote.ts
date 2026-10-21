@@ -27,4 +27,10 @@ export const supabaseRemote: Remote = {
     if (error) throw error;
     return (data ?? []) as Row[];
   },
+
+  async pullCatalog(): Promise<Row[]> {
+    const { data, error } = await supabase().from("offline_price_matches").select("*").limit(3000);
+    if (error) throw error;
+    return (data ?? []) as Row[];
+  },
 };

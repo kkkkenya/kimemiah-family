@@ -28,6 +28,12 @@ export class LocalDB extends Dexie {
     };
     for (const t of SYNC_TABLES) stores[t] = "id, updated_at";
     this.version(1).stores(stores);
+    // Supermarket prices kept offline: a few hundred rows from offline_price_matches.
+    this.version(2).stores({ local_catalog_matches: "id, store, canonical_concept, canonical_group_key" });
+  }
+
+  get catalog(): Table<Row, string> {
+    return this.table("local_catalog_matches");
   }
 
   rows(table: SyncTable): Table<Row, string> {

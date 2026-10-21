@@ -18,7 +18,8 @@ Each phase ends with a check on two real phones that must pass before the next o
 |---|---|---|
 | **0. Input** | Walk Mom through the plan privately. WhatsApp poll: shops we use, 10 to 15 usual meals, contacts, who logs spending, days before a job is flagged | Answers written into the starter data |
 | **1. Foundation** | App shell that installs and works offline, database, PIN unlock, "Who are you?", sync queue, activity log, deploy, nightly backup, secrets setup script | Two phones unlock. Removing one phone cuts it off. A change shows the right person. A backup restores |
-| **2. Stock and Shopping** | +/− and OK/Low/Out, shopping list by shop, KES total, "I'm going to", Put away into a spend entry | Both phones offline lower the same item. After reconnecting the total is right on both |
+| **2a. Shopping list (done)** | List by shop (each supermarket and the market on its own, no kiosk). Essentials / Full shop / + Upgrades with totals. Best brand and store, brand drawer, bulk value, store basket and split run, deals drawer, catalog search. "I'm going to" with the running-low check. Weekly Quickmart prices (`scrape-supermarkets.yml`, Thursday 23:00 UTC) | Toggle modes offline and the totals change. Prices and the brand drawer show with no signal |
+| **2b. Stock** | +/− and OK/Low/Out, Low/Out items join the list on their own, Put away with real-price fix into a spend entry, "ran out early" note | Both phones offline lower the same item. After reconnecting the total is right on both |
 | **3. Jobs** | Post, take, drop, done, repeat, "waiting N days", Asante | Two phones tap "I'll do it" at once: one gets it, the other sees it's taken |
 | **4. Money** | Money in and out, corrections, balance, Budget tab, Summary for Dad | KES 10,000 in, 2,350 out shows 7,650. A correction restores it. Editing an entry is refused |
 | **Gate** | **Set the family meeting date** | Phases 2 to 4 pass on two real phones |

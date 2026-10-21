@@ -31,12 +31,38 @@ Rules that apply everywhere:
 - Each item keeps a short history of who changed it and when.
 
 **Shopping list**
-- Low and Out items appear on their own, grouped by shop: Supermarket, Market, Mama mboga, Wholesaler, Other.
-- Anyone can add a one-off item.
-- Estimated total in KES.
-- **"I'm going to [shop]"** tells everyone (push alert) so they can add requests before you leave.
+- Low and Out items appear on their own, grouped by shop: **Naivas, Quickmart, Supermarket (either), Market, Mama mboga, Wholesaler**, plus Gas dealer, Water vendor and M-Pesa for things no supermarket sells.
+- **No kiosk.** Kiosk prices run 20–40% above the supermarket, so milk, bread, eggs, sugar and tissue belong to the supermarket run.
+- Anyone can add a one-off item and pick how urgent it is in one tap: **Essential**, **Full shop** or **Can wait**.
 - Tick items as you shop; mark "Not found" if the shop is out.
-- **"Put away"** at home adds what you bought to stock and opens a spend entry already filled in.
+- **"Put away"** at home adds what you bought to stock and opens a spend entry already filled in with the shop prices. If the receipt differs, one tap fixes the price.
+
+**Three modes** (top of the list, each with its own estimated total):
+
+| Mode | What's in it | When |
+|---|---|---|
+| **Essentials** | Unga, rice, oil, sugar, milk, bread, salt, eggs, tissue, soap, gas, tokens | Mid-month top-ups, tight weeks |
+| **Full shop** | Essentials plus tea, Royco, spices, margarine, washing powder, dish soap, bleach, drinks | The bi-weekly or monthly bulk run |
+| **+ Upgrades** | Can-wait items: broom, mop, bucket, basin, containers, pegs, bulbs, cloths, mats | When there's room in the budget, or one is on a deep deal |
+
+Below the modes: "Estimated: KES 3,450 · Money left this month: KES 6,200", in amber when the list costs more than what's left.
+
+**Anti-kiosk trips**
+- **"I'm going to Naivas / Quickmart"** first checks the fast movers (milk, bread, eggs, tissue, sugar, unga). Anything Low, or not checked in 5 days, is offered for the trip list: "Keep them on your trip list so we skip the kiosk this week?"
+- During the trip, a **"Grab while you're there (running low)"** card stays at the top.
+- Everyone else sees "Mom is going to Quickmart. Add anything you need." (the push alert for this comes with Phase 7).
+- If a bulk item runs out more than 4 days before the next big run, twice in a row, it gets a quiet note: "Ran out early last 2 runs. Consider buying more."
+
+**Supermarket prices** (updated every Friday, all usable offline)
+- Each item shows the **best brand and store**: "Best: Fresh Fri 2l · KES 545 at Naivas (sale · save KES 85)", with the other store's price underneath.
+- **Brand rules per item**: any brand (cheapest), prefer a brand (with a note when a rival is 12%+ off), or only that brand.
+- **Compare brands and sizes**: a drawer listing every brand and pack at both stores, with the price per kg, litre or piece, so an empty shelf isn't a problem.
+- **Bulk value** tip when a bigger pack is at least 8% cheaper per kg or litre.
+- **Supermarket basket**: Naivas total vs Quickmart total for the current mode, deals and savings, and a "split the run" option when buying some items at each store saves KES 300 or more.
+- **Tracked staples on offer this week**: items fine at home but 15%+ off, to restock early.
+- **Search the supermarket catalog** (needs signal) for anything not on the house list.
+
+Naivas currently blocks automated price tools, so its online prices may be missing; Quickmart prices come through weekly. Receipt prices from "Put away" fill the gap.
 
 ## 3. Jobs (volunteering)
 

@@ -1,20 +1,41 @@
 import type { Row } from "@/lib/sync/tables";
 
 export type Shop = Row & { name: string; kind: string; sort: number };
-export type StockItem = Row & { name: string; category: string; unit: string; shop_id: string | null; sort: number };
+export type StockItem = Row & {
+  name: string;
+  category: string;
+  unit: string;
+  shop_id: string | null;
+  sort: number;
+  shopping_tier?: "essential" | "standard" | "qol";
+  is_fast_mover?: boolean;
+  canonical_group_key?: string | null;
+  canonical_concept?: string | null;
+  preferred_brand?: string | null;
+  brand_flexibility?: "any_cheapest" | "prefer_named" | "strict_named";
+  usual_price_kes?: number | null;
+  track_mode?: "count" | "level";
+  level?: "ok" | "low" | "out";
+  have_qty?: number;
+  min_qty?: number;
+};
 export type ShoppingItem = Row & {
   title: string;
   qty: string | null;
   shop_id: string | null;
   item_id: string | null;
   bought_at: string | null;
+  shopping_tier?: "essential" | "standard" | "qol";
+  catalog_product_id?: string | null;
+  preferred_store?: string | null;
   created_at?: string;
   actor_id?: string | null;
   _local?: boolean;
 };
 
-// Market and supermarket first and always separate: they're different trips.
-const ORDER = ["Market", "Supermarket", "Mama mboga", "Kiosk", "Wholesaler", "Gas dealer", "Water vendor", "M-Pesa", "Other"];
+// Supermarkets first, market separate: they're different trips. No kiosk (prices run 20-40% higher).
+const ORDER = ["Naivas", "Quickmart", "Supermarket (either)", "Market", "Mama mboga", "Wholesaler", "Gas dealer", "Water vendor", "M-Pesa", "Other"];
+export const SUPERMARKETS = new Set(["Naivas", "Quickmart", "Supermarket (either)"]);
 
 export function sortShops(shops: Shop[]): Shop[] {
   const rank = (s: Shop) => {
@@ -25,10 +46,9 @@ export function sortShops(shops: Shop[]): Shop[] {
 }
 
 export const SHOP_HINT: Record<string, string> = {
+  "Supermarket (either)": "Flour, oil, sugar, milk, bread, soap, tissue",
   Market: "Fresh produce, beans, charcoal",
-  Supermarket: "Flour, oil, soap, tissue",
   "Mama mboga": "Sukuma, dhania",
-  Kiosk: "Milk, bread, matches",
   "Gas dealer": "Gas refill",
   "Water vendor": "Drinking water",
   "M-Pesa": "KPLC tokens",

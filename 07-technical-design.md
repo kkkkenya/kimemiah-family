@@ -73,6 +73,26 @@ All tables have: `id` (made on the phone), `created_at`, `updated_at`, `deleted_
 
 Views: `shopping_needed`, `money_balance`, `budget_vs_actual`.
 
+`stock_items` also carries `shopping_tier` (essential / standard / qol), `is_fast_mover`, `canonical_group_key` (exact pack, e.g. `cooking-oil-2l`), `canonical_concept` (product family, e.g. `cooking-oil`), `preferred_brand`, `brand_flexibility` (any_cheapest / prefer_named / strict_named), `last_out_at` and `early_depletion_streak`. `shopping_extras` carries `shopping_tier`, `catalog_product_id` and `preferred_store`.
+
+## Supermarket prices
+
+| Part | What it does |
+|---|---|
+| `catalog_products` | Naivas and Quickmart products: brand, pack size, normalized quantity (kg / litre / unit), regular and sale price, `effective_price` and `discount_pct` (generated), unit price, product family. Unique per store and SKU. Read-only to phones. Only the scraper writes, with the service key |
+| `scrape_runs` | One row per store per run: status, items, items on sale, errors |
+| `offline_price_matches` view | What phones keep offline: for each product family the house tracks, the 10 cheapest per store (exact pack first), anything linked from the list, and the 100 steepest 15%+ deals. A few hundred rows |
+| Dexie `local_catalog_matches` | The phone's copy of that view, replaced every 6 hours when online. All price comparisons, the brand drawer and mode totals run on it with no signal |
+| Catalog search | Online only. Queries `catalog_products` directly and caches picked products on the phone |
+
+**Weekly scraper** (`scripts/scrape-supermarkets.mjs`, `.github/workflows/scrape-supermarkets.yml`, Thursday 23:00 UTC = Friday 02:00 in Nairobi, plus manual runs):
+- Runs on GitHub's free runner, never on Vercel or Supabase.
+- Identifies itself honestly (`KimemiahFamilyPriceBot/1.0`), waits 1.5–2.5 s between requests, retries with backoff, and walks an allowlist of categories: food, drinks and alcohol, cleaning, toiletries and household goods. Electronics, appliances, furniture, toys, clothing and hardware are blocked by category and by title.
+- `scripts/lib/product-parser.mjs` extracts the brand (Kenyan brand list, then the words before the product noun), the pack size and unit price, and the product family. It has its own tests.
+- **Quickmart** prices by branch. The scraper picks the branch nearest central Nairobi the same way a shopper does (set `QUICKMART_LAT` / `QUICKMART_LNG` to change it).
+- **Naivas** blocks automated clients behind its bot protection. The scraper sends one request a week, records the run as failed when refused, and does not try to get around it. If Naivas allows access later, the same code starts filling in prices.
+- A clean run marks products not seen this week as out of stock.
+
 ## Push alerts
 
 - A new `activity` row triggers `notify` (Edge Function) with a shared secret.
