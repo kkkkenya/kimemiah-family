@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+/* Kimemiah design tokens (see 08-design-system.md): lotus-pond palette.
+   Dark green, moss green, beige, rosy brown, midnight green. Light first; dark redefines the same tokens. */
+:root {
+  --surface-base: #f7f4d5;
+  --surface-raised: #fcfaea;
+  --text-primary: #0a3323;
+  --text-muted: #4a5e4f;
+  --line: #dcd8b2;
+  --brand: #105666;
+  --brand-contrast: #f7f4d5;
+  --chai: #d3968c;
+  --moss: #839958;
+  --ok-fg: #2c5a1e;
+  --ok-bg: #e3eacd;
+  --low-fg: #7a4e00;
+  --low-bg: #f4e3b4;
+  --out-fg: #ffffff;
+  --out-bg: #a63d30;
+  --out-strong: #a63d30;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface-base: #0a3323;
+    --surface-raised: #114130;
+    --text-primary: #f7f4d5;
+    --text-muted: #b7c29e;
+    --line: #1f5040;
+    --brand: #a9bf7c;
+    --brand-contrast: #0a3323;
+    --chai: #d3968c;
+    --moss: #839958;
+    --ok-fg: #b5cf86;
+    --ok-bg: #173f2c;
+    --low-fg: #ebc66e;
+    --low-bg: #36310f;
+    --out-fg: #0a3323;
+    --out-bg: #e9958a;
+    --out-strong: #e9958a;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --surface-base: #0a3323;
+  --surface-raised: #114130;
+  --text-primary: #f7f4d5;
+  --text-muted: #b7c29e;
+  --line: #1f5040;
+  --brand: #a9bf7c;
+  --brand-contrast: #0a3323;
+  --chai: #d3968c;
+  --moss: #839958;
+  --ok-fg: #b5cf86;
+  --ok-bg: #173f2c;
+  --low-fg: #ebc66e;
+  --low-bg: #36310f;
+  --out-fg: #0a3323;
+  --out-bg: #e9958a;
+  --out-strong: #e9958a;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-base: var(--surface-base);
+  --color-raised: var(--surface-raised);
+  --color-ink: var(--text-primary);
+  --color-muted: var(--text-muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-contrast: var(--brand-contrast);
+  --color-chai: var(--chai);
+  --color-moss: var(--moss);
+  --color-ok-fg: var(--ok-fg);
+  --color-ok-bg: var(--ok-bg);
+  --color-low-fg: var(--low-fg);
+  --color-low-bg: var(--low-bg);
+  --color-out-fg: var(--out-fg);
+  --color-out-bg: var(--out-bg);
+  --color-out-strong: var(--out-strong);
+  --font-sans: var(--font-atkinson), system-ui, sans-serif;
+  --font-display: var(--font-young-serif), Georgia, "Noto Serif", serif;
+}
+
+html,
+body {
+  background: var(--surface-base);
+  color: var(--text-primary);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Kanga stripe: header and thank-you cards only. */
+.kanga {
+  background: repeating-linear-gradient(90deg, var(--brand) 0 16px, var(--chai) 16px 24px, var(--moss) 24px 32px, var(--surface-base) 32px 36px);
+}
+
+:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+}

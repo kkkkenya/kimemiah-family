@@ -1,76 +1,104 @@
 # Starter stock list (5 adults)
 
-Check this list before the build: remove what we don't buy, add what's missing, and adjust the minimums. Prices are left blank on purpose; fill them in from the next shopping receipt.
+This list is loaded into the app. The family edits it there: remove what we don't buy, add what's missing, adjust minimums.
 
-**Minimum** is the amount at which an item counts as Low and goes on the shopping list.
+- **Minimum**: at or below this, an item counts as Low and goes on the shopping list. 0 means it never goes Low (add it when wanted).
+- **Tier**: E = Essential, F = Full shop, Q = Quality of life (can wait). Decides which shopping mode shows it.
+- **Fast**: a fast mover that runs out between bulk runs. The "I'm going to" check offers it so we skip the kiosk.
+- **Family**: the product family used to match Naivas and Quickmart brands and prices (exact pack first, other sizes for "bulk value").
+- Prices come from the weekly supermarket prices, or from receipts after "Put away".
 
 ## Kitchen staples
 
-| Item | Unit | Minimum | Usual shop | Price (KES) |
-|---|---|---|---|---|
-| Maize flour (unga) | 2 kg packet | 2 | Supermarket | |
-| Wheat flour (chapati) | 2 kg packet | 1 | Supermarket | |
-| Rice | kg | 2 | Supermarket | |
-| Sugar | kg | 2 | Supermarket | |
-| Cooking oil | litre | 2 | Supermarket | |
-| Salt | 500 g packet | 1 | Supermarket | |
-| Beans | kg | 1 | Market | |
-| Green grams (ndengu) | kg | 1 | Market | |
-| Spaghetti | packet | 2 | Supermarket | |
-| Royco / stock cubes | packet | 1 | Supermarket | |
-| Spices (curry, pilau masala) | packet | 1 | Supermarket | |
-| Tomato paste | tin/sachet | 2 | Supermarket | |
+| Item | Unit | Min | Shop | Tier | Fast | Family |
+|---|---|---|---|---|---|---|
+| Maize flour (unga) | 2 kg packet | 2 | Supermarket | E | ✓ | maize-flour-2kg |
+| Wheat flour (chapati) | 2 kg packet | 1 | Supermarket | F | | wheat-flour-2kg |
+| Rice | kg | 2 | Supermarket | E | | rice-2kg |
+| Sugar | kg | 2 | Supermarket | E | ✓ | sugar-2kg |
+| Cooking oil | litre | 2 | Supermarket | E | | cooking-oil-2l |
+| Salt | 500 g packet | 1 | Supermarket | E | | salt-500g |
+| Beans | kg | 1 | Market | F | | |
+| Green grams (ndengu) | kg | 1 | Market | F | | |
+| Spaghetti | packet | 2 | Supermarket | F | | spaghetti-500g |
+| Royco / stock cubes | packet | 1 | Supermarket | F | | stock-cubes-200g |
+| Spices (curry, pilau masala) | packet | 1 | Supermarket | F | | spices |
+| Tomato paste | tin/sachet | 2 | Supermarket | F | | tomato-paste |
 
-## Fresh produce
+## Fresh produce (OK / Low / Out, no counting)
 
-| Item | Unit | Minimum | Usual shop | Price (KES) |
-|---|---|---|---|---|
-| Sukuma wiki | bunch | 2 | Mama mboga | |
-| Cabbage | head | 1 | Market | |
-| Tomatoes | kg | 1 | Market | |
-| Onions | kg | 1 | Market | |
-| Potatoes | kg | 2 | Market | |
-| Carrots | kg | 0.5 | Market | |
-| Dhania | bunch | 1 | Mama mboga | |
-| Bananas | bunch | 1 | Market | |
-| Eggs | tray | 1 | Supermarket | |
+| Item | Unit | Shop | Tier |
+|---|---|---|---|
+| Sukuma wiki | bunch | Mama mboga | F |
+| Cabbage | head | Market | F |
+| Tomatoes | kg | Market | F |
+| Onions | kg | Market | F |
+| Potatoes | kg | Market | F |
+| Carrots | kg | Market | F |
+| Dhania | bunch | Mama mboga | F |
+| Bananas | bunch | Market | F |
 
-## Drinks and breakfast
+## Breakfast and dairy
 
-| Item | Unit | Minimum | Usual shop | Price (KES) |
-|---|---|---|---|---|
-| Milk | 500 ml packet | 4 | Shop / supermarket | |
-| Tea leaves | 500 g packet | 1 | Supermarket | |
-| Bread | loaf | 1 | Shop | |
-| Margarine (Blue Band) | 500 g tub | 1 | Supermarket | |
-| Drinking water | 20 L refill | 1 | Water vendor | |
+| Item | Unit | Min | Shop | Tier | Fast | Family |
+|---|---|---|---|---|---|---|
+| Eggs | tray | 1 | Supermarket | E | ✓ | eggs-30pk |
+| Milk | 500 ml packet | 4 | Supermarket | E | ✓ | milk-500ml |
+| Bread | loaf | 1 | Supermarket | E | ✓ | bread-400g |
+| Tea leaves | 500 g packet | 1 | Supermarket | F | | tea-leaves-500g |
+| Margarine (Blue Band) | 500 g tub | 1 | Supermarket | F | | margarine-500g |
+| Drinking water | 20 L refill | 1 | Water vendor | E | | |
 
 ## Cleaning
 
-| Item | Unit | Minimum | Usual shop | Price (KES) |
-|---|---|---|---|---|
-| Washing powder (Omo) | 1 kg packet | 1 | Supermarket | |
-| Bar soap | bar | 2 | Supermarket | |
-| Dishwashing liquid | 500 ml | 1 | Supermarket | |
-| Bleach (Jik) | 750 ml | 1 | Supermarket | |
-| Steel wool / sponge | piece | 2 | Supermarket | |
-| Floor cleaner | litre | 1 | Supermarket | |
-| Bin liners | roll | 1 | Supermarket | |
+| Item | Unit | Min | Shop | Tier | Family |
+|---|---|---|---|---|---|
+| Washing powder (Omo) | 1 kg packet | 1 | Supermarket | F | washing-powder-1kg |
+| Bar soap | bar | 2 | Supermarket | E | bar-soap-800g |
+| Dishwashing liquid | 500 ml | 1 | Supermarket | F | dish-liquid-500ml |
+| Bleach (Jik) | 750 ml | 1 | Supermarket | F | bleach-750ml |
+| Steel wool / sponge | piece | 2 | Supermarket | F | steel-wool |
+| Floor cleaner | litre | 1 | Supermarket | F | floor-cleaner-1l |
+| Bin liners | roll | 1 | Supermarket | F | bin-liners |
 
 ## Bathroom and personal
 
-| Item | Unit | Minimum | Usual shop | Price (KES) |
-|---|---|---|---|---|
-| Toilet paper | roll | 6 | Supermarket | |
-| Bathing soap | bar | 2 | Supermarket | |
-| Toothpaste | tube | 1 | Supermarket | |
-| Petroleum jelly / lotion | tub | 1 | Supermarket | |
+| Item | Unit | Min | Shop | Tier | Fast | Family |
+|---|---|---|---|---|---|---|
+| Toilet paper | roll | 6 | Supermarket | E | ✓ | toilet-tissue-10pk |
+| Bathing soap | bar | 2 | Supermarket | E | | bathing-soap |
+| Toothpaste | tube | 1 | Supermarket | F | | toothpaste |
+| Petroleum jelly / lotion | tub | 1 | Supermarket | F | | petroleum-jelly |
 
 ## Utilities
 
-| Item | Unit | Minimum | Usual shop | Price (KES) |
+| Item | Unit | Min | Shop | Tier |
 |---|---|---|---|---|
-| Cooking gas | 13 kg cylinder (spare) | 1 | Gas dealer | |
-| KPLC tokens | units | 30 | M-Pesa | |
-| Matches | box | 2 | Shop | |
-| Charcoal (if used) | sack | 1 | Market | |
+| Cooking gas | 13 kg cylinder | 1 | Gas dealer | E |
+| KPLC tokens | units | 30 | M-Pesa | E |
+| Matches | box | 2 | Supermarket | F |
+| Charcoal (if used) | sack | 1 | Market | F |
+
+## Drinks and alcohol (Full shop, minimum 0)
+
+| Item | Unit | Family |
+|---|---|---|
+| Beer (lager) | 500 ml | lager-beer-500ml |
+| Wine (red) | 750 ml bottle | red-wine-750ml |
+| Gin | 750 ml bottle | gin-750ml |
+
+## Household upgrades (Can wait, minimum 0)
+
+| Item | Unit | Family |
+|---|---|---|
+| Soft broom | piece | soft-broom |
+| Mop | piece | mop |
+| Bucket (20 L, with lid) | piece | bucket-20l |
+| Basin | piece | basin |
+| Food storage containers | set | food-container |
+| Clothes pegs | pack | clothes-pegs |
+| LED bulb | piece | led-bulb |
+| Kitchen cloths | pack | kitchen-cloth |
+| Doormat | piece | doormat |
+
+"Supermarket" here means **Supermarket (either)**. Set an item to Naivas or Quickmart in the app if the family always buys it at one of them.

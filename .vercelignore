@@ -1,0 +1,11 @@
+# Never upload secrets, family photos or local tooling.
+.env*
+!.env.example
+family*.jpg
+family*.jpeg
+family*.png
+family*.heic
+*.age
+.claude
+.next
+node_modules

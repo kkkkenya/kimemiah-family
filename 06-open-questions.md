@@ -1,20 +1,25 @@
 # Open questions
 
-Decide these before or during the build. Some are best settled at the family meeting.
+## WhatsApp poll (before the build)
 
-## Before the build (me)
+Send these to the family group. The answers become the app's starter data.
 
-- [ ] Are the eight sections right for version 1, or should some wait?
-- [ ] Which shops do we really use? (Names like Naivas, Quickmart, Carrefour, a specific market.)
+- [ ] Which shops do we really use? (Naivas, Quickmart, Carrefour, which market, which mama mboga, any wholesaler.)
 - [ ] Which 10 to 15 meals do we cook most, and what goes in each?
-- [ ] Which contacts go in the phone book?
+- [ ] Which contacts should be in the house phone book? (Fundi, plumber, landlord or caretaker, gas delivery, water vendor, clinic.)
+- [ ] Who logs spending: whoever spends, or one person?
+- [ ] How many days can a job wait before it goes on the meeting agenda? (Suggestion: 3.)
+
+## For me, before the build
+
+- [ ] Walk Mom through the plan and note what she'd change.
+- [ ] Choose the family PIN (6+ digits, not a birth year or 123456).
+- [ ] Check which iPhones are in the family and their iOS version (Settings > General > About). Alerts need iOS 16.4 or newer.
 - [ ] Should my sister's contributions, if she chooses to make any, be logged as "Money in" next to Dad's?
 
 ## At the family meeting (everyone)
 
 - [ ] How often do we meet, and who hosts next?
-- [ ] Who logs spending: whoever spends, or one person?
-- [ ] How many days can a job stay unpicked before it goes to the meeting?
-- [ ] Are there jobs that need a regular owner, such as bills with fixed dates?
-- [ ] Does Dad get the monthly summary? Who sends it?
+- [ ] Are there jobs that need a regular owner anyway, such as bills with fixed dates?
+- [ ] Who sends Dad the monthly summary?
 - [ ] Do we plan meals together on a set day, for example Sunday evening?

@@ -12,7 +12,7 @@ Five adults:
 | Brother, 25 | Trading forex, not yet profitable |
 | Me | Not earning yet |
 
-Dad lives elsewhere and sends money for shopping and the market.
+Dad lives elsewhere and sends money for shopping and the market. He uses the app too, with the same access as everyone else.
 
 ## How things work today
 

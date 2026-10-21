@@ -1,0 +1,68 @@
+{
+ "phase": "planning",
+ "complete": true,
+ "idea": "Kimemiah family household app: revise and improve the plan",
+ "themeName": "Council",
+ "sessionId": "kimemiah-family-app-20261021-1044",
+ "date": "2026-10-21",
+ "mode": "standard",
+ "profile": "balanced",
+ "backend": "sequential",
+ "roster": [
+  {
+   "name": "Architect",
+   "color": "#60a5fa",
+   "status": "active"
+  },
+  {
+   "name": "Advocate",
+   "color": "#4ade80",
+   "status": "active"
+  },
+  {
+   "name": "Skeptic",
+   "color": "#f87171",
+   "status": "active"
+  },
+  {
+   "name": "Pathfinder",
+   "color": "#fb7185",
+   "status": "active"
+  },
+  {
+   "name": "Strategist",
+   "color": "#facc15",
+   "status": "active"
+  },
+  {
+   "name": "Artisan",
+   "color": "#f472b6",
+   "status": "active"
+  }
+ ],
+ "tensionPairs": [
+  {
+   "a": "Architect",
+   "b": "Skeptic",
+   "tension": "Offline everywhere vs stock/shopping only; anonymous-auth devices vs 6 real member users"
+  },
+  {
+   "a": "Artisan",
+   "b": "Pathfinder",
+   "tension": "Google Fonts + React Bits vs system fonts and 170KB budget"
+  },
+  {
+   "a": "Strategist",
+   "b": "Advocate",
+   "tension": "Meet first vs build first; push scope; nav placement of Money"
+  }
+ ],
+ "costEstimate": "~120-180K tokens",
+ "phases": [
+  "interview",
+  "assembly",
+  "deliberation",
+  "verdict",
+  "planning"
+ ]
+}
