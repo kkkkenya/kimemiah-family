@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { kes, linePrice, type CatalogMatch, type ListLine, type Store } from "@/lib/shopping/pricing";
-import { lineTotal, parseQty, spendByShop, type PutAwayLine } from "@/lib/shopping/stock";
+import { lineTotal, parseQty, spendByShop, unitsAdded, unitsPerPack, type PutAwayLine } from "@/lib/shopping/stock";
 import type { Shop, ShoppingItem, StockItem } from "@/lib/shopping/shops";
 
 const STORE_OF: Record<string, Store | undefined> = { Naivas: "naivas", Quickmart: "quickmart" };
@@ -39,6 +39,7 @@ export function PutAway({ bought, stockById, shops, matches, toLine, onFixPrice,
         shopId: i.shop_id,
         level: item?.track_mode === "level",
         qty: Number(i.quantity) > 1 ? Number(i.quantity) : (parseQty(i.qty) ?? 1),
+        perPack: unitsPerPack(matches.find((m) => m.id === i.catalog_product_id), item?.unit),
         price: startPrice(toLine(i), shops.find((s) => s.id === i.shop_id), matches),
       };
     }),
@@ -89,7 +90,9 @@ export function PutAway({ bought, stockById, shops, matches, toLine, onFixPrice,
                   </button>
                   <span className="min-w-12 text-center tabular" aria-live="polite">
                     {l.qty}
-                    {unitOf(l) && <span className="block text-xs text-muted">{unitOf(l)}</span>}
+                    {unitOf(l) && (
+                      <span className="block text-xs text-muted">{(l.perPack ?? 1) !== 1 ? `= ${unitsAdded(l)} ${unitOf(l)}` : unitOf(l)}</span>
+                    )}
                   </span>
                   <button
                     type="button"
