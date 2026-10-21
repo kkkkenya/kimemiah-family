@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { SyncDot } from "./SyncDot";
 
 const HEADER_LINKS = [
   { href: "/more/contacts", label: "Contacts", icon: <path d="M6.6 3.5h2.8l1.4 4-2 1.3a11 11 0 0 0 5.4 5.4l1.3-2 4 1.4v2.8a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2Z" /> },
@@ -23,6 +24,7 @@ export function Screen({ title, back, children }: { title: string; back?: string
             </Link>
           )}
           <h1 className="min-w-0 flex-1 font-display text-[1.75rem] leading-tight text-balance">{title}</h1>
+          <SyncDot />
           <nav aria-label="More" className="-mr-2 flex shrink-0">
             {HEADER_LINKS.map((l) => (
               <Link key={l.href} href={l.href} aria-label={l.label} title={l.label} className="flex size-12 items-center justify-center rounded-full text-brand">

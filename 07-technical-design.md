@@ -94,6 +94,14 @@ Views: `shopping_needed`, `money_balance`, `budget_vs_actual`.
 
 **Pictures (migration `0016`)**: profile pictures are in the private `family` bucket as `avatars/a1.jpg` to `a8.jpg` (`scripts/upload-avatars.mjs`, square 256 px), readable as soon as a phone is unlocked so they show on "Who's using this phone?". Each person's own Home photo is `family/home/<member id>.jpg`, which only that person can upload or replace. Phones keep pictures offline and refresh them daily.
 
+**Across tabs (`lib/sync/workflows.ts`)**: `restockHouse` is the one step behind Shopping done and the receipt reader: movements into stock (packs converted), produce back to OK, prices saved, one spend entry (per shop, or the receipt total), basket rows cleared, the trip finished and today's supermarket run job done, all queued together in the outbox.
+
+**Live sync (`lib/sync/realtime.ts`)**: after a sync that sent changes, a phone broadcasts an empty "changed" ping on the Supabase Realtime channel `household-live`; open phones that hear it sync within about a second. The ping carries no data.
+
+**Receipts (`lib/receipt/parser.ts`, tested)**: reads Naivas / Quickmart ETR layouts (qty x price lines, wrapped names, discounts, weighed items, total) from pasted text or OCR (`tesseract.js`, loaded only in the reader). Lines match house items by product family (the scraper's parser) or by name.
+
+**Tools and supper (migration `0018`)**: tools are `stock_items` with `track_mode = 'tool'`, `tool_location`, `tool_condition` and `last_used_by`. `members.eating_out_on` is the day someone said they'd be out for supper.
+
 ## Supermarket prices
 
 | Part | What it does |

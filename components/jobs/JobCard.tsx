@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSync } from "@/components/SyncProvider";
 import { joinJob, leaveJob, rescueJob, sendThanks, updateJob } from "@/lib/jobs/actions";
 import { sendAlertsNow } from "@/lib/push/client";
@@ -17,7 +17,11 @@ import {
   type Job,
   type Participant,
 } from "@/lib/jobs/logic";
-import { PART_NOTES, type Category } from "@/lib/jobs/templates";
+import { PART_NOTES, TOOLS_FOR, type Category } from "@/lib/jobs/templates";
+import { postJob, dayPlus, dueOnDay } from "@/lib/jobs/actions";
+import { BottomSheet } from "@/components/BottomSheet";
+import { syncEngine } from "@/lib/sync/client";
+import type { StockItem } from "@/lib/shopping/shops";
 import { kes } from "@/lib/shopping/pricing";
 
 export const STRAIN = {
@@ -40,9 +44,14 @@ type Props = {
   homeNames?: string[]; // others at home right now, to suggest for rescues and handovers
   agendaAfter?: number; // days with nobody on it before it goes on the meeting agenda
   suggestedFor?: string | null; // member suggested for this job (has given least lately); never assigned
+  tools?: StockItem[]; // Stock tools, to show where this job's tools are and check them back in
+  supper?: string | null; // "Cooking for 4 tonight (Vinnie is out)" on cooking jobs
 };
 
-export function JobCard({ job, parts, meId, nameOf, thanked, onMessage, homeNames = [], agendaAfter = 3, suggestedFor = null }: Props) {
+type Start = "join" | "help" | "done" | null;
+
+// Everything about one job, shown in its detail sheet.
+function JobDetails({ job, parts, meId, nameOf, thanked, onMessage, homeNames = [], agendaAfter = 3, suggestedFor = null, tools = [], supper = null, start = null }: Props & { start?: Start }) {
   const { online, syncNow } = useSync();
   const [joining, setJoining] = useState<"join" | "help" | null>(null);
   const [pct, setPct] = useState(0);
@@ -78,16 +87,40 @@ export function JobCard({ job, parts, meId, nameOf, thanked, onMessage, homeName
     setJoining(kind);
   }
 
+  const jobTools = (TOOLS_FOR[job.template_key ?? ""] ?? []).map((n) => tools.find((t) => t.name === n)).filter((t): t is StockItem => !!t);
+  const [returning, setReturning] = useState(false);
+  const [putBack, setPutBack] = useState("Store room");
+  const [broken, setBroken] = useState<Set<string>>(new Set());
+
+  // Done on a job with tools: say where they went back, and if anything needs fixing.
+  async function doneWithTools() {
+    for (const t of jobTools) {
+      const fix = broken.has(t.id);
+      await syncEngine().queue("stock_items", "update", { id: t.id, tool_location: putBack, tool_condition: fix ? "needs_fix" : "working", last_used_by: meId ?? null });
+      if (fix) await postJob({ title: `Fix or sharpen the ${t.name.toLowerCase()}`, category: "maintenance_fix", strain: "medium", duration_min: 30, people_needed: 1, due_at: dueOnDay(dayPlus(2)) });
+    }
+    setReturning(false);
+    await markDone();
+  }
+
   async function markDone() {
     await updateJob(job.id, { done_at: new Date().toISOString(), done_by: meId ?? null });
     void syncNow();
     onMessage(`${job.title}: done. Asante!`, () => updateJob(job.id, { done_at: null, done_by: null }).then(() => void syncNow()));
   }
 
-  const dadMessage = `Hi Peter, ${job.title.replace(/^Ask Peter (for|to) /i, "could you please send ")}.${job.notes ? ` ${job.notes}` : ""} Thank you!`;
+  useEffect(() => {
+    if (start === "join") openJoin("join");
+    else if (start === "help") openJoin("help");
+    else if (start === "done") setReturning(true);
+    // Only when the sheet opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const dadMessage = `Hi Peter, ${job.title.replace(/^Ask Peter to /i, "could you please ")}.${job.notes ? ` ${job.notes}` : ""} Thank you!`;
 
   return (
-    <li className={`rounded-xl bg-raised p-4 shadow-[0_1px_3px_rgba(10,51,35,.10)] ${status === "overdue" ? "border-2 border-out-strong" : ""}`}>
+    <div className="pt-1">
       {status === "overdue" && (
         <p className="mb-2 rounded-lg bg-low-bg px-3 py-2 text-sm text-low-fg">
           <strong>⚠️ Meant to be done by {meantToDoIt(job.id, parts).map(nameOf).join(" and ") || "someone"}</strong>, but it wasn&apos;t finished in time. You can
@@ -125,6 +158,48 @@ export function JobCard({ job, parts, meId, nameOf, thanked, onMessage, homeName
         </strong>
       </p>
       {job.notes && <p className="text-sm text-muted">{job.notes}</p>}
+      {supper && job.category === "cooking_house" && !job.done_at && <p className="text-sm font-bold text-ok-fg">🍽️ {supper}</p>}
+      {jobTools.length > 0 && !job.done_at && (
+        <p className="text-sm text-muted">🧰 {jobTools.map((t) => `${t.name}: ${t.tool_location ?? "not sure where"}${t.tool_condition === "needs_fix" ? " (needs fixing)" : ""}`).join(" · ")}</p>
+      )}
+      {returning && (
+        <div className="mt-2 flex flex-col gap-2 rounded-xl border border-line p-3">
+          <p className="font-bold">Where did the tools go back?</p>
+          <div role="radiogroup" aria-label="Where the tools went" className="flex flex-wrap gap-2">
+            {["Store room", "Back verandah", "Dog kennel", "Main house"].map((l) => (
+              <button key={l} type="button" role="radio" aria-checked={putBack === l} onClick={() => setPutBack(l)} className={`min-h-10 rounded-full border px-3 text-sm font-bold ${putBack === l ? "border-brand bg-brand text-brand-contrast" : "border-line"}`}>
+                {l}
+              </button>
+            ))}
+          </div>
+          {jobTools.map((t) => (
+            <label key={t.id} className="flex min-h-10 items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={broken.has(t.id)}
+                onChange={() =>
+                  setBroken((b) => {
+                    const n = new Set(b);
+                    if (n.has(t.id)) n.delete(t.id);
+                    else n.add(t.id);
+                    return n;
+                  })
+                }
+                className="size-5"
+              />
+              {t.name} needs fixing or sharpening
+            </label>
+          ))}
+          <div className="flex gap-2">
+            <button type="button" onClick={doneWithTools} className="min-h-12 rounded-xl bg-brand px-4 font-bold text-brand-contrast">
+              ✓ Done
+            </button>
+            <button type="button" onClick={() => setReturning(false)} className="min-h-12 rounded-xl px-4 font-bold text-brand">
+              Not yet
+            </button>
+          </div>
+        </div>
+      )}
       {!job.done_at && job.due_at && <p className="text-sm text-muted">Due {when(job.due_at)}</p>}
       {!job.done_at && job.started_at && <p className="text-sm text-ok-fg">Started {when(job.started_at)}</p>}
 
@@ -292,7 +367,7 @@ export function JobCard({ job, parts, meId, nameOf, thanked, onMessage, homeName
                   ▶ I&apos;m starting
                 </button>
               )}
-              <button type="button" onClick={markDone} className="min-h-12 rounded-xl bg-brand px-4 font-bold text-brand-contrast">
+              <button type="button" onClick={() => (jobTools.length ? setReturning(true) : markDone())} className="min-h-12 rounded-xl bg-brand px-4 font-bold text-brand-contrast">
                 ✓ Done
               </button>
               <button type="button" disabled={!online} onClick={() => openJoin("join")} className="min-h-12 rounded-xl border border-line px-3 font-bold disabled:opacity-50">
@@ -315,6 +390,93 @@ export function JobCard({ job, parts, meId, nameOf, thanked, onMessage, homeName
           )}
           {!online && !mine && <p className="w-full text-sm text-muted">Taking a job needs signal, so two people don&apos;t take the same share.</p>}
         </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * One job in a list: name and tags, one status line, and one button. Tapping the card opens
+ * everything else in a sheet (shares, notes, tools, Asante, Leave...).
+ */
+export function JobCard(props: Props) {
+  const { job, parts, meId, nameOf, thanked, suggestedFor, tools = [] } = props;
+  const { online, syncNow } = useSync();
+  const [sheet, setSheet] = useState<{ start: Start } | null>(null);
+  const status = jobStatus(job, parts);
+  const people = workers(job.id, parts);
+  const mine = people.some((p) => p.member_id === meId);
+  const covered = coverage(job.id, parts);
+  const size = jobSize(job);
+  const strain = STRAIN[job.strain];
+  const choices = shareChoices(job, parts, meId).choices;
+  const hasTools = (TOOLS_FOR[job.template_key ?? ""] ?? []).some((n) => tools.some((t) => t.name === n));
+  const unthanked = people.map((p) => p.member_id).filter((m) => m !== meId && !thanked(job.id, m));
+
+  const line =
+    status === "done"
+      ? `✓ Done${people.length ? ` by ${people.map((p) => nameOf(p.member_id)).join(", ")}` : ""}`
+      : status === "overdue"
+        ? `⚠️ Past its time · meant for ${meantToDoIt(job.id, parts).map(nameOf).join(" and ") || "someone"}`
+        : status === "planning"
+          ? `Money run${job.planned_for ? ` · ${job.planned_for}` : ""} · ${job.funds_status === "funds_ready" ? "money ready" : "money being arranged"}`
+          : people.length
+            ? `${people.map((p) => `${nameOf(p.member_id)} ${p.effort_pct}%`).join(" · ")}${covered < 100 ? ` · ${100 - covered}% left` : ""}`
+            : `${size.label} job · ${formatMinutes(job.duration_min)} × ${job.people_needed === 1 ? "1 person" : `${job.people_needed} people`}`;
+
+  async function done() {
+    if (hasTools) return setSheet({ start: "done" });
+    await updateJob(job.id, { done_at: new Date().toISOString(), done_by: meId ?? null });
+    void syncNow();
+    props.onMessage(`${job.title}: done. Asante!`, () => updateJob(job.id, { done_at: null, done_by: null }).then(() => void syncNow()));
+  }
+
+  const action: { label: string; run: () => void; needsSignal?: boolean } =
+    mine && !job.done_at
+      ? { label: "✓ Done", run: done }
+      : status === "overdue"
+        ? { label: "🤝 Help", run: () => setSheet({ start: "help" }), needsSignal: true }
+        : !job.done_at && choices.length && (status === "open" || status === "partial" || status === "planning")
+          ? { label: status === "planning" ? "I'll go" : people.length ? "Join in" : "I'll do it", run: () => setSheet({ start: "join" }), needsSignal: true }
+          : job.done_at && unthanked.length
+            ? { label: "🙏 Asante", run: () => setSheet({ start: null }) }
+            : { label: "Details", run: () => setSheet({ start: null }) };
+
+  return (
+    <li className={`rounded-xl bg-raised shadow-[0_1px_3px_rgba(10,51,35,.10)] ${status === "overdue" ? "border-2 border-out-strong" : ""}`}>
+      <div className="flex items-center gap-3 p-4">
+        <button type="button" onClick={() => setSheet({ start: null })} className="min-w-0 flex-1 text-left">
+          <span className="flex flex-wrap items-center gap-1.5">
+            <span className="font-bold">{job.title}</span>
+            <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${strain.cls}`}>
+              <span aria-hidden="true">{strain.icon} </span>
+              {strain.word}
+            </span>
+            {job.urgent && !job.done_at && <span className="rounded-full bg-out-bg px-2 py-0.5 text-xs font-bold text-out-fg">Urgent</span>}
+            {suggestedFor === meId && !job.done_at && <span className="rounded-full bg-brand px-2 py-0.5 text-xs font-bold text-brand-contrast">For you</span>}
+          </span>
+          <span className="mt-0.5 block text-sm text-muted tabular">{line}</span>
+        </button>
+        <button
+          type="button"
+          disabled={action.needsSignal && !online}
+          onClick={action.run}
+          className="min-h-12 shrink-0 rounded-xl bg-brand px-4 font-bold text-brand-contrast disabled:opacity-50"
+        >
+          {action.needsSignal && !online ? "Needs signal" : action.label}
+        </button>
+      </div>
+      {sheet && (
+        <BottomSheet title={job.title} onClose={() => setSheet(null)}>
+          <JobDetails
+            {...props}
+            start={sheet.start}
+            onMessage={(t, u) => {
+              props.onMessage(t, u);
+              if (/done|left|helping|on it|took over/i.test(t)) setSheet(null);
+            }}
+          />
+        </BottomSheet>
       )}
     </li>
   );

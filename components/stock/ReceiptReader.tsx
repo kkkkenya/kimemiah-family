@@ -35,7 +35,7 @@ export function ReceiptReader({ stock, shops, meId, onClose }: { stock: StockIte
   const [logSpend, setLogSpend] = useState(true);
   const [done, setDone] = useState<string | null>(null);
 
-  const items = stock.filter((s) => !s.deleted_at && s.track_mode !== "tool") as unknown as HouseItem[];
+  const items = (stock.filter((s) => !s.deleted_at && s.track_mode !== "tool") as unknown as HouseItem[]).sort((a, b) => a.name.localeCompare(b.name));
   const itemById = new Map(items.map((i) => [i.id, i]));
 
   function read(t: string) {

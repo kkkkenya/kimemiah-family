@@ -81,3 +81,12 @@ export const PART_NOTES: Partial<Record<Category, string[]>> = {
   cooking_house: ["Prep and chop", "Cook", "Serve and clean up"],
   house_cleaning: ["Bathroom", "Toilet", "Mop the floor"],
 };
+
+/** Tools each usual job needs (names of Stock tools), shown on the job with where they are. */
+export const TOOLS_FOR: Record<string, string[]> = {
+  fence: ["Hedge shears", "Panga"],
+  slash: ["Slasher", "Panga", "Rake"],
+  dog: ["Dog shampoo and brush", "Hosepipe"],
+  sweep: ["Rake"],
+  tanks: ["Hosepipe", "Ladder"],
+};
