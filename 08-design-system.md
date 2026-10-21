@@ -13,18 +13,19 @@ A warm Nairobi home, not a generic app. Agreed by the council on 2026-10-21.
 
 | Token | Light | Dark |
 |---|---|---|
-| surface-base | #F7F4D5 beige | #0A3323 dark green |
-| surface-raised | #FCFAEA | #114130 |
-| text-primary | #0A3323 dark green | #F7F4D5 beige |
-| text-muted | #4A5E4F | #B7C29E |
-| brand | #105666 midnight green | #A9BF7C light moss |
+| surface-base | #F7F4D5 beige | #072A1C dark green |
+| surface-raised (cards) | #FFFFFF | #0F3D2C |
+| text-primary | #062A1C dark green | #FBF9E6 beige |
+| text-muted | #34463A | #D3DCBC |
+| line (borders, input outlines) | #7D7A58 | #6F9A83 |
+| brand | #0C4A59 midnight green, white text | #C3D896 light moss, dark text |
 | rosy (decoration only) | #D3968C | #D3968C |
 | moss (decoration only) | #839958 | #839958 |
-| ok | #2C5A1E on #E3EACD | #B5CF86 on #173F2C |
-| low | #7A4E00 on #F4E3B4 | #EBC66E on #36310F |
-| out | #FFFFFF on #A63D30 | #0A3323 on #E9958A |
+| ok | #1D4512 on #E1ECCB | #CDE6A0 on #143A28 |
+| low | #5A3800 on #F6E2AE | #F2D282 on #33300E |
+| out | #FFFFFF on #8E2C20 | #062A1C on #F4ADA3 |
 
-Every text pairing was checked and meets WCAG AA (4.5:1 or better). The exact moss #839958 behind dark green text only reaches 4.4:1, so dark mode uses the lighter moss #A9BF7C for buttons.
+High contrast, raised on 21 Oct 2026 at the family's request. Every text pairing meets WCAG AAA (7:1 or better; muted text 8.5:1 or more, status chips 8.2:1 or more). Borders and input outlines are 3.8:1 or more against the page and cards, so boxes and buttons are easy to see. Cards are white on the beige page. The exact moss #839958 is decoration only.
 
 ## Type
 

@@ -1,66 +1,67 @@
 @import "tailwindcss";
 
 /* Kimemiah design tokens (see 08-design-system.md): lotus-pond palette.
-   Dark green, moss green, beige, rosy brown, midnight green. Light first; dark redefines the same tokens. */
+   Dark green, moss green, beige, rosy brown, midnight green. Light first; dark redefines the same tokens.
+   High contrast: every text pair is 7:1 or better (WCAG AAA) and borders are 3:1 or better. */
 :root {
   --surface-base: #f7f4d5;
-  --surface-raised: #fcfaea;
-  --text-primary: #0a3323;
-  --text-muted: #4a5e4f;
-  --line: #dcd8b2;
-  --brand: #105666;
-  --brand-contrast: #f7f4d5;
+  --surface-raised: #ffffff;
+  --text-primary: #062a1c;
+  --text-muted: #34463a;
+  --line: #7d7a58;
+  --brand: #0c4a59;
+  --brand-contrast: #ffffff;
   --chai: #d3968c;
   --moss: #839958;
-  --ok-fg: #2c5a1e;
-  --ok-bg: #e3eacd;
-  --low-fg: #7a4e00;
-  --low-bg: #f4e3b4;
+  --ok-fg: #1d4512;
+  --ok-bg: #e1eccb;
+  --low-fg: #5a3800;
+  --low-bg: #f6e2ae;
   --out-fg: #ffffff;
-  --out-bg: #a63d30;
-  --out-strong: #a63d30;
+  --out-bg: #8e2c20;
+  --out-strong: #8e2c20;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --surface-base: #0a3323;
-    --surface-raised: #114130;
-    --text-primary: #f7f4d5;
-    --text-muted: #b7c29e;
-    --line: #1f5040;
-    --brand: #a9bf7c;
-    --brand-contrast: #0a3323;
+    --surface-base: #072a1c;
+    --surface-raised: #0f3d2c;
+    --text-primary: #fbf9e6;
+    --text-muted: #d3dcbc;
+    --line: #6f9a83;
+    --brand: #c3d896;
+    --brand-contrast: #062a1c;
     --chai: #d3968c;
     --moss: #839958;
-    --ok-fg: #b5cf86;
-    --ok-bg: #173f2c;
-    --low-fg: #ebc66e;
-    --low-bg: #36310f;
-    --out-fg: #0a3323;
-    --out-bg: #e9958a;
-    --out-strong: #e9958a;
+    --ok-fg: #cde6a0;
+    --ok-bg: #143a28;
+    --low-fg: #f2d282;
+    --low-bg: #33300e;
+    --out-fg: #062a1c;
+    --out-bg: #f4ada3;
+    --out-strong: #f4ada3;
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
-  --surface-base: #0a3323;
-  --surface-raised: #114130;
-  --text-primary: #f7f4d5;
-  --text-muted: #b7c29e;
-  --line: #1f5040;
-  --brand: #a9bf7c;
-  --brand-contrast: #0a3323;
+  --surface-base: #072a1c;
+  --surface-raised: #0f3d2c;
+  --text-primary: #fbf9e6;
+  --text-muted: #d3dcbc;
+  --line: #6f9a83;
+  --brand: #c3d896;
+  --brand-contrast: #062a1c;
   --chai: #d3968c;
   --moss: #839958;
-  --ok-fg: #b5cf86;
-  --ok-bg: #173f2c;
-  --low-fg: #ebc66e;
-  --low-bg: #36310f;
-  --out-fg: #0a3323;
-  --out-bg: #e9958a;
-  --out-strong: #e9958a;
+  --ok-fg: #cde6a0;
+  --ok-bg: #143a28;
+  --low-fg: #f2d282;
+  --low-bg: #33300e;
+  --out-fg: #062a1c;
+  --out-bg: #f4ada3;
+  --out-strong: #f4ada3;
   color-scheme: dark;
 }
 
