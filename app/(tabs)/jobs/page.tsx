@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Empty, Screen } from "@/components/Screen";
 import { PRESENCE, type Presence } from "@/components/Presence";
 import { useSync } from "@/components/SyncProvider";
@@ -51,6 +51,10 @@ export default function JobsPage() {
   const learned = (key: string) => learnedDuration(jobs, key);
 
   const [tab, setTab] = useState<Tab>("needs");
+  // Home's "Say asante" opens the Done list.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("tab") === "done") setTab("done");
+  }, []);
   const [effort, setEffort] = useState<Effort>("all");
   const [adding, setAdding] = useState(false);
   const [undo, setUndo] = useState<UndoState>(null);

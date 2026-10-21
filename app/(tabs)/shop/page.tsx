@@ -10,7 +10,6 @@ import { DealRestock } from "@/components/shop/DealRestock";
 import { PutAway } from "@/components/shop/PutAway";
 import { ItemPrice } from "@/components/shop/ItemPrice";
 import { ModeBar } from "@/components/shop/ModeBar";
-import { StockView } from "@/components/shop/StockView";
 import { StoreCompare } from "@/components/shop/StoreCompare";
 import { TripCheck, isActive, type Trip } from "@/components/shop/TripCheck";
 import {
@@ -27,9 +26,10 @@ import {
   type StockLike,
   type Tier,
 } from "@/lib/shopping/pricing";
-import { SHOP_HINT, SUPERMARKETS, sortShops, type Shop, type ShoppingItem, type StockItem } from "@/lib/shopping/shops";
+import { SHOP_HINT, SUPERMARKETS, type Shop, type ShoppingItem, type StockItem } from "@/lib/shopping/shops";
 import type { Product } from "@/lib/shopping/catalog";
-import { autoListItems, putAwayMovements, spendByShop, withLocalCounts, type Movement, type PutAwayLine } from "@/lib/shopping/stock";
+import { autoListItems, putAwayMovements, spendByShop, type PutAwayLine } from "@/lib/shopping/stock";
+import { useStock } from "@/lib/shopping/useStock";
 import { localDB, syncEngine } from "@/lib/sync/client";
 import { useMe, useRows, type Member } from "@/lib/sync/hooks";
 
@@ -52,21 +52,20 @@ function savedMode(): Mode {
 }
 
 const VIEW_KEY = "kimemiah-shop-view";
-type View = "catalog" | "list" | "stock";
+type View = "catalog" | "list";
 const VIEWS: { id: View; label: string }[] = [
   { id: "catalog", label: "Catalog" },
   { id: "list", label: "Cart / List" },
-  { id: "stock", label: "Kitchen stock" },
 ];
 
-// Shop tab: the supermarket Catalog, the family Cart / List, and Kitchen stock, one switch apart.
+// Shop tab: the supermarket Catalog and the family Cart / List, one switch apart. Stock has its own tab.
 export default function ShopPage() {
   const { syncNow } = useSync();
   const [view, setViewState] = useState<View>("catalog");
   useEffect(() => {
     try {
-      const v = localStorage.getItem(VIEW_KEY);
-      if (v === "list" || v === "stock") setViewState(v);
+      const v = new URLSearchParams(window.location.search).get("view") ?? localStorage.getItem(VIEW_KEY);
+      if (v === "list") setViewState(v);
     } catch {}
   }, []);
   const setView = (v: View) => {
@@ -76,14 +75,7 @@ export default function ShopPage() {
     } catch {}
   };
 
-  const me = useMe();
-  const shops = sortShops(useRows<Shop>("shops") ?? []);
-  const stockRows = useRows<StockItem>("stock_items");
-  const movementRows = useRows<Movement & { id: string }>("stock_movements");
-  const movements = useMemo(() => movementRows ?? [], [movementRows]);
-  // Counts include this phone's unsynced +/-, the same sum the server keeps.
-  const stock = useMemo(() => withLocalCounts(stockRows ?? [], movements, me?.id), [stockRows, movements, me?.id]);
-  const members = useRows<Member>("members") ?? [];
+  const { shops, stock, members } = useStock();
   const items = useRows<ShoppingItem>("shopping_extras");
   // Every list row ever (removed ones too), for "Most bought by the house".
   const history = useLiveQuery(() => localDB().rows("shopping_extras").toArray(), [], []) as ShoppingItem[];
@@ -168,7 +160,7 @@ export default function ShopPage() {
   }
 
   const switcher = (
-    <div role="tablist" aria-label="Shop" className="grid grid-cols-3 gap-1 rounded-full border border-line bg-raised p-1">
+    <div role="tablist" aria-label="Shop" className="grid grid-cols-2 gap-1 rounded-full border border-line bg-raised p-1">
       {VIEWS.map((v) => (
         <button
           key={v.id}
@@ -184,14 +176,6 @@ export default function ShopPage() {
     </div>
   );
 
-  if (view === "stock") {
-    return (
-      <Screen title="Kitchen stock">
-        {switcher}
-        <StockView stock={stock} movements={movements} shops={shops} members={members} meId={me?.id} />
-      </Screen>
-    );
-  }
   if (view === "catalog") {
     return (
       <Screen title="Catalog">

@@ -115,7 +115,7 @@ export default function MeetingPage() {
   const total = items.reduce((s, a) => s + (a.minutes ?? 0), 0);
 
   return (
-    <Screen title="Meeting" back="/more">
+    <Screen title="Meeting" back="/">
       {!next ? (
         <Card>
           <h2 className="font-display text-xl">Next family meeting</h2>

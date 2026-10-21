@@ -118,7 +118,7 @@ export default function ContactsPage() {
   );
 
   return (
-    <Screen title="Contacts" back="/more">
+    <Screen title="Contacts" back="/">
       <div className="flex gap-2">
         <label htmlFor="contact-search" className="sr-only">
           Search contacts

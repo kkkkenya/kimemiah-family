@@ -12,10 +12,10 @@ const icon = (d: ReactNode) => (
 
 const TABS = [
   { href: "/", label: "Home", icon: icon(<path d="M3 11.5 12 4l9 7.5M5.5 10v9.5h13V10" />) },
+  { href: "/stock", label: "Stock", icon: icon(<><path d="M4 8.5 12 4l8 4.5v9L12 22l-8-4.5Z" /><path d="M4 8.5 12 13l8-4.5M12 13v9" /></>) },
   { href: "/shop", label: "Shop", icon: icon(<><path d="M5 7h14l-1.2 11.2a1.5 1.5 0 0 1-1.5 1.3H7.7a1.5 1.5 0 0 1-1.5-1.3Z" /><path d="M9 7V5.5a3 3 0 0 1 6 0V7" /></>) },
   { href: "/jobs", label: "Jobs", icon: icon(<><rect x="5" y="4" width="14" height="17" rx="2" /><path d="m9 12 2 2 4-4M9 4V3h6v1" /></>) },
   { href: "/money", label: "Money", icon: icon(<><rect x="3" y="6.5" width="18" height="11" rx="2" /><circle cx="12" cy="12" r="2.5" /></>) },
-  { href: "/more", label: "More", icon: icon(<><circle cx="6" cy="12" r="1.3" /><circle cx="12" cy="12" r="1.3" /><circle cx="18" cy="12" r="1.3" /></>) },
 ];
 
 export function BottomNav() {
