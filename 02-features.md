@@ -17,7 +17,7 @@ Rules that apply everywhere:
 - "Still yours" reminders and jobs that need rescuing.
 - **Jobs: the last 2 weeks**: each person's time given against an equal share, with a plain label (Just starting, Room to help, Doing your part, Doing a lot, Away), and your own panel: jobs that suit you, or, if you've been doing a lot, the choice to take it easy for a week.
 - Where are you? (At home / Out / Away) and everyone else's.
-- Turn on alerts for this phone, and the family photo.
+- Turn on alerts for this phone, and your picture. A Home photo shows only if you chose one in Settings (none by default, since the family photo doesn't include everyone).
 - Still to come: items that are Out, "Wanjiru is going to the market", money left this month.
 
 ## 2. Shop (Catalog, Cart / List, Kitchen stock)
@@ -142,6 +142,7 @@ See [03-family-meeting.md](03-family-meeting.md) for the first meeting.
 
 ## 7. Settings (under More)
 
+- **You**: the name shown in the app, your picture (8 to choose from, also offered right after "Who's using this phone?"), and the photo on your own Home screen: none, the family photo, or one you upload (shrunk on the phone, hidden location details dropped).
 - Alerts on this phone (on or off).
 - **Your jobs**: "No heavy jobs" (heavy jobs aren't suggested to you) and "Take it easy for a week" (no suggestions until then). Wanini starts with No heavy jobs on.
 - **The house**: days before a waiting job goes on the meeting agenda, pause all alerts on every phone, and the ground rules.

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
+import { ProfileCard } from "@/components/ProfileCard";
 import { PushCard } from "@/components/PushCard";
 import { HouseSettingsCard, MyJobSettings } from "@/components/SettingsCards";
 import { Card, Screen } from "@/components/Screen";
@@ -69,6 +70,7 @@ export default function SettingsPage() {
 
   return (
     <Screen title="Settings" back="/more">
+      <ProfileCard />
       <PushCard />
       <MyJobSettings />
       <HouseSettingsCard />

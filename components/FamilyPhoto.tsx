@@ -1,54 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
-import { localDB } from "@/lib/sync/client";
-import { getMeta, setMeta } from "@/lib/sync/db";
+import { useFamilyImage } from "@/lib/images";
+import { useMe } from "@/lib/sync/hooks";
 
-const KEY = "photo:home";
-const REFRESH_MS = 24 * 60 * 60 * 1000;
+type WithPhoto = { id: string; home_photo?: string | null };
 
-type Cached = { blob: Blob; fetchedAt: number };
+/** Where my chosen Home photo lives: the family photo, or my own upload (versioned by upload time). */
+export function homePhotoPath(me: WithPhoto | undefined): { path: string; version: string } | null {
+  if (!me?.home_photo) return null;
+  if (me.home_photo === "family") return { path: "home.jpg", version: "family" };
+  return { path: `home/${me.id}.jpg`, version: me.home_photo.slice(4) };
+}
 
-// The family photo from the private bucket. Kept on the phone so it shows offline;
-// fetched again at most once a day.
+// The Home photo, only if this person chose one in Settings (the family photo or their own).
 export function FamilyPhoto() {
-  const [url, setUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    let objectUrl: string | null = null;
-    let cancelled = false;
-    const show = (blob: Blob) => {
-      if (cancelled) return;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-      objectUrl = URL.createObjectURL(blob);
-      setUrl(objectUrl);
-    };
-
-    (async () => {
-      const db = localDB();
-      const cached = await getMeta<Cached>(db, KEY);
-      if (cached?.blob) show(cached.blob);
-      const stale = !cached || Date.now() - cached.fetchedAt > REFRESH_MS;
-      if (!stale || !navigator.onLine) return;
-      const { data } = await supabase().storage.from("family").download("home.jpg");
-      if (data) {
-        await setMeta(db, KEY, { blob: data, fetchedAt: Date.now() });
-        show(data);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, []);
-
+  const me = useMe() as WithPhoto | undefined;
+  const photo = homePhotoPath(me);
+  const url = useFamilyImage(photo?.path ?? null, photo?.version);
   if (!url) return null;
   return (
     <figure className="overflow-hidden rounded-xl bg-raised shadow-[0_1px_3px_rgba(10,51,35,.10)]">
       {/* eslint-disable-next-line @next/next/no-img-element -- local blob URL, not optimisable */}
-      <img src={url} alt="The Kimemiah family together at home" className="aspect-[4/3] w-full object-cover" />
+      <img src={url} alt={me?.home_photo === "family" ? "The family together at home" : "Your Home photo"} className="aspect-[4/3] w-full object-cover" />
       <div className="kanga h-1" />
     </figure>
   );

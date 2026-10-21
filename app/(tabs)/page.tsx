@@ -1,6 +1,7 @@
 "use client";
 
 import { ContactSearch } from "@/components/ContactSearch";
+import { Avatar } from "@/components/Avatar";
 import { FamilyPhoto } from "@/components/FamilyPhoto";
 import { PresenceCard } from "@/components/Presence";
 import { PushCard } from "@/components/PushCard";
@@ -21,6 +22,12 @@ export default function HomePage() {
 
   return (
     <Screen title={me ? `${hello}, ${me.name}` : hello}>
+      {me && (
+        <div className="-mt-2 flex items-center gap-2">
+          <Avatar avatar={(me as { avatar?: string | null }).avatar} name={me.name} size={44} />
+          <span className="text-sm text-muted">Change your picture, name or Home photo in More › Settings.</span>
+        </div>
+      )}
       <ContactSearch />
       <JobAlerts link />
       <JobStats />

@@ -52,7 +52,7 @@ All tables have: `id` (made on the phone), `created_at`, `updated_at`, `deleted_
 | Table | Purpose |
 |---|---|
 | settings | Days before a job is flagged, ground rules, push kill switch, PIN version |
-| members | The six people; `presence` (at_home / out / away), `no_heavy` and `ease_until`, which each person sets for themselves; `ease_offered_at` and `nudged_at` (alert bookkeeping) |
+| members | The six people; `name`, `avatar` (a1–a8) and `home_photo` (none, `family`, or `own:<upload time>`), `presence` (at_home / out / away), `no_heavy` and `ease_until`, which each person sets for themselves; `ease_offered_at` and `nudged_at` (alert bookkeeping) |
 | devices | Signed-in phones, their member, revoked or not |
 | auth_failures | Failed PIN attempts (hashed IP) |
 | shops | Supermarket, market, mama mboga, wholesaler |
@@ -91,6 +91,8 @@ Views: `shopping_needed`, `money_balance`, `budget_vs_actual`.
 - Reminders show in the app (every 2 hours, 07:00–21:00 Nairobi) and as push alerts.
 - **Sharing the work** (`lib/jobs/stats.ts`, tested): time given = the work in each finished share over 14 days. An equal share is the house total over the people at home (not remote, not Away). Bands: under 0.5 share Room to help, over 1.6 Doing a lot, else Doing your part; nothing judged under 2 hours of house work. `suggestFor` picks, among people the job suits (at home, not easing off, not heavy for `no_heavy`, room left), whoever has given least; none on a tie. The same rules drive the Home card, the job tags and the push alerts.
 - **Meals removed** (migration `0014`): the three meal tables were empty and are dropped; `0015` leaves empty stand-in views so phones on the older version keep syncing. Drop those views once every phone has updated.
+
+**Pictures (migration `0016`)**: profile pictures are in the private `family` bucket as `avatars/a1.jpg` to `a8.jpg` (`scripts/upload-avatars.mjs`, square 256 px), readable as soon as a phone is unlocked so they show on "Who's using this phone?". Each person's own Home photo is `family/home/<member id>.jpg`, which only that person can upload or replace. Phones keep pictures offline and refresh them daily.
 
 ## Supermarket prices
 
