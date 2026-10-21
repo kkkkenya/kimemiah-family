@@ -48,8 +48,9 @@ export function ItemPrice({ line, matches }: { line: ListLine; matches: CatalogM
         )}
       </span>
       <span className="block text-muted tabular">
-        {otherPick ? `${storeName(other)}: ${label(otherPick)} · ${kes(otherPick.effective_price)}` : `${storeName(other)}: no price`}
-        {usual ? ` · Usual: ${kes(usual)}` : ""}
+        {[otherPick ? `${storeName(other)}: ${label(otherPick)} · ${kes(otherPick.effective_price)}` : null, usual ? `Usual: ${kes(usual)}` : null]
+          .filter(Boolean)
+          .join(" · ")}
       </span>
       {rival && (
         <span className="block text-ok-fg">

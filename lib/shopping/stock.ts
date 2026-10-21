@@ -1,7 +1,7 @@
 // Stock logic: counts, the automatic shopping list, "Put away" and the "ran out early" note.
 // Pure functions over this phone's copy, so they work with no signal.
 
-import { isCounted, stockStatus, type StockLike } from "./pricing";
+import { isCounted, stockStatus, type CatalogMatch, type StockLike } from "./pricing";
 
 export type Movement = {
   id: string;
@@ -71,21 +71,59 @@ export function parseQty(text: string | null | undefined): number | null {
   return n > 0 ? n : null;
 }
 
+// House units counted one by one: a 10-pack of tissue is 10 rolls, Geisha 4x125g is 4 bars.
+// Other count units ("tray", "pack", "set") are the pack itself: 30 eggs are 1 tray.
+const SINGLE = /^(roll|bar|piece|tube|sachet|cube|box|bottle|can)s?$/i;
+const WEIGHT: Record<string, number> = { kg: 1, g: 0.001 };
+const VOLUME: Record<string, number> = { l: 1, litre: 1, liter: 1, ml: 0.001 };
+
+/** A house unit as an amount: "litre" is 1 L, "2 kg packet" is 2 kg, "500 ml" is 0.5 L, "roll" is one item. */
+function houseUnit(unit: string): { qty: number; base: "kg" | "liter" } | { single: boolean } {
+  const m = unit.trim().toLowerCase().match(/^(\d+(?:\.\d+)?)?\s*(kg|g|litre|liter|l|ml)(?![a-z])/);
+  if (m) {
+    const n = Number(m[1] ?? 1);
+    return m[2] in WEIGHT ? { qty: n * WEIGHT[m[2]], base: "kg" } : { qty: n * VOLUME[m[2]], base: "liter" };
+  }
+  return { single: SINGLE.test(unit.trim()) };
+}
+
+/**
+ * How many of the house unit one catalog pack adds: Fresh Fri 3L is 3 litres, a 10-pack of
+ * toilet tissue is 10 rolls, a 2 kg sugar packet is 2 kg. 1 when the two can't be compared.
+ */
+export function unitsPerPack(product: Pick<CatalogMatch, "normalized_qty" | "normalized_unit" | "pack_size_label"> | undefined, unit: string | undefined): number {
+  if (!product || !unit) return 1;
+  const house = houseUnit(unit);
+  const qty = Number(product.normalized_qty ?? 0);
+  if ("base" in house) {
+    if (!qty || product.normalized_unit !== house.base) return 1;
+    return Math.round((qty / house.qty) * 100) / 100 || 1;
+  }
+  if (!house.single) return 1;
+  if (product.normalized_unit === "unit" && qty >= 1) return qty;
+  const multi = product.pack_size_label?.match(/^(\d+)\s*X/i);
+  return multi ? Number(multi[1]) : 1;
+}
+
 export type PutAwayLine = {
   extraId: string;
   itemId: string | null;
   title: string;
   shopId: string | null;
   level: boolean; // OK / Low / Out item: goes back to OK, no count
-  qty: number;
-  price: number | null; // per unit, KES
+  qty: number; // packs bought
+  perPack?: number; // house units in one pack (3 for a 3 L bottle counted in litres); 1 if missing
+  price: number | null; // per pack, KES
 };
+
+/** House units a line adds to stock: packs bought times what one pack holds. */
+export const unitsAdded = (l: PutAwayLine) => Math.round(l.qty * (l.perPack ?? 1) * 100) / 100;
 
 /** Stock changes for a put away: counted items go up by what was bought; level items get a 0 marker for history and the early-run check. */
 export function putAwayMovements(lines: PutAwayLine[]): { item_id: string; delta: number; level: boolean }[] {
   return lines
     .filter((l) => l.itemId && (l.level || l.qty > 0))
-    .map((l) => ({ item_id: l.itemId!, delta: l.level ? 0 : l.qty, level: l.level }));
+    .map((l) => ({ item_id: l.itemId!, delta: l.level ? 0 : unitsAdded(l), level: l.level }));
 }
 
 export const lineTotal = (l: PutAwayLine) => (l.price ?? 0) * (l.level ? 1 : l.qty);

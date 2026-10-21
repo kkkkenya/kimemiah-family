@@ -30,7 +30,8 @@ export function TripCheck({ supermarkets, trips, stock, onList, meId, nameOf, on
   const active = trips.filter(isActive);
   const mine = active.find((t) => t.member_id === meId);
   const others = active.filter((t) => t.member_id !== meId);
-  const low = runningLow(stock).filter((r) => !onList(r.item.name, r.item.id));
+  // Only what this run can buy: eggs from the market aren't offered for a Quickmart trip.
+  const low = runningLow(stock).filter((r) => supermarkets.some((s) => s.id === r.item.shop_id) && !onList(r.item.name, r.item.id));
   const shopName = (id: string | null) => supermarkets.find((s) => s.id === id)?.name ?? "the shops";
 
   function start(shop: Shop) {
@@ -57,7 +58,14 @@ export function TripCheck({ supermarkets, trips, stock, onList, meId, nameOf, on
           </div>
           {low.length > 0 && (
             <div className="mt-2">
-              <h3 className="font-bold">Grab while you&apos;re there (running low)</h3>
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="font-bold">Fast movers running low (skip the kiosk)</h3>
+                {low.length > 1 && (
+                  <button type="button" onClick={() => low.forEach((r) => onAdd(r.item))} className="min-h-12 shrink-0 rounded-xl px-2 font-bold text-brand">
+                    + Add all {low.length}
+                  </button>
+                )}
+              </div>
               <ul className="mt-1 flex flex-wrap gap-2">
                 {low.map((r) => (
                   <li key={r.item.id}>

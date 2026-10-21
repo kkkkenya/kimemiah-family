@@ -43,7 +43,8 @@ Test phones: a low-end Android (2-3 GB RAM), a mid-range Samsung, and a family i
 
 ## Shopping prices
 
-- [ ] The phone's offline price copy (`local_catalog_matches`) stays under about 1,000 rows and 200 KB.
+- [ ] On a low-end Android, the first catalog download finishes in the background without blocking unlock or the Shop tab, and search stays quick.
+- [ ] The sync after the weekly scrape downloads only the rows whose price, sale or stock changed.
 - [ ] In airplane mode, switching Essentials / Full shop / + Upgrades changes the list and the totals correctly.
 - [ ] In airplane mode, "Compare brands and sizes" opens and shows both stores.
 - [ ] The weekly scraper run shows `success` for Quickmart in `scrape_runs`, and no electronics or appliances appear in `catalog_products`.

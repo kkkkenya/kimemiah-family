@@ -6,6 +6,7 @@ import {
   parseQty,
   putAwayMovements,
   ranOutEarly,
+  unitsPerPack,
   spendByShop,
   withLocalCounts,
   type Movement,
@@ -109,6 +110,28 @@ describe("put away", () => {
       { item_id: "oil", delta: 2, level: false },
       { item_id: "sukuma", delta: 0, level: true },
     ]);
+  });
+
+  it("counts packs in the house unit", () => {
+    const pack = (normalized_qty: number, normalized_unit: "kg" | "liter" | "unit", pack_size_label: string) => ({ normalized_qty, normalized_unit, pack_size_label });
+    // Lines from a real Naivas receipt (21 Oct 2026) against the starter stock units.
+    expect(unitsPerPack(pack(3, "liter", "3L"), "litre")).toBe(3); // Fresh Fri 3L
+    expect(unitsPerPack(pack(10, "unit", "10PK"), "roll")).toBe(10); // toilet tissue 10-pack
+    expect(unitsPerPack(pack(0.5, "kg", "4X125G"), "bar")).toBe(4); // Geisha 4x125g
+    expect(unitsPerPack(pack(4, "unit", "4PK"), "piece")).toBe(4); // Supa Brite 4pk
+    expect(unitsPerPack(pack(2, "kg", "2KG"), "kg")).toBe(2); // sugar 2kg
+    expect(unitsPerPack(pack(2, "kg", "2KG"), "2 kg packet")).toBe(1); // Soko maize meal 2kg
+    expect(unitsPerPack(pack(1, "kg", "1KG"), "500 g packet")).toBe(2); // salt 1kg
+    expect(unitsPerPack(pack(0.5, "liter", "500ML"), "litre")).toBe(0.5);
+    expect(unitsPerPack(pack(0.75, "liter", "750ML"), "750 ml")).toBe(1); // bleach
+    expect(unitsPerPack(pack(0.12, "liter", "120ML"), "tube")).toBe(1); // toothpaste
+    expect(unitsPerPack(pack(30, "unit", "30PK"), "tray")).toBe(1); // 30 eggs are one tray
+    expect(unitsPerPack(pack(0.4, "kg", "400G"), "500 ml")).toBe(1); // dish paste vs liquid: can't compare
+    expect(unitsPerPack(undefined, "litre")).toBe(1); // not from the catalog
+  });
+
+  it("adds packs times what each holds", () => {
+    expect(putAwayMovements([line({ itemId: "oil", qty: 2, perPack: 3 })])).toEqual([{ item_id: "oil", delta: 6, level: false }]);
   });
 
   it("makes one spend entry per shop from the prices", () => {

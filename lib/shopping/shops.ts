@@ -25,6 +25,7 @@ export type StockItem = Row & {
 export type ShoppingItem = Row & {
   title: string;
   qty: string | null;
+  quantity?: number; // how many, from the catalog stepper
   shop_id: string | null;
   item_id: string | null;
   bought_at: string | null;
@@ -38,7 +39,7 @@ export type ShoppingItem = Row & {
 };
 
 // Supermarkets first, market separate: they're different trips. No kiosk (prices run 20-40% higher).
-const ORDER = ["Naivas", "Quickmart", "Supermarket (either)", "Market", "Mama mboga", "Wholesaler", "Gas dealer", "Water vendor", "M-Pesa", "Other"];
+const ORDER = ["Naivas", "Quickmart", "Supermarket (either)", "Market", "Mama mboga", "Wholesaler", "Vet", "Kenchic", "Gas dealer", "Water vendor", "M-Pesa", "Other"];
 export const SUPERMARKETS = new Set(["Naivas", "Quickmart", "Supermarket (either)"]);
 
 export function sortShops(shops: Shop[]): Shop[] {

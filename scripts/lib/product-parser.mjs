@@ -166,6 +166,19 @@ export function canonicalKey(title) {
   return size ? `${concept}-${size.label}` : concept;
 }
 
+// ---------------------------------------------------------------- default tier
+
+// Essentials: core food and hygiene. Upgrades: home hardware, plastics and kitchenware.
+// Everything else (pantry extras, drinks, alcohol, detergents) is Full shop. Same lists as migration 0008.
+const ESSENTIAL = new Set(["maize-flour", "wheat-flour", "rice", "cooking-oil", "sugar", "milk", "bread", "eggs", "salt", "toilet-tissue", "bathing-soap", "bar-soap"]);
+const UPGRADE = new Set(["bucket", "basin", "hard-broom", "soft-broom", "mop", "dustpan", "food-container", "clothes-pegs", "hangers", "led-bulb", "kitchen-cloth", "doormat", "extension-cable", "flask", "sufuria"]);
+
+export function tierFor(concept, categoryGroup) {
+  if (concept && ESSENTIAL.has(concept)) return "essential";
+  if (categoryGroup === "home_qol" || (concept && UPGRADE.has(concept))) return "qol";
+  return "standard";
+}
+
 // ---------------------------------------------------------------- brands
 
 const BRANDS = [
@@ -229,5 +242,6 @@ export function parseProduct({ store, externalSku, title, regularPrice, salePric
     is_on_sale: Boolean(sale),
     product_url: productUrl,
     in_stock: inStock,
+    default_tier: tierFor(concept, categoryGroup),
   };
 }

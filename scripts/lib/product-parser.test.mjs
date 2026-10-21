@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canonicalKey, conceptFor, extractBrand, isBlocked, parsePrice, parseProduct, parseSize } from "./product-parser.mjs";
+import { canonicalKey, conceptFor, extractBrand, isBlocked, parsePrice, parseProduct, parseSize, tierFor } from "./product-parser.mjs";
 
 // Titles below are real ones seen on naivas.online and quickmart.co.ke (Oct 2026).
 
@@ -146,5 +146,22 @@ describe("canonicalKey and parseProduct", () => {
     expect(row.sale_price).toBeNull();
     expect(row.is_on_sale).toBe(false);
     expect(parseProduct({ store: "naivas", externalSku: "2", title: "Ramtons Electric Kettle", regularPrice: 2500, categoryGroup: "home_qol" })).toBeNull();
+  });
+});
+
+describe("tierFor", () => {
+  it("tags staples as Essentials, home goods as Upgrades, the rest as Full shop", () => {
+    expect(tierFor("maize-flour", "food_cupboard")).toBe("essential");
+    expect(tierFor("toilet-tissue", "toiletries")).toBe("essential");
+    expect(tierFor("bucket", "cleaning_laundry")).toBe("qol");
+    expect(tierFor(null, "home_qol")).toBe("qol");
+    expect(tierFor("lager-beer", "liquor_alcohol")).toBe("standard");
+    expect(tierFor("washing-powder", "cleaning_laundry")).toBe("standard");
+    expect(tierFor(null, "beverages")).toBe("standard");
+  });
+
+  it("is part of every parsed row", () => {
+    const row = parseProduct({ store: "quickmart", externalSku: "1", title: "Soko Maize Meal 2Kg", regularPrice: 149, categoryGroup: "food_cupboard" });
+    expect(row?.default_tier).toBe("essential");
   });
 });

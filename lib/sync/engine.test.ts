@@ -60,9 +60,12 @@ class FakeRemote implements Remote {
 
   catalog: Row[] = [];
   catalogCalls = 0;
-  async pullCatalog() {
+  async pullCatalog(since: string | null, offset: number, limit: number) {
     this.catalogCalls++;
-    return this.catalog;
+    const rows = this.catalog
+      .filter((r) => (since ? (r.price_changed_at as string) > since : r.in_stock !== false))
+      .sort((a, b) => (a.price_changed_at as string).localeCompare(b.price_changed_at as string));
+    return rows.slice(offset, offset + limit);
   }
 
   async pull(t: SyncTable, since: string | null) {
@@ -194,16 +197,24 @@ describe("sync engine", () => {
     expect(remote.calls).toBe(1);
   });
 
-  it("keeps supermarket prices offline and refreshes them at most every few hours", async () => {
+  it("downloads the catalog once, then only rows whose price changed", async () => {
     const engine = createSyncEngine(db, remote);
-    remote.catalog = [{ id: "p1", store: "quickmart", title: "Rina Vegetable Cooking Oil 2L" }];
+    const t = (d: number) => `2026-10-${d}T02:00:00Z`;
+    remote.catalog = [
+      { id: "p1", title: "Rina Oil 2L", effective_price: 545, in_stock: true, price_changed_at: t(10) },
+      { id: "p2", title: "Fresh Fri 2L", effective_price: 560, in_stock: true, price_changed_at: t(10) },
+      { id: "p3", title: "Old Oil 2L", effective_price: 500, in_stock: false, price_changed_at: t(10) },
+    ];
     await engine.syncNow();
-    expect(await db.catalog.count()).toBe(1);
+    expect((await db.catalog.toArray()).map((r) => r.id).sort()).toEqual(["p1", "p2"]);
 
-    remote.catalog = [{ id: "p2", store: "quickmart", title: "Fresh Fri Vegetable Cooking Oil 2L" }];
+    // A week later: one price changed and one product left the shelf.
+    remote.catalog[0] = { ...remote.catalog[0], effective_price: 499, price_changed_at: t(17) };
+    remote.catalog[1] = { ...remote.catalog[1], in_stock: false, price_changed_at: t(17) };
     await engine.syncNow();
-    expect(remote.catalogCalls).toBe(1); // not stale yet
-    await engine.refreshCatalog(true);
-    expect((await db.catalog.toArray()).map((r) => r.id)).toEqual(["p2"]); // replaced, not merged
+    expect(remote.catalogCalls).toBe(1); // checked within the hour already
+    expect(await engine.refreshCatalog(true)).toBe(2); // only the two changed rows
+    expect((await db.catalog.get("p1"))?.effective_price).toBe(499);
+    expect((await db.catalog.get("p2"))?.in_stock).toBe(false);
   });
 });
