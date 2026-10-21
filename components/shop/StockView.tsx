@@ -18,6 +18,7 @@ const CATEGORIES: Record<string, string> = {
   bathroom: "Bathroom",
   utilities: "Gas, power and fuel",
   drinks_alcohol: "Drinks for guests",
+  pets: "Dog",
   home_upgrades: "Home upgrades",
 };
 const categoryName = (c: string) => CATEGORIES[c] ?? c.replace(/_/g, " ").replace(/^./, (x) => x.toUpperCase());

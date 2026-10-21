@@ -64,6 +64,8 @@ export function CatalogView({ products, stock, cart, cartLines, history, onAdd, 
   const more = useRef<HTMLDivElement>(null);
 
   const onShelf = useMemo(() => products.filter((p) => p.in_stock !== false), [products]);
+  // Naivas blocks price collection, so only Quickmart has prices today; Naivas options appear if that changes.
+  const hasNaivas = useMemo(() => onShelf.some((p) => p.store === "naivas"), [onShelf]);
   const packs = useMemo(() => byPack(onShelf), [onShelf]);
   const houseConcepts = useMemo(() => new Set(stock.map((s) => s.canonical_concept).filter((c): c is string => !!c)), [stock]);
   const houseTier = useMemo(
@@ -104,7 +106,7 @@ export function CatalogView({ products, stock, cart, cartLines, history, onAdd, 
   }, [cards.length, shown]);
 
   const inCart = useMemo(() => new Map(cart.filter((r) => r.catalog_product_id).map((r) => [r.catalog_product_id as string, r])), [cart]);
-  const market = aisle === "market" ? stock.filter((s) => s.track_mode === "level" || s.category === "fresh_produce").filter((s) => matchesSearch({ title: s.name } as Product, query)) : [];
+  const market = aisle === "market" ? stock.filter((s) => s.category === "fresh_produce").filter((s) => matchesSearch({ title: s.name } as Product, query)) : [];
 
   const totals = storeTotals(cartLines, products as never);
   const priced = totals.filter((t) => t.priced > 0).sort((a, b) => a.total - b.total);
@@ -151,7 +153,7 @@ export function CatalogView({ products, stock, cart, cartLines, history, onAdd, 
           ))}
         </select>
         <select aria-label="Store" value={store} onChange={(e) => setStore(e.target.value as StoreFilter)} className={select}>
-          {STORE_FILTERS.map((s) => (
+          {STORE_FILTERS.filter((s) => hasNaivas || !s.id.includes("naivas")).map((s) => (
             <option key={s.id} value={s.id}>
               {s.label}
             </option>
@@ -273,24 +275,19 @@ function ProductCard({
       </div>
       <h3 className="mt-1 font-bold">{product.title}</h3>
 
-      <div className="mt-2 grid grid-cols-2 gap-2 text-sm tabular">
+      <div className={`mt-2 grid gap-2 text-sm tabular ${both ? "grid-cols-2" : "grid-cols-1"}`}>
         {(["naivas", "quickmart"] as Store[]).map((s) => {
           const p = prices[s];
+          if (!p) return null;
           return (
             <div key={s} className={`rounded-lg px-2 py-1.5 ${winner === s ? "bg-ok-bg text-ok-fg" : "bg-base"}`}>
               <span className="block text-xs font-bold">
                 {storeName(s)}
                 {winner === s && " · cheaper"}
               </span>
-              {p ? (
-                <>
-                  <strong>{kes(p.effective_price)}</strong>
-                  {p.is_on_sale && p.sale_price != null && <span className="ml-1 text-muted line-through">{kes(p.regular_price)}</span>}
-                  {perUnit(p) && <span className="block text-xs text-muted">{perUnit(p)}</span>}
-                </>
-              ) : (
-                <span className="block text-muted">{s === "naivas" ? "No Naivas price yet" : "Not at Quickmart"}</span>
-              )}
+              <strong>{kes(p.effective_price)}</strong>
+              {p.is_on_sale && p.sale_price != null && <span className="ml-1 text-muted line-through">{kes(p.regular_price)}</span>}
+              {perUnit(p) && <span className="block text-xs text-muted">{perUnit(p)}</span>}
             </div>
           );
         })}

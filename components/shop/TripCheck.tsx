@@ -30,7 +30,8 @@ export function TripCheck({ supermarkets, trips, stock, onList, meId, nameOf, on
   const active = trips.filter(isActive);
   const mine = active.find((t) => t.member_id === meId);
   const others = active.filter((t) => t.member_id !== meId);
-  const low = runningLow(stock).filter((r) => !onList(r.item.name, r.item.id));
+  // Only what this run can buy: eggs from the market aren't offered for a Quickmart trip.
+  const low = runningLow(stock).filter((r) => supermarkets.some((s) => s.id === r.item.shop_id) && !onList(r.item.name, r.item.id));
   const shopName = (id: string | null) => supermarkets.find((s) => s.id === id)?.name ?? "the shops";
 
   function start(shop: Shop) {

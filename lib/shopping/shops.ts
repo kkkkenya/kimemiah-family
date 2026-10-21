@@ -39,7 +39,7 @@ export type ShoppingItem = Row & {
 };
 
 // Supermarkets first, market separate: they're different trips. No kiosk (prices run 20-40% higher).
-const ORDER = ["Naivas", "Quickmart", "Supermarket (either)", "Market", "Mama mboga", "Wholesaler", "Gas dealer", "Water vendor", "M-Pesa", "Other"];
+const ORDER = ["Naivas", "Quickmart", "Supermarket (either)", "Market", "Mama mboga", "Wholesaler", "Vet", "Kenchic", "Gas dealer", "Water vendor", "M-Pesa", "Other"];
 export const SUPERMARKETS = new Set(["Naivas", "Quickmart", "Supermarket (either)"]);
 
 export function sortShops(shops: Shop[]): Shop[] {

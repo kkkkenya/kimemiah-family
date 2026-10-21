@@ -40,6 +40,7 @@ export type StockLike = {
   updated_at?: string;
   deleted_at?: string | null;
   actor_id?: string | null; // null until someone in the family has updated it
+  shop_id?: string | null;
 };
 
 /** Starter rows nobody has counted yet: their status is unknown, not "out". */

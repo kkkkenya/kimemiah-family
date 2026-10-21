@@ -42,7 +42,7 @@ This list is loaded into the app. The family edits it there: remove what we don'
 
 | Item | Unit | Min | Shop | Tier | Fast | Family |
 |---|---|---|---|---|---|---|
-| Eggs | tray | 1 | Supermarket | E | ✓ | eggs-30pk |
+| Eggs | tray | 1 | Market (KES 470) | E | ✓ | – |
 | Milk | 500 ml packet | 4 | Supermarket | E | ✓ | milk-500ml |
 | Bread | loaf | 1 | Supermarket | E | ✓ | bread-400g |
 | Tea leaves | 500 g packet | 1 | Supermarket | F | | tea-leaves-500g |
@@ -86,6 +86,16 @@ This list is loaded into the app. The family edits it there: remove what we don'
 | Beer (lager) | 500 ml | lager-beer-500ml |
 | Wine (red) | 750 ml bottle | red-wine-750ml |
 | Gin | 750 ml bottle | gin-750ml |
+
+## Dog (OK / Low / Out, no counting)
+
+| Item | Unit | Shop | Tier | Usual price |
+|---|---|---|---|---|
+| Dog unga | kg | Vet | E | KES 55 / kg |
+| Dog meat | kg | Kenchic | E | KES 190 / kg |
+| Dog dewormer | dose | Vet | F | |
+| Dog shampoo | bottle | Vet | F | |
+| Pestigon (ticks and fleas) | bottle | Vet | F | |
 
 ## Household upgrades (Can wait, minimum 0)
 

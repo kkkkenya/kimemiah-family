@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { kes, smartSplit, storeName, storeTotals, type CatalogMatch, type ListLine } from "@/lib/shopping/pricing";
 
-// Naivas vs Quickmart basket for the items in the current mode, plus a split run when it saves enough.
+// Supermarket basket for the items in the current mode: each store with online prices (only
+// Quickmart while Naivas blocks price collection), plus a split run when both have prices and it saves enough.
 export function StoreCompare({ lines, matches }: { lines: ListLine[]; matches: CatalogMatch[] }) {
   const [showSplit, setShowSplit] = useState(false);
   const totals = storeTotals(lines, matches);
@@ -15,21 +16,15 @@ export function StoreCompare({ lines, matches }: { lines: ListLine[]; matches: C
   return (
     <section aria-label="Supermarket comparison" className="rounded-xl border border-line bg-raised p-4">
       <h2 className="font-bold">Supermarket basket</h2>
-      <ul className="mt-2 grid grid-cols-2 gap-2">
-        {totals.map((t) => (
+      <ul className={`mt-2 grid gap-2 ${priced.length === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
+        {priced.map((t) => (
           <li key={t.store} className={`rounded-xl p-3 ${winner?.store === t.store ? "bg-ok-bg text-ok-fg" : "bg-base"}`}>
             <span className="block text-sm font-bold">{storeName(t.store)}</span>
-            {t.priced ? (
-              <>
-                <span className="block text-lg font-bold tabular">{kes(t.total)}</span>
-                <span className="block text-sm">
-                  {t.deals ? `${t.deals} on sale · saves ${kes(t.saves)}` : "No deals this week"}
-                  {t.missing ? ` · ${t.missing} not found` : ""}
-                </span>
-              </>
-            ) : (
-              <span className="block text-sm text-muted">No online prices this week</span>
-            )}
+            <span className="block text-lg font-bold tabular">{kes(t.total)}</span>
+            <span className="block text-sm">
+              {t.deals ? `${t.deals} on sale · saves ${kes(t.saves)}` : "No deals this week"}
+              {t.missing ? ` · ${t.missing} not found` : ""}
+            </span>
           </li>
         ))}
       </ul>
