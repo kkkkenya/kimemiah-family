@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Screen } from "@/components/Screen";
 
 const ITEMS = [
-  { href: "/more/meals", label: "Meals", hint: "This week's meals and who's cooking" },
   { href: "/more/meeting", label: "Meeting", hint: "Agenda, notes and decisions" },
   { href: "/more/contacts", label: "Contacts", hint: "Fundi, gas, water, clinic" },
   { href: "/more/settings", label: "Settings", hint: "This phone, alerts, other phones" },

@@ -10,6 +10,8 @@ export const SYNC_TABLES = [
   "shopping_extras",
   "trip_lines",
   "jobs",
+  "job_participants",
+  "job_rota",
   "thanks",
   "budget_categories",
   "money_entries",
@@ -17,9 +19,6 @@ export const SYNC_TABLES = [
   "meetings",
   "agenda_items",
   "decisions",
-  "meals",
-  "meal_ingredients",
-  "meal_slots",
   "contacts",
   "activity",
 ] as const;

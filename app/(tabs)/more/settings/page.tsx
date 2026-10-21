@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
+import { ProfileCard } from "@/components/ProfileCard";
+import { PushCard } from "@/components/PushCard";
+import { HouseSettingsCard, MyJobSettings } from "@/components/SettingsCards";
 import { Card, Screen } from "@/components/Screen";
 import { useSync } from "@/components/SyncProvider";
 import { supabase } from "@/lib/supabase/client";
@@ -67,6 +70,10 @@ export default function SettingsPage() {
 
   return (
     <Screen title="Settings" back="/more">
+      <ProfileCard />
+      <PushCard />
+      <MyJobSettings />
+      <HouseSettingsCard />
       <Card>
         <h2 className="font-bold">This phone</h2>
         <p className="text-muted">Used by {me?.name ?? "…"}</p>

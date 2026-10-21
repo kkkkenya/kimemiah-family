@@ -4,6 +4,20 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { useRouter } from "next/navigation";
 import type { SyncResult } from "@/lib/sync/engine";
 import { readIdentity, syncEngine, wipePhone } from "@/lib/sync/client";
+import { supabase } from "@/lib/supabase/client";
+
+const ROTA_KEY = "kimemiah-rota-checked";
+const ROTA_EVERY_MS = 30 * 60_000;
+
+async function postRotaJobs(): Promise<number> {
+  try {
+    const last = Number(localStorage.getItem(ROTA_KEY) ?? 0);
+    if (Date.now() - last < ROTA_EVERY_MS) return 0;
+    localStorage.setItem(ROTA_KEY, String(Date.now()));
+  } catch {}
+  const { data } = await supabase().rpc("ensure_rota_jobs");
+  return typeof data === "number" ? data : 0;
+}
 
 type SyncContext = {
   online: boolean;
@@ -37,6 +51,8 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         await wipePhone({ remote: true });
         router.replace("/unlock");
       }
+      // Today's weekly-grid jobs; the server posts each one once however many phones ask.
+      if (result.ok && (await postRotaJobs()) > 0) return await syncEngine().syncNow();
       return result;
     } finally {
       busy.current = false;

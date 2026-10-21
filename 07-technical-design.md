@@ -52,20 +52,20 @@ All tables have: `id` (made on the phone), `created_at`, `updated_at`, `deleted_
 | Table | Purpose |
 |---|---|
 | settings | Days before a job is flagged, ground rules, push kill switch, PIN version |
-| members | The six people |
+| members | The six people; `name`, `avatar` (a1–a8) and `home_photo` (none, `family`, or `own:<upload time>`), `presence` (at_home / out / away), `no_heavy` and `ease_until`, which each person sets for themselves; `ease_offered_at` and `nudged_at` (alert bookkeeping) |
 | devices | Signed-in phones, their member, revoked or not |
 | auth_failures | Failed PIN attempts (hashed IP) |
 | shops | Supermarket, market, mama mboga, wholesaler |
 | stock_items | Name, category, unit, minimum, price, shop, count or OK/Low/Out mode |
 | stock_movements | +/− changes to stock |
-| shopping_extras | One-off shopping items, optionally for a meal |
+| shopping_extras | One-off shopping items and the cart |
 | shopping_trips, trip_lines | "I'm going to", ticked items, put away |
-| jobs | Jobs and help requests: due, repeat, taken by, done by, waiting since |
-| thanks | Asante to a person for a job, meal or money in |
+| jobs | Jobs: category, `strain` (light / medium / heavy), `duration_min`, `people_needed`, urgent, `due_at`, repeat, two-stage `next_stage`, money fields (`requires_funds`, `estimated_cost_kes`, `funds_status`, `planned_for`), done by / at |
+| job_participants | Who is on a job and their `effort_pct` share, a part note, and `status` (active, rescuer, unable). Written only by the server functions `join_job`, `leave_job`, `rescue_job` (migration `0010`), which lock the job so shares never pass 100% |
+| thanks | Asante to a person for a job or money in |
 | money_entries | Money in and out, insert only, voids |
 | budget_categories, budgets | Monthly budget per category |
 | meetings, agenda_items, decisions | Family meetings |
-| meals, meal_ingredients, meal_slots | Saved meals and the week grid |
 | contacts | House phone book |
 | activity | Feed for Home and push alerts |
 | push_subscriptions | Each phone's push address |
@@ -83,6 +83,16 @@ Views: `shopping_needed`, `money_balance`, `budget_vs_actual`.
 - OK / Low / Out history comes from `audit_log` and needs signal. +/− history comes from the phone's movements.
 
 `stock_items` also carries `shopping_tier` (essential / standard / qol), `is_fast_mover`, `canonical_group_key` (exact pack, e.g. `cooking-oil-2l`), `canonical_concept` (product family, e.g. `cooking-oil`), `preferred_brand`, `brand_flexibility` (any_cheapest / prefer_named / strict_named), `last_out_at` and `early_depletion_streak`. `shopping_extras` carries `shopping_tier`, `catalog_product_id`, `preferred_store` and `quantity` (the cart stepper; totals multiply by it).
+
+**Jobs (Phase 3, migrations `0010` and `0011`)**
+- A job's status is worked out on the phone from facts, not stored: done if `done_at`; upcoming while a money job waits for money or its day; overdue once someone is on it and `due_at` has passed; taken when shares reach 100% with at least `people_needed` people; otherwise part-taken or open. No scheduled server job is needed and the board is right offline.
+- Size is `duration_min × people_needed` (person-minutes): up to 30 Quick, up to 90 Small, under 240 Medium, 240 or more Big. A share's time is that times its percent.
+- When a job is marked done, trigger `job_done_followups` creates its next stage and, for repeating jobs, the next one.
+- Reminders show in the app (every 2 hours, 07:00–21:00 Nairobi) and as push alerts.
+- **Sharing the work** (`lib/jobs/stats.ts`, tested): time given = the work in each finished share over 14 days. An equal share is the house total over the people at home (not remote, not Away). Bands: under 0.5 share Room to help, over 1.6 Doing a lot, else Doing your part; nothing judged under 2 hours of house work. `suggestFor` picks, among people the job suits (at home, not easing off, not heavy for `no_heavy`, room left), whoever has given least; none on a tie. The same rules drive the Home card, the job tags and the push alerts.
+- **Meals removed** (migration `0014`): the three meal tables were empty and are dropped; `0015` leaves empty stand-in views so phones on the older version keep syncing. Drop those views once every phone has updated.
+
+**Pictures (migration `0016`)**: profile pictures are in the private `family` bucket as `avatars/a1.jpg` to `a8.jpg` (`scripts/upload-avatars.mjs`, square 256 px), readable as soon as a phone is unlocked so they show on "Who's using this phone?". Each person's own Home photo is `family/home/<member id>.jpg`, which only that person can upload or replace. Phones keep pictures offline and refresh them daily.
 
 ## Supermarket prices
 
@@ -106,9 +116,11 @@ Views: `shopping_needed`, `money_balance`, `budget_vs_actual`.
 
 ## Push alerts
 
-- A new `activity` row triggers `notify` (Edge Function) with a shared secret.
-- `notify` skips the person who did the action, respects quiet hours (21:00 to 07:00 Nairobi), each person's on/off setting and the kill switch, groups bursts per person over about a minute, skips events older than an hour (old offline changes syncing), and removes dead subscriptions.
-- Alert text never includes money amounts.
+- Each phone subscribes (Web Push, VAPID) and saves its address with `save_push_subscription` (migration `0012`). The service worker (`app/sw.ts`) shows alerts and opens the Jobs tab on tap.
+- Every 5 minutes `pg_cron` runs `push_tick()`, which uses `pg_net` to POST to the app's `/api/push/tick` with the shared secret. The URL and secret are in Supabase Vault (`scripts/push-setup.mjs`, `npm run push:setup`), never in migrations. A phone can also call the route right away with its own sign-in token, after posting an urgent job or handing one over.
+- The route (`lib/server/push.ts`) posts today's weekly-grid jobs, works out alerts with `planAlerts` (`lib/push/plan.ts`, tested), claims each one with a conditional update (`urgent_notified_at`, `covered_notified_at`, `overdue_notified_at`, `last_reminded_at`, `handover_notified_at`) so two rounds never send twice, groups them per person and sends. Dead addresses (404/410) are removed.
+- Rules: quiet hours 21:00–07:00 Nairobi, nothing older than an hour, never the person who did it, reminders only for people At home, kill switch in `settings.push_kill_switch`, no money amounts.
+- This replaced the planned `notify` Edge Function: the route deploys with the app and needs no separate service.
 
 ## Backups
 
@@ -130,7 +142,7 @@ Never typed into chat, never committed.
 
 ```
 app/(tabs)/home  shop  jobs  money        Budget is a tab inside money
-app/more/meals  meeting  contacts  settings
+app/more/meeting  contacts  settings
 app/unlock  app/who                      PIN screen, "Who are you?"
 app/api/unlock  app/api/revoke
 lib/sync/      db.ts outbox.ts pull.ts claims.ts

@@ -1,7 +1,13 @@
 "use client";
 
+import { ContactSearch } from "@/components/ContactSearch";
+import { Avatar } from "@/components/Avatar";
 import { FamilyPhoto } from "@/components/FamilyPhoto";
-import { Card, Empty, Screen } from "@/components/Screen";
+import { PresenceCard } from "@/components/Presence";
+import { PushCard } from "@/components/PushCard";
+import { Screen } from "@/components/Screen";
+import { JobAlerts } from "@/components/jobs/JobAlerts";
+import { JobStats } from "@/components/jobs/JobStats";
 import { useMe } from "@/lib/sync/hooks";
 
 function greeting(hour: number) {
@@ -16,12 +22,18 @@ export default function HomePage() {
 
   return (
     <Screen title={me ? `${hello}, ${me.name}` : hello}>
+      {me && (
+        <div className="-mt-2 flex items-center gap-2">
+          <Avatar avatar={(me as { avatar?: string | null }).avatar} name={me.name} size={44} />
+          <span className="text-sm text-muted">Change your picture, name or Home photo in More › Settings.</span>
+        </div>
+      )}
+      <ContactSearch />
+      <JobAlerts link />
+      <JobStats />
+      <PresenceCard />
+      <PushCard compact />
       <FamilyPhoto />
-      <Card>
-        <h2 className="font-bold">Today</h2>
-        <p className="text-muted">Items running out, shop runs, today&apos;s meals and money left will show here.</p>
-      </Card>
-      <Empty>Nothing needs you right now.</Empty>
     </Screen>
   );
 }

@@ -9,7 +9,6 @@ const OFFLINE_PAGES = [
   "/jobs",
   "/money",
   "/more",
-  "/more/meals",
   "/more/meeting",
   "/more/contacts",
   "/more/settings",

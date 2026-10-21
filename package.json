@@ -15,7 +15,8 @@
     "check:security": "node scripts/security-check.mjs",
     "icons": "node scripts/make-icons.mjs",
     "photo": "node scripts/upload-photo.mjs",
-    "vercel:env": "node scripts/vercel-env.mjs"
+    "vercel:env": "node scripts/vercel-env.mjs",
+    "push:setup": "node scripts/push-setup.mjs"
   },
   "dependencies": {
     "@serwist/next": "^9.5.13",
@@ -27,7 +28,8 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "server-only": "^0.0.1",
-    "serwist": "^9.5.13"
+    "serwist": "^9.5.13",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -36,6 +38,7 @@
     "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "age-encryption": "^0.2.4",
     "eslint": "^9",
     "eslint-config-next": "15.5",

@@ -6,13 +6,15 @@ Five adults:
 
 | Person | Situation |
 |---|---|
-| Mom | Lives at home, runs much of the house today |
-| Sister, 31 | Earning |
-| Brother, 27 | In school |
-| Brother, 25 | Trading forex, not yet profitable |
-| Me | Not earning yet |
+| Juliet (Mom) | Lives at home, runs much of the house today, mostly cooks |
+| Wanini (sister), 31 | Earning. Cooks sometimes, cleans the kitchen and arranges dishes. Can't do physically heavy work |
+| Daniel (older brother), 27 | In school |
+| Vinnie (brother), 25 | Trading forex, not yet profitable. Cuts the fence, compound work, washes dishes |
+| Greg | Not earning yet. Washes the dog, does much of the cooking |
 
-Dad lives elsewhere and sends money for shopping and the market. He uses the app too, with the same access as everyone else.
+Peter (Dad, "Mguu Kubwa") lives elsewhere and sends money for shopping and the market, and pays utilities (KPLC tokens, water bill) directly. He uses the app too, with the same access as everyone else.
+
+Each person sets where they are in the app: **At home**, **Out** (errands, school) or **Away from home**.
 
 ## How things work today
 
