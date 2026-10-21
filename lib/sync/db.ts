@@ -16,6 +16,9 @@ export type OutboxEntry = {
 
 export type MetaEntry = { key: string; value: unknown };
 
+// Tables added after the first version get their own Dexie version below.
+const LATER: ReadonlySet<SyncTable> = new Set<SyncTable>(["job_participants"]);
+
 export class LocalDB extends Dexie {
   outbox!: Table<OutboxEntry, number>;
   meta!: Table<MetaEntry, string>;
@@ -26,7 +29,7 @@ export class LocalDB extends Dexie {
       outbox: "++seq, id, status, table",
       meta: "key",
     };
-    for (const t of SYNC_TABLES) stores[t] = "id, updated_at";
+    for (const t of SYNC_TABLES) if (!LATER.has(t)) stores[t] = "id, updated_at";
     this.version(1).stores(stores);
     // Supermarket prices kept offline: a few hundred rows from offline_price_matches.
     this.version(2).stores({ local_catalog_matches: "id, store, canonical_concept, canonical_group_key" });
@@ -35,6 +38,8 @@ export class LocalDB extends Dexie {
       local_catalog_matches: null,
       catalog_products: "id, store, category_group, canonical_concept, canonical_group_key",
     });
+    // Who is doing each job and their share (written only through the server's join functions).
+    this.version(4).stores({ job_participants: "id, updated_at, job_id" });
   }
 
   get catalog(): Table<Row, string> {

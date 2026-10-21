@@ -52,7 +52,7 @@ All tables have: `id` (made on the phone), `created_at`, `updated_at`, `deleted_
 | Table | Purpose |
 |---|---|
 | settings | Days before a job is flagged, ground rules, push kill switch, PIN version |
-| members | The six people |
+| members | The six people, and `presence` (at_home / out / away), which each person sets for themselves |
 | devices | Signed-in phones, their member, revoked or not |
 | auth_failures | Failed PIN attempts (hashed IP) |
 | shops | Supermarket, market, mama mboga, wholesaler |
@@ -60,7 +60,8 @@ All tables have: `id` (made on the phone), `created_at`, `updated_at`, `deleted_
 | stock_movements | +/− changes to stock |
 | shopping_extras | One-off shopping items, optionally for a meal |
 | shopping_trips, trip_lines | "I'm going to", ticked items, put away |
-| jobs | Jobs and help requests: due, repeat, taken by, done by, waiting since |
+| jobs | Jobs: category, `strain` (light / medium / heavy), `duration_min`, `people_needed`, urgent, `due_at`, repeat, two-stage `next_stage`, money fields (`requires_funds`, `estimated_cost_kes`, `funds_status`, `planned_for`), done by / at |
+| job_participants | Who is on a job and their `effort_pct` share, a part note, and `status` (active, rescuer, unable). Written only by the server functions `join_job`, `leave_job`, `rescue_job` (migration `0010`), which lock the job so shares never pass 100% |
 | thanks | Asante to a person for a job, meal or money in |
 | money_entries | Money in and out, insert only, voids |
 | budget_categories, budgets | Monthly budget per category |
@@ -83,6 +84,12 @@ Views: `shopping_needed`, `money_balance`, `budget_vs_actual`.
 - OK / Low / Out history comes from `audit_log` and needs signal. +/− history comes from the phone's movements.
 
 `stock_items` also carries `shopping_tier` (essential / standard / qol), `is_fast_mover`, `canonical_group_key` (exact pack, e.g. `cooking-oil-2l`), `canonical_concept` (product family, e.g. `cooking-oil`), `preferred_brand`, `brand_flexibility` (any_cheapest / prefer_named / strict_named), `last_out_at` and `early_depletion_streak`. `shopping_extras` carries `shopping_tier`, `catalog_product_id`, `preferred_store` and `quantity` (the cart stepper; totals multiply by it).
+
+**Jobs (Phase 3, migrations `0010` and `0011`)**
+- A job's status is worked out on the phone from facts, not stored: done if `done_at`; upcoming while a money job waits for money or its day; overdue once someone is on it and `due_at` has passed; taken when shares reach 100% with at least `people_needed` people; otherwise part-taken or open. No scheduled server job is needed and the board is right offline.
+- Size is `duration_min × people_needed` (person-minutes): up to 30 Quick, up to 90 Small, under 240 Medium, 240 or more Big. A share's time is that times its percent.
+- When a job is marked done, trigger `job_done_followups` creates its next stage and, for repeating jobs, the next one.
+- Reminders run in the app (every 2 hours, 07:00–21:00 Nairobi) until push alerts arrive in Phase 7.
 
 ## Supermarket prices
 

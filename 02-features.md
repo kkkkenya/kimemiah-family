@@ -8,7 +8,7 @@ Rules that apply everywhere:
 - **Undo, not "Are you sure?".** A tap shows a short Undo bar, for example "Cooking oil −1 · Undo".
 - **Works offline.** Everything can be read and changed without signal, except taking a job or a cooking slot. Those need signal so two people don't pick the same one.
 - **Every action is credited automatically.** Each phone is set to one person ("Who are you?") at setup.
-- **No scores.** The app never shows how many jobs or how much spending each person has. Thank-yous go only to the person thanked.
+- **No scores.** The app never ranks people or shows spending per person. Jobs show who is on them; per-person job totals appear only on the Meeting screen (see Jobs). Thank-yous go only to the person thanked.
 - Money shows as KES 1,250. Dates show as Tue 21 Oct. Times are Nairobi time.
 
 ## 1. Home ("Today")
@@ -76,27 +76,37 @@ Naivas blocks automated price tools, so the app shows **Quickmart prices only**.
 
 ## 3. Jobs (volunteering)
 
-- Three lists: **Open · Taken · Done**.
-- Post a job or a help request ("Can someone help me carry shopping at 4pm?"), with an optional due date and repeat (daily, weekly, monthly).
-- **"I'll do it"** takes the job (needs signal). **"Done"** finishes it. **"Drop it"** puts it back on the board with no reason asked and no alert.
-- Repeating jobs come back on their own.
-- A job nobody has taken for 3 days shows "Waiting 3 days · on the next meeting agenda". The tag is about the job, never about people.
-- **Asante**: one tap thanks whoever did a job. They get a push alert. Thank-yous collect on the Done list.
+- **Anyone can post a job.** One-tap chips for the usual ones (Water is back: fill tanks, Arrange kitchen, Wash dishes, Sweep the drive, Wash the dog, Plan a supermarket run), or **+ Add a job** for anything else.
+- **Size = how long × how many people.** A job says how long it takes and how many people it needs, and the app shows its size from the two together: 20 min × 1 is a Quick job, 1 h × 2 people is a Medium job (2 h of work), 2 h × 2 people or more is a Big job. A separate tag says how physically hard it is: 🌿 Light, ⚡ Medium or 🏋️ Heavy, so Wanini can filter to Light jobs.
+- **Team-ups with shares.** "I'll do it" / "Join in" picks a share (20% to 100%), each shown as time: 40% of a 1 h, 2-person job is about 48 min. A job is taken when it's 100% covered by enough people; one person can't fill a 2-person job alone. Optional "my part" notes ("Hold and soap", "Fetch water and rinse"). Joining needs signal, so two people can't take the same share.
+- **Two-stage kitchen.** "Clean counters and arrange dishes" (Light) creates "Wash the arranged dishes" when it's done.
+- **Money jobs** (supermarket and market runs, gas): two people go, planned 2–4 days ahead. They wait under **Upcoming & money** until someone taps "Money is ready" and the day comes.
+- **Bills Peter pays** (KPLC tokens, water bill): "Send to Peter on WhatsApp" with the details, then "Peter paid".
+- **Reminders.** Every 2 hours (07:00–21:00) a job you're on shows "Still yours" on Home and Jobs until you tap Done. In the app for now; push alerts with the same rule come in Phase 7.
+- **Overdue rescue.** A taken job past its due time goes to the top with "Meant to be done by Vinnie, but it wasn't finished in time." Anyone can **Help them finish** (pick a share; the others' shares shrink to fit) or **Take it over** (the earlier people step back).
+- Lists: **Needs people · In progress · Upcoming & money · Done & Asante**, plus **Light only** and **Team-ups** filters. "At home now" shows who's around to team up with.
+- Repeating jobs come back on their own when done. **Asante** thanks each person who did a job.
+- **Names, not scores.** A job shows who is on it. Per-person totals (jobs, time given, times stepped in, house meals) appear only on the Meeting screen, for the last 14 days, in family order and never ranked.
 
-Starter jobs (the family edits these at the first meeting):
+Usual jobs (one tap, all editable when posting):
 
-| Job | Repeat |
-|---|---|
-| Market run | Weekly |
-| Supermarket run | Monthly |
-| Gas refill | When low |
-| Buy KPLC tokens | When low |
-| Clean kitchen after supper | Daily |
-| Take out rubbish | Weekly (collection day) |
-| Clean bathroom | Weekly |
-| Cook Sunday lunch | Weekly |
-| Wash the water tank | Every 3 months |
-| Pay water bill | Monthly |
+| Job | Time × people | Physical | Notes |
+|---|---|---|---|
+| Water is back! Fill the tanks | 45 min × 1 | Medium | Urgent, due in 3 hours |
+| Clean counters and arrange dishes | 20 min × 1 | Light | Creates "Wash the arranged dishes" (40 min, Medium) |
+| Wash dishes and pots | 40 min × 1 | Medium | |
+| Cook supper for the house | 1 h 30 min × 1 | Medium | Only meals for the whole house count |
+| Sweep the driveway and paths | 45 min × 1 | Medium | |
+| Cut and trim the fence and hedges | 3 h × 1 | Heavy | Monthly |
+| Slash grass and weed the compound | 4 h × 2 | Heavy | Monthly |
+| Wash the dog | 1 h × 2 | Heavy | |
+| Feed the dog and clean the kennel | 15 min × 1 | Light | |
+| Supermarket run | 3 h × 2 | Medium | Money, 3 days ahead |
+| Market run | 2 h × 2 | Medium | Money, 3 days ahead |
+| Refill the gas cylinder | 1 h × 2 | Heavy | Money, 2 days ahead |
+| Ask Peter for KPLC tokens or the water bill | 10 min × 1 | Light | WhatsApp to Peter |
+| Scrub the bathroom and toilet | 45 min × 1 | Medium | Weekly |
+| Wash the water tanks | 4 h × 3 | Heavy | Every 3 months |
 
 ## 4. Money (Dad's money and budget)
 

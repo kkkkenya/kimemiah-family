@@ -15,14 +15,14 @@ values (
 )
 on conflict do nothing;
 
--- Roles for now; rename later with: update public.members set name = '...' where id = '...';
+-- The family (renamed from roles in migration 0011).
 insert into public.members (id, name, is_remote, sort) values
-  ('00000000-0000-0000-0001-000000000001', 'Mom', false, 1),
-  ('00000000-0000-0000-0001-000000000002', 'Dad', true, 2),
-  ('00000000-0000-0000-0001-000000000003', 'Sister', false, 3),
-  ('00000000-0000-0000-0001-000000000004', 'Big brother', false, 4),
-  ('00000000-0000-0000-0001-000000000005', 'Brother', false, 5),
-  ('00000000-0000-0000-0001-000000000006', 'Me', false, 6)
+  ('00000000-0000-0000-0001-000000000001', 'Juliet', false, 1),
+  ('00000000-0000-0000-0001-000000000002', 'Peter (Mguu Kubwa)', true, 2),
+  ('00000000-0000-0000-0001-000000000003', 'Wanini', false, 3),
+  ('00000000-0000-0000-0001-000000000004', 'Daniel', false, 4),
+  ('00000000-0000-0000-0001-000000000005', 'Vinnie', false, 5),
+  ('00000000-0000-0000-0001-000000000006', 'Greg', false, 6)
 on conflict (id) do nothing;
 
 insert into public.shops (id, name, kind, sort) values

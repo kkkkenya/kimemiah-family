@@ -1,7 +1,9 @@
 "use client";
 
 import { FamilyPhoto } from "@/components/FamilyPhoto";
+import { PresenceCard } from "@/components/Presence";
 import { Card, Empty, Screen } from "@/components/Screen";
+import { JobAlerts } from "@/components/jobs/JobAlerts";
 import { useMe } from "@/lib/sync/hooks";
 
 function greeting(hour: number) {
@@ -16,7 +18,9 @@ export default function HomePage() {
 
   return (
     <Screen title={me ? `${hello}, ${me.name}` : hello}>
+      <JobAlerts link />
       <FamilyPhoto />
+      <PresenceCard />
       <Card>
         <h2 className="font-bold">Today</h2>
         <p className="text-muted">Items running out, shop runs, today&apos;s meals and money left will show here.</p>
