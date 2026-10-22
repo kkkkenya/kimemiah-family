@@ -248,13 +248,14 @@ export function dealRestock(stock: StockLike[], matches: CatalogMatch[]): { item
 
 // ---------------------------------------------------------------- money
 
-export type MoneyEntry = { id: string; direction: "in" | "out"; amount_kes: number; occurred_on: string; voids_entry_id?: string | null; deleted_at?: string | null };
+export type MoneyEntry = { id: string; direction: "in" | "out"; amount_kes: number; occurred_on: string; voids_entry_id?: string | null; project_id?: string | null; deleted_at?: string | null };
 
 /** Money in minus money out this month, ignoring corrected entries and their corrections. */
 export function moneyLeftThisMonth(entries: MoneyEntry[], today = new Date()): number | null {
   const month = today.toISOString().slice(0, 7);
   const voided = new Set(entries.map((e) => e.voids_entry_id).filter(Boolean));
-  const live = entries.filter((e) => !e.deleted_at && !e.voids_entry_id && !voided.has(e.id) && e.occurred_on.startsWith(month));
+  // Money set aside for a project isn't shopping money.
+  const live = entries.filter((e) => !e.deleted_at && !e.voids_entry_id && !voided.has(e.id) && !e.project_id && e.occurred_on.startsWith(month));
   if (!live.some((e) => e.direction === "in")) return null;
   return live.reduce((sum, e) => sum + (e.direction === "in" ? 1 : -1) * num(e.amount_kes), 0);
 }

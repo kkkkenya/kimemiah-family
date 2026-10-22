@@ -136,3 +136,13 @@ describe("performance alerts", () => {
     expect(planAlerts(open, done, nudged, NOW, history).filter((x) => x.kind === "nudge")).toEqual([]);
   });
 });
+
+describe("money ready", () => {
+  it("tells the people going on a run once money is ready", () => {
+    const run = job({ id: "run", title: "Supermarket run", requires_funds: true, funds_status: "funds_ready", people_needed: 2, suggested_notified_at: ago(1) });
+    const ps = [part({ job_id: "run", member_id: "greg", effort_pct: 50 }), part({ job_id: "run", member_id: "vinnie", effort_pct: 50 })];
+    const a = planAlerts([{ ...run, covered_notified_at: ago(1) }], ps, members, NOW).find((x) => x.kind === "funds");
+    expect(a).toMatchObject({ to: ["greg", "vinnie"], title: "Money is ready: Supermarket run" });
+    expect(planAlerts([{ ...run, covered_notified_at: ago(1), funds_notified_at: ago(0) }], ps, members, NOW).find((x) => x.kind === "funds")).toBeUndefined();
+  });
+});

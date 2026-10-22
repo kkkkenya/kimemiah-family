@@ -127,14 +127,16 @@ Usual jobs (one tap, all editable when posting):
 | Scrub the bathroom and toilet | 45 min × 1 | Medium | Weekly |
 | Wash the water tanks | 4 h × 3 | Heavy | Every 3 months |
 
-## 4. Money (Dad's money and budget)
+## 4. Money (house money, projects and budget)
 
-- **Balance**: money in, money spent and money left this month.
-- **Money in**: date, amount, how it came (M-Pesa, bank, cash), note. Money in can be thanked with Asante too.
-- **Money out**: date, amount, who spent it, shop, category, note. Usually filled in from "Put away".
-- **Entries can't be edited or deleted.** A mistake is fixed with "Correct this", which adds a correcting entry. The history stays complete, so there's nothing to argue about.
-- **Budget tab**: a monthly amount per category (Food staples, Market and fresh, Cleaning, Personal care, Utilities, Other) compared with actual spend, and what the current shopping list would cost.
-- **Summary for Dad**: one button builds the month's summary (received, spent by category, balance) and opens WhatsApp to send it, with a copy button as a fallback.
+- **This month**: money in, spent and left (‹ › for other months). Money set aside for projects isn't counted here.
+- **+ Money in / − Money out**: amount, day, what for (a budget kind, or a project), how (M-Pesa, cash, bank), from / paid to, note. Put away and receipts log spending on their own.
+- **📲 Paste an M-Pesa SMS** and the entry fills itself in: amount, who, day, which way, and the M-Pesa code. The same message can't be logged twice. A cash withdrawal isn't spending, so it isn't logged.
+- **Money in unlocks runs**: when money comes in and what's left this month covers a planned supermarket, market or gas run, it flips to "Money ready" (soonest first, never promising the same money twice) and the people going get an alert.
+- **Projects**: savings goals for **house work** (e.g. "Repaint the gate, KES 6,000") and **upgrades** (from the cart: "Save up for the upgrades"). Anyone adds money toward one and logs what's spent on it; a progress bar shows how close it is. A house-work project can post its job on Jobs, which unlocks ("Money ready") once the project reaches its target.
+- **Entries can't be edited or deleted.** "Wrong? Correct it" adds a correcting entry; both then drop out of every total.
+- **Budget**: an amount per kind each month (Food staples, Market and fresh, Cleaning, Personal care, Utilities, Dog, House projects, Upgrades, Other) against what was spent, red when over.
+- **Summary for Peter**: one tap opens WhatsApp to Peter with the month (in, spent by kind, left, projects).
 
 ## 5. Meeting (under More)
 

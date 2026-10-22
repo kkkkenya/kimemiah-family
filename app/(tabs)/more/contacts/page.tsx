@@ -7,7 +7,7 @@ import { useSync } from "@/components/SyncProvider";
 import { UndoBar, type UndoState } from "@/components/UndoBar";
 import { matchContact, sortContacts, type Contact } from "@/lib/contacts";
 import { syncEngine } from "@/lib/sync/client";
-import { useRows } from "@/lib/sync/hooks";
+import { useRows, type Member } from "@/lib/sync/hooks";
 
 type Row = Contact & { [key: string]: unknown };
 const field = "min-h-12 w-full rounded-xl border border-line bg-base px-3";
@@ -24,6 +24,11 @@ export default function ContactsPage() {
   const closeUndo = useCallback(() => setUndo(null), []);
 
   const shown = contacts.filter((c) => matchContact(c, query));
+  const family = ((useRows<Member & { phone?: string | null }>("members") ?? []) as (Member & { phone?: string | null })[])
+    .filter((m) => m.active !== false && m.phone)
+    .sort((a, b) => a.sort - b.sort)
+    .map((m) => ({ id: `member-${m.id}`, name: m.name, role: "Family", phone: m.phone }) as Contact)
+    .filter((c) => matchContact(c, query));
 
   function open(c?: Contact) {
     setEditing(c ? c.id : "new");
@@ -130,6 +135,20 @@ export default function ContactsPage() {
       </div>
 
       {editing === "new" && editor()}
+
+      {family.length > 0 && (
+        <section aria-labelledby="family">
+          <h2 id="family" className="mb-1 font-bold">
+            Family
+          </h2>
+          <ul className="divide-y divide-line rounded-xl bg-raised px-4 shadow-[0_1px_3px_rgba(10,51,35,.10)]">
+            {family.map((c) => (
+              <ContactRow key={c.id} contact={c} />
+            ))}
+          </ul>
+          <p className="mt-1 text-xs text-muted">Each person sets their own number in Settings.</p>
+        </section>
+      )}
 
       {shown.length ? (
         <ul className="divide-y divide-line rounded-xl bg-raised px-4 shadow-[0_1px_3px_rgba(10,51,35,.10)]">

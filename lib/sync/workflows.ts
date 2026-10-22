@@ -5,6 +5,7 @@
 
 import { putAwayMovements, spendByShop, type PutAwayLine } from "@/lib/shopping/stock";
 import type { Job } from "@/lib/jobs/logic";
+import { monthOf, monthSummary, projectProgress, runsToUnlock, type Entry, type FundedJob, type Project } from "@/lib/money/money";
 import { localDB, syncEngine } from "./client";
 
 const nairobiToday = () => new Date(Date.now() + 3 * 3600_000).toISOString().slice(0, 10);
@@ -66,4 +67,74 @@ export async function restockHouse(lines: PutAwayLine[], o: RestockOptions): Pro
   for (const j of runs) await engine.queue("jobs", "update", { id: j.id, done_at: new Date().toISOString(), done_by: o.meId ?? null });
 
   return { spent, runsDone: runs.length };
+}
+
+// ---------------------------------------------------------------- money
+
+export type NewEntry = {
+  direction: "in" | "out";
+  amount_kes: number;
+  occurred_on: string;
+  category_id?: string | null;
+  project_id?: string | null;
+  shop_id?: string | null;
+  method?: "mpesa" | "bank" | "cash" | "other" | null;
+  spent_by?: string | null;
+  note?: string | null;
+  counterparty?: string | null;
+  mpesa_code?: string | null;
+};
+
+/**
+ * Log money in or out. Then: money in that leaves enough this month unlocks the money runs it
+ * covers ("Money ready"); money toward a project that reaches its target marks it funded and
+ * unlocks its house-work job. An M-Pesa code already logged is refused.
+ */
+export async function logMoney(entry: NewEntry): Promise<{ error?: string; unlocked: string[]; funded?: string }> {
+  const db = localDB();
+  const engine = syncEngine();
+  const all = (await db.rows("money_entries").toArray()) as unknown as Entry[];
+  if (entry.mpesa_code && all.some((e) => e.mpesa_code === entry.mpesa_code && !e.deleted_at)) {
+    return { error: `That M-Pesa message (${entry.mpesa_code}) is already logged.`, unlocked: [] };
+  }
+  const row = { id: crypto.randomUUID(), voids_entry_id: null, trip_id: null, ...entry, amount_kes: Math.round(entry.amount_kes) };
+  await engine.queue("money_entries", "insert", row);
+  const entries = [...all, row as unknown as Entry];
+
+  const unlocked: string[] = [];
+  let funded: string | undefined;
+  const jobs = (await db.rows("jobs").toArray()) as unknown as (Job & FundedJob)[];
+  if (entry.direction === "in" && !entry.project_id) {
+    // A project's job waits for that project's own money, not the household's.
+    const projectJobs = new Set(((await db.rows("projects").toArray()) as unknown as Project[]).map((p) => p.job_id).filter(Boolean));
+    const { left } = monthSummary(entries, monthOf(entry.occurred_on));
+    for (const id of runsToUnlock(jobs.filter((j) => !projectJobs.has(j.id)), left)) {
+      await engine.queue("jobs", "update", { id, funds_status: "funds_ready" });
+      unlocked.push(jobs.find((j) => j.id === id)?.title ?? "");
+    }
+  }
+  if (entry.project_id) {
+    const project = (await db.rows("projects").get(entry.project_id)) as unknown as Project | undefined;
+    if (project && project.status === "saving" && projectProgress(project, entries).funded) {
+      await engine.queue("projects", "update", { id: project.id, status: "funded" });
+      funded = project.title;
+      if (project.job_id) {
+        await engine.queue("jobs", "update", { id: project.job_id, funds_status: "funds_ready" });
+        unlocked.push(jobs.find((j) => j.id === project.job_id)?.title ?? project.title);
+      }
+    }
+  }
+  return { unlocked, funded };
+}
+
+/** A correction: a new entry that cancels a wrong one (entries are never edited or deleted). */
+export async function correctEntry(e: Entry) {
+  await syncEngine().queue("money_entries", "insert", {
+    id: crypto.randomUUID(),
+    direction: e.direction,
+    amount_kes: e.amount_kes,
+    occurred_on: e.occurred_on,
+    voids_entry_id: e.id,
+    note: `Correction of: ${e.note ?? e.counterparty ?? "an entry"}`,
+  });
 }

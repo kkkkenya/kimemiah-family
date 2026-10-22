@@ -10,7 +10,7 @@ import { fromTemplate, joinJob, postJob, updateJob } from "@/lib/jobs/actions";
 import { formatMinutes, jobStatus, shareChoices, sortBoard, workers, type Job, type Participant } from "@/lib/jobs/logic";
 import { TEMPLATES } from "@/lib/jobs/templates";
 import { sendAlertsNow } from "@/lib/push/client";
-import { kes, linePrice, stockStatus, type CatalogMatch, type StockLike } from "@/lib/shopping/pricing";
+import { kes, linePrice, moneyLeftThisMonth, stockStatus, type CatalogMatch, type MoneyEntry, type StockLike } from "@/lib/shopping/pricing";
 import type { Shop, StockItem } from "@/lib/shopping/shops";
 import { upgradeDeals } from "@/lib/shopping/predict";
 import { localDB, syncEngine } from "@/lib/sync/client";
@@ -167,12 +167,14 @@ export function QuickStrip() {
 export function EssentialsCard() {
   const stock = ((useRows<StockItem>("stock_items") ?? []) as (StockItem & StockLike)[]).filter((s) => !s.deleted_at);
   const needed = essentialsNeeded(stock);
+  const money = (useRows<MoneyEntry & { id: string }>("money_entries") ?? []) as MoneyEntry[];
   const concepts = [...new Set(needed.map((s) => s.canonical_concept).filter((c): c is string => !!c))];
   const matches = (useLiveQuery(() => (concepts.length ? localDB().catalog.where("canonical_concept").anyOf(concepts).toArray() : []), [concepts.join("|")], []) ?? []) as unknown as CatalogMatch[];
   if (!needed.length) return null;
   const live = matches.filter((m) => (m as { in_stock?: boolean }).in_stock !== false);
   const price = (s: StockLike) => linePrice({ id: s.id, title: s.name, item: s }, live);
   const total = needed.reduce((sum, s) => sum + (price(s) ?? 0), 0);
+  const moneyLeft = moneyLeftThisMonth(money);
 
   return (
     <section aria-labelledby="essentials" className={card}>
@@ -197,6 +199,7 @@ export function EssentialsCard() {
         })}
       </ul>
       <p className="mt-2 font-bold tabular">About {kes(total)} at Quickmart prices</p>
+      {moneyLeft != null && <p className={`text-sm tabular ${moneyLeft < total ? "text-low-fg" : "text-muted"}`}>Money left this month: {kes(moneyLeft)}</p>}
       <div className="mt-3 flex flex-wrap gap-2">
         <Link href="/shop?view=list" className="flex min-h-12 items-center rounded-xl bg-brand px-4 font-bold text-brand-contrast">
           🛒 Open the cart

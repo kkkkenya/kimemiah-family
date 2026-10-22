@@ -12,11 +12,12 @@ export type PushJob = Job & {
   covered_notified_at?: string | null;
   overdue_notified_at?: string | null;
   suggested_notified_at?: string | null;
+  funds_notified_at?: string | null;
 };
 export type PushPart = Participant & { last_reminded_at?: string | null; handover_notified_at?: string | null; updated_at?: string };
 
 export type Alert = {
-  kind: "urgent" | "covered" | "overdue" | "reminder" | "handover" | "suggested" | "nudge" | "ease";
+  kind: "urgent" | "covered" | "overdue" | "reminder" | "handover" | "suggested" | "nudge" | "ease" | "funds";
   jobId?: string;
   partId?: string; // for reminders and handovers: the participant row it's about
   memberId?: string; // for nudge and ease: the person it's about (marked once a week)
@@ -69,6 +70,17 @@ export function planAlerts(jobs: PushJob[], parts: PushPart[], members: PushMemb
         to: who && who !== job.actor_id ? [who] : [],
         title: `Suggested for you: ${job.title}`,
         body: `About ${formatMinutes(job.duration_min)}. Join if you can; it's up to you.`,
+      });
+    }
+
+    // Money came in for a run (or a project reached its target): tell the people going.
+    if (job.funds_status === "funds_ready" && job.requires_funds && !job.funds_notified_at) {
+      alerts.push({
+        kind: "funds",
+        jobId: job.id,
+        to: ids,
+        title: `Money is ready: ${job.title}`,
+        body: people.length ? "You can go ahead." : "Who's going? Join it on Jobs.",
       });
     }
 

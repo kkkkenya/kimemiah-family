@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabase/client";
 import { syncEngine } from "@/lib/sync/client";
 import { useMe } from "@/lib/sync/hooks";
 
-type Me = { id: string; name: string; avatar?: string | null; home_photo?: string | null };
+type Me = { id: string; name: string; avatar?: string | null; home_photo?: string | null; phone?: string | null };
 
 // Your name, your picture, and the photo on your Home screen (none, the family photo, or your own).
 export function ProfileCard() {
@@ -70,6 +70,8 @@ export function ProfileCard() {
         </button>
       </form>
 
+      <PhoneField me={me} onSave={(phone) => save({ phone })} />
+
       <p className="mt-4 text-sm font-bold">Your picture</p>
       <div className="mt-2">
         <AvatarPicker value={me.avatar} onPick={(a) => save({ avatar: a })} />
@@ -117,5 +119,30 @@ export function ProfileCard() {
       </fieldset>
       {note && <p className="mt-2 text-sm text-muted">{note}</p>}
     </Card>
+  );
+}
+
+function PhoneField({ me, onSave }: { me: Me; onSave: (phone: string | null) => void }) {
+  const [v, setV] = useState<string | null>(null);
+  const draft = v ?? me.phone ?? "";
+  const ok = draft.trim() === "" || /^\+?[0-9 ]{9,16}$/.test(draft.trim());
+  return (
+    <form
+      className="mt-3 flex items-end gap-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!ok) return;
+        onSave(draft.trim() || null);
+        setV(null);
+      }}
+    >
+      <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm font-bold">
+        Your phone (for Call and WhatsApp in Contacts)
+        <input value={draft} inputMode="tel" onChange={(e) => setV(e.target.value)} placeholder="e.g. 0722 123 456" className="min-h-12 rounded-xl border border-line bg-base px-3 font-normal" />
+      </label>
+      <button type="submit" disabled={!ok || draft.trim() === (me.phone ?? "")} className="min-h-12 shrink-0 rounded-xl bg-brand px-4 font-bold text-brand-contrast disabled:opacity-50">
+        Save
+      </button>
+    </form>
   );
 }

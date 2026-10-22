@@ -24,6 +24,9 @@ async function claim(db: Db, a: Alert, now: string): Promise<boolean> {
     case "urgent":
       res = await q("jobs", "urgent_notified_at", a.jobId!).is("urgent_notified_at", null).select("id");
       break;
+    case "funds":
+      res = await q("jobs", "funds_notified_at", a.jobId!).is("funds_notified_at", null).select("id");
+      break;
     case "suggested":
       res = await q("jobs", "suggested_notified_at", a.jobId!).is("suggested_notified_at", null).select("id");
       break;

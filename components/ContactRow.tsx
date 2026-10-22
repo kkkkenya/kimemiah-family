@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { telHref, type Contact } from "@/lib/contacts";
+import { telHref, whatsappHref, type Contact } from "@/lib/contacts";
 
 // One contact: who they are, and Call / Copy number in one tap.
 export function ContactRow({ contact, onEdit }: { contact: Contact; onEdit?: () => void }) {
   const [copied, setCopied] = useState(false);
   const tel = telHref(contact.phone);
+  const wa = whatsappHref(contact.phone);
 
   async function copy() {
     try {
@@ -31,6 +32,11 @@ export function ContactRow({ contact, onEdit }: { contact: Contact; onEdit?: () 
         {tel && (
           <a href={tel} className="flex min-h-12 items-center rounded-xl bg-brand px-4 font-bold text-brand-contrast">
             📞 Call
+          </a>
+        )}
+        {wa && (
+          <a href={wa} target="_blank" rel="noreferrer" className="flex min-h-12 items-center rounded-xl border border-line px-4 font-bold">
+            WhatsApp
           </a>
         )}
         {contact.phone && (

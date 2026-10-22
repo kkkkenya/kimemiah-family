@@ -482,6 +482,24 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
     }
   }, [run, fullTotal]);
 
+  // Can-wait upgrades: save up for them as a project on Money.
+  const projects = (useRows<{ id: string; kind: string; status: string; deleted_at?: string | null }>("projects") ?? []) as { id: string; kind: string; status: string; deleted_at?: string | null }[];
+  const upgradeLines = needed.filter((i) => i.shopping_tier === "qol");
+  const savingForUpgrades = projects.some((p) => p.kind === "upgrade" && p.status === "saving" && !p.deleted_at);
+  async function saveForUpgrades() {
+    await syncEngine().queue("projects", "insert", {
+      id: crypto.randomUUID(),
+      title: upgradeLines.length === 1 ? upgradeLines[0].title : `Upgrades: ${upgradeLines.map((i) => i.title).slice(0, 3).join(", ")}${upgradeLines.length > 3 ? "…" : ""}`,
+      kind: "upgrade",
+      target_kes: Math.max(1, Math.round(totals.upgrades)),
+      notes: upgradeLines.map((i) => i.title).join(", "),
+      job_id: null,
+      status: "saving",
+    });
+    void syncNow();
+    setUndo({ id: Date.now(), message: `Saving up for the upgrades (${kes(totals.upgrades)}) on Money` });
+  }
+
   async function planRun() {
     const t = TEMPLATES.find((x) => x.id === "funded")!;
     await postJob({ ...fromTemplate(t), estimated_cost_kes: Math.round(fullTotal) || null });
@@ -498,6 +516,11 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
           {!aisle && (
             <button type="button" onClick={() => setAisle(true)} className="min-h-12 rounded-xl bg-brand px-4 font-bold text-brand-contrast">
               🛒 Start shopping in store
+            </button>
+          )}
+          {upgradeLines.length > 0 && totals.upgrades > 0 && !savingForUpgrades && (
+            <button type="button" onClick={saveForUpgrades} className="min-h-12 rounded-xl border border-line px-4 text-sm font-bold">
+              💰 Save up for the upgrades ({kes(totals.upgrades)})
             </button>
           )}
           {run ? (
