@@ -102,6 +102,8 @@ Views: `shopping_needed`, `money_balance`, `budget_vs_actual`.
 
 **Tools and supper (migration `0018`)**: tools are `stock_items` with `track_mode = 'tool'`, `tool_location`, `tool_condition` and `last_used_by`. `members.eating_out_on` is the day someone said they'd be out for supper.
 
+**Money (migrations `0019`, `0020`)**: `projects` (house_work / upgrade, target, optional job, saving / funded / done). `money_entries` gains `project_id` (project money is set aside, out of the monthly balance), `mpesa_code` (unique, so a pasted SMS is logged once) and `counterparty`. `logMoney` (workflows) unlocks money runs the month's balance covers (`runsToUnlock`, soonest first) and marks projects funded, unlocking their job; a project's job never unlocks from household money. The `funds` push alert tells the people on a run. `members.phone` holds each person's number (set in the app, not in the repo) for Call / WhatsApp.
+
 ## Supermarket prices
 
 | Part | What it does |

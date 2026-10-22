@@ -12,6 +12,7 @@ export const SYNC_TABLES = [
   "jobs",
   "job_participants",
   "job_rota",
+  "projects",
   "thanks",
   "budget_categories",
   "money_entries",

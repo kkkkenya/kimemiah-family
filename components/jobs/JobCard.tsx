@@ -20,6 +20,8 @@ import {
 import { PART_NOTES, TOOLS_FOR, type Category } from "@/lib/jobs/templates";
 import { postJob, dayPlus, dueOnDay } from "@/lib/jobs/actions";
 import { BottomSheet } from "@/components/BottomSheet";
+import { whatsappHref } from "@/lib/contacts";
+import { useRows } from "@/lib/sync/hooks";
 import { syncEngine } from "@/lib/sync/client";
 import type { StockItem } from "@/lib/shopping/shops";
 import { kes } from "@/lib/shopping/pricing";
@@ -117,6 +119,7 @@ function JobDetails({ job, parts, meId, nameOf, thanked, onMessage, homeNames = 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const peterPhone = ((useRows<{ id: string; is_remote?: boolean; phone?: string | null }>("members") ?? []).find((m) => m.is_remote)?.phone) ?? null;
   const dadMessage = `Hi Peter, ${job.title.replace(/^Ask Peter to /i, "could you please ")}.${job.notes ? ` ${job.notes}` : ""} Thank you!`;
 
   return (
@@ -380,7 +383,7 @@ function JobDetails({ job, parts, meId, nameOf, thanked, onMessage, homeNames = 
           )}
           {job.category === "utilities_dad" && (
             <>
-              <a href={`https://wa.me/?text=${encodeURIComponent(dadMessage)}`} target="_blank" rel="noreferrer" className="flex min-h-12 items-center rounded-xl border border-brand px-4 font-bold text-brand">
+              <a href={whatsappHref(peterPhone, dadMessage) ?? `https://wa.me/?text=${encodeURIComponent(dadMessage)}`} target="_blank" rel="noreferrer" className="flex min-h-12 items-center rounded-xl border border-brand px-4 font-bold text-brand">
                 Send to Peter on WhatsApp
               </a>
               <button type="button" onClick={() => updateJob(job.id, { funds_status: "paid_by_dad", done_at: new Date().toISOString(), done_by: meId ?? null }).then(() => void syncNow())} className="min-h-12 rounded-xl px-3 font-bold text-brand">

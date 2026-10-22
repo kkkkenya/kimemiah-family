@@ -30,6 +30,13 @@ export function sortContacts(list: Contact[]): Contact[] {
     .sort((a, b) => Number(!!b.is_emergency) - Number(!!a.is_emergency) || (a.sort ?? 0) - (b.sort ?? 0) || a.name.localeCompare(b.name));
 }
 
+/** WhatsApp chat link for a Kenyan mobile (07... / 01... / 2547...), or null. */
+export function whatsappHref(phone: string | null | undefined, text?: string): string | null {
+  const d = (phone ?? "").replace(/\D/g, "");
+  const n = /^0[17]\d{8}$/.test(d) ? `254${d.slice(1)}` : /^254[17]\d{8}$/.test(d) ? d : null;
+  return n ? `https://wa.me/${n}${text ? `?text=${encodeURIComponent(text)}` : ""}` : null;
+}
+
 /** A Kenyan number to dial: 0722 123 456 -> +254722123456; others kept as typed (digits and +). */
 export function telHref(phone: string | null | undefined): string | null {
   const raw = (phone ?? "").replace(/[^\d+]/g, "");

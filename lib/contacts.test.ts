@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchContact, sortContacts, telHref, type Contact } from "./contacts";
+import { matchContact, sortContacts, telHref, whatsappHref, type Contact } from "./contacts";
 
 const c = (o: Partial<Contact> & { id: string; name: string }): Contact => o;
 
@@ -27,5 +27,13 @@ describe("contacts", () => {
     expect(telHref("254733000222")).toBe("tel:+254733000222");
     expect(telHref("+254 711 000 111")).toBe("tel:+254711000111");
     expect(telHref("")).toBeNull();
+  });
+});
+
+describe("whatsapp", () => {
+  it("links Kenyan mobiles only", () => {
+    expect(whatsappHref("0722 000111")).toBe("https://wa.me/254722000111");
+    expect(whatsappHref("+254 705 000222", "Hi")).toBe("https://wa.me/254705000222?text=Hi");
+    expect(whatsappHref("020 1234567")).toBeNull();
   });
 });
