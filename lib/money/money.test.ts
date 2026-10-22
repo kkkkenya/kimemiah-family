@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { liveEntries, monthSummary, projectProgress, runsToUnlock, summaryText, type Entry } from "./money";
+import { foodStats, liveEntries, monthSummary, projectProgress, runsToUnlock, summaryText, type Entry } from "./money";
 import { parseMpesa } from "./mpesa";
 
 describe("M-Pesa SMS", () => {
@@ -82,5 +82,32 @@ describe("money", () => {
     expect(text).toContain("Left: KES 7,650");
     expect(text).toContain("- Food staples: KES 2,350");
     expect(text).toContain("- Repaint the gate: KES 3,000 of KES 6,000");
+  });
+});
+
+describe("food spending", () => {
+  const food = ["food", "market"];
+  const e = (id: string, occurred_on: string, amount_kes: number, o: Partial<Entry> = {}): Entry => ({ id, direction: "out", occurred_on, amount_kes, category_id: "food", ...o });
+  const entries = [
+    e("a", "2026-10-21", 8550, { shop_id: "naivas" }),
+    e("b", "2026-10-03", 1400, { shop_id: "market", category_id: "market" }),
+    e("c", "2026-10-05", 600, { category_id: "cleaning" }),
+    e("d", "2026-09-10", 7000, { shop_id: "naivas" }),
+    e("x", "2026-10-02", 500, { shop_id: "naivas" }),
+    { id: "y", direction: "out", occurred_on: "2026-10-22", amount_kes: 500, voids_entry_id: "x" } as Entry,
+  ];
+
+  it("totals food only, compares with last month and splits by shop", () => {
+    const f = foodStats(entries, "2026-10", "2026-10-21", food);
+    expect(f.total).toBe(9950);
+    expect(f.lastMonth).toBe(7000);
+    expect(f.perWeek).toBe(Math.round((9950 / 21) * 7));
+    expect(f.byShop).toEqual([["naivas", 8550], ["market", 1400]]);
+    expect(f.trend.map((t) => t.month)).toEqual(["2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"]);
+    expect(f.trend.at(-1)?.total).toBe(9950);
+  });
+
+  it("averages a past month over all its days", () => {
+    expect(foodStats(entries, "2026-09", "2026-10-21", food).perWeek).toBe(Math.round((7000 / 30) * 7));
   });
 });

@@ -8,6 +8,7 @@ export type Entry = {
   amount_kes: number;
   occurred_on: string;
   category_id?: string | null;
+  shop_id?: string | null;
   project_id?: string | null;
   voids_entry_id?: string | null;
   note?: string | null;
@@ -37,6 +38,34 @@ export function monthSummary(entries: Entry[], month: string) {
   const moneyIn = sum("in");
   const moneyOut = sum("out");
   return { moneyIn, moneyOut, left: moneyIn - moneyOut, byCategory, hasIn: live.some((e) => e.direction === "in") };
+}
+
+/** The two kinds that are food: Food (supermarket shops) and Market and fresh. */
+export const FOOD_CATEGORIES = ["00000000-0000-0000-0003-000000000001", "00000000-0000-0000-0003-000000000002"];
+
+/**
+ * Food spending for a month: the total, last month's, a weekly average (weeks so far in the
+ * current month), the split by shop, and the last six months for a trend.
+ */
+export function foodStats(entries: Entry[], month: string, today: string, food: string[] = FOOD_CATEGORIES) {
+  const spent = liveEntries(entries).filter((e) => e.direction === "out" && !e.project_id && food.includes(e.category_id ?? ""));
+  const total = (m: string) => spent.filter((e) => monthOf(e.occurred_on) === m).reduce((s, e) => s + n(e.amount_kes), 0);
+  const back = (by: number) => {
+    const d = new Date(`${month}-15T00:00:00Z`);
+    d.setUTCMonth(d.getUTCMonth() - by);
+    return d.toISOString().slice(0, 7);
+  };
+  const thisMonth = total(month);
+  const days = monthOf(today) === month ? Number(today.slice(8, 10)) : new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0)).getUTCDate();
+  const byShop = new Map<string | null, number>();
+  for (const e of spent.filter((x) => monthOf(x.occurred_on) === month)) byShop.set(e.shop_id ?? null, (byShop.get(e.shop_id ?? null) ?? 0) + n(e.amount_kes));
+  return {
+    total: thisMonth,
+    lastMonth: total(back(1)),
+    perWeek: Math.round((thisMonth / days) * 7),
+    byShop: [...byShop].sort((a, b) => b[1] - a[1]),
+    trend: [5, 4, 3, 2, 1, 0].map((by) => ({ month: back(by), total: total(back(by)) })),
+  };
 }
 
 /** A project's money: given toward it, spent on it, and how far to the target. */
