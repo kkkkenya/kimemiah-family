@@ -7,7 +7,7 @@ import { UndoBar, type UndoState } from "@/components/UndoBar";
 import { EntryForm, type Draft } from "@/components/money/EntryForm";
 import { Projects } from "@/components/money/Projects";
 import { dayPlus, dueOnDay, postJob } from "@/lib/jobs/actions";
-import { liveEntries, monthSummary, projectProgress, summaryText, type Entry, type Project } from "@/lib/money/money";
+import { foodStats, liveEntries, monthSummary, projectProgress, summaryText, type Entry, type Project } from "@/lib/money/money";
 import { whatsappHref } from "@/lib/contacts";
 import { kes } from "@/lib/shopping/pricing";
 import { syncEngine } from "@/lib/sync/client";
@@ -17,6 +17,7 @@ import { correctEntry, logMoney, type NewEntry } from "@/lib/sync/workflows";
 
 type Category = Row & { name: string; sort: number };
 type Budget = Row & { month: string; category_id: string; amount_kes: number };
+type Shop = Row & { name: string };
 type Person = Row & { name: string; is_remote?: boolean; phone?: string | null };
 
 const thisMonth = () => new Date(Date.now() + 3 * 3600_000).toISOString().slice(0, 7);
@@ -38,6 +39,7 @@ export default function MoneyPage() {
   const categories = (useRows<Category>("budget_categories") ?? []).sort((a, b) => a.sort - b.sort);
   const budgets = useRows<Budget>("budgets") ?? [];
   const people = (useRows<Person>("members") ?? []) as Person[];
+  const shops = useRows<Shop>("shops") ?? [];
   const [month, setMonth] = useState(thisMonth());
   const [form, setForm] = useState<Draft | null>(null);
   const [fixing, setFixing] = useState<string | null>(null);
@@ -45,6 +47,8 @@ export default function MoneyPage() {
   const closeUndo = useCallback(() => setUndo(null), []);
 
   const s = monthSummary(entries, month);
+  const food = foodStats(entries, month, new Date(Date.now() + 3 * 3600_000).toISOString().slice(0, 10));
+  const foodTop = Math.max(1, ...food.trend.map((t) => t.total));
   const catName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? "Other";
   const live = liveEntries(entries);
   const shown = live.filter((e) => e.occurred_on.startsWith(month)).sort((a, b) => b.occurred_on.localeCompare(a.occurred_on));
@@ -142,6 +146,44 @@ export default function MoneyPage() {
       </Card>
 
       {form && <EntryForm start={form} categories={categories} projects={projects} meId={me?.id} onSave={save} onCancel={() => setForm(null)} />}
+
+      <Card>
+        <h2 className="font-display text-xl">Food</h2>
+        <p className="text-sm text-muted">Log one total per shop or market trip under Food or Market and fresh.</p>
+        <dl className="mt-2 grid grid-cols-2 gap-2 text-center tabular">
+          <div className="rounded-xl bg-base p-2">
+            <dt className="text-xs text-muted">{monthLabel(month).split(" ")[0]}</dt>
+            <dd className="text-lg font-bold">{kes(food.total)}</dd>
+          </div>
+          <div className="rounded-xl bg-base p-2">
+            <dt className="text-xs text-muted">About a week</dt>
+            <dd className="text-lg font-bold">{kes(food.perWeek)}</dd>
+          </div>
+        </dl>
+        {food.lastMonth > 0 && (
+          <p className="mt-2 text-sm">
+            {food.total >= food.lastMonth ? `${kes(food.total - food.lastMonth)} more` : `${kes(food.lastMonth - food.total)} less`} than {monthLabel(shift(month, -1)).split(" ")[0]} ({kes(food.lastMonth)})
+          </p>
+        )}
+        {food.byShop.length > 0 && (
+          <ul className="mt-2 flex flex-col gap-1 text-sm">
+            {food.byShop.map(([id, v]) => (
+              <li key={id ?? "none"} className="flex justify-between gap-2">
+                <span>{shops.find((x) => x.id === id)?.name ?? "No shop given"}</span>
+                <span className="font-bold tabular">{kes(v)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="mt-3 flex h-24 items-end gap-2" role="img" aria-label={`Food spending, last six months: ${food.trend.map((t) => `${monthLabel(t.month)} ${kes(t.total)}`).join(", ")}`}>
+          {food.trend.map((t) => (
+            <div key={t.month} className="flex flex-1 flex-col items-center gap-1">
+              <div className={`w-full rounded-t-md ${t.month === month ? "bg-brand" : "bg-line"}`} style={{ height: `${Math.max(2, (t.total / foodTop) * 72)}px` }} />
+              <span className="text-xs text-muted">{new Date(`${t.month}-15T09:00:00Z`).toLocaleDateString("en-KE", { month: "short" })}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       <Projects
         projects={projects}

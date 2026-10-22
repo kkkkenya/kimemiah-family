@@ -34,7 +34,7 @@ insert into public.shops (id, name, kind, sort) values
 on conflict (id) do nothing;
 
 insert into public.budget_categories (id, name, sort) values
-  ('00000000-0000-0000-0003-000000000001', 'Food staples', 1),
+  ('00000000-0000-0000-0003-000000000001', 'Food', 1),
   ('00000000-0000-0000-0003-000000000002', 'Market and fresh', 2),
   ('00000000-0000-0000-0003-000000000003', 'Cleaning', 3),
   ('00000000-0000-0000-0003-000000000004', 'Personal care', 4),

@@ -135,7 +135,7 @@ Usual jobs (one tap, all editable when posting):
 - **Money in unlocks runs**: when money comes in and what's left this month covers a planned supermarket, market or gas run, it flips to "Money ready" (soonest first, never promising the same money twice) and the people going get an alert.
 - **Projects**: savings goals for **house work** (e.g. "Repaint the gate, KES 6,000") and **upgrades** (from the cart: "Save up for the upgrades"). Anyone adds money toward one and logs what's spent on it; a progress bar shows how close it is. A house-work project can post its job on Jobs, which unlocks ("Money ready") once the project reaches its target.
 - **Entries can't be edited or deleted.** "Wrong? Correct it" adds a correcting entry; both then drop out of every total.
-- **Budget**: an amount per kind each month (Food staples, Market and fresh, Cleaning, Personal care, Utilities, Dog, House projects, Upgrades, Other) against what was spent, red when over.
+- **Budget**: an amount per kind each month (Food, Market and fresh, Cleaning, Personal care, Utilities, Dog, House projects, Upgrades, Other) against what was spent, red when over.
 - **Summary for Peter**: one tap opens WhatsApp to Peter with the month (in, spent by kind, left, projects).
 
 ## 5. Meeting (under More)
