@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { budgetAvailable, cashFlow, foodStats, liveEntries, monthSummary, planFor, projectPace, projectProgress, runsToUnlock, summaryText, type Entry } from "./money";
+import { budgetAvailable, cashFlow, chippedIn, foodStats, owedTo, liveEntries, monthSummary, planFor, projectPace, projectProgress, runsToUnlock, summaryText, type Entry } from "./money";
 import { parseMpesa } from "./mpesa";
 
 describe("M-Pesa SMS", () => {
@@ -138,5 +138,29 @@ describe("cash flow, goals and rollover", () => {
     expect(budgetAvailable(budgets, spend, "fees", "2026-10", false)).toMatchObject({ plan: 5000, carry: 0, available: 5000 });
     // August left 5000, September left 3000.
     expect(budgetAvailable(budgets, spend, "fees", "2026-10", true)).toMatchObject({ carry: 8000, available: 13000, left: 13000 });
+  });
+});
+
+describe("settle up and who chipped in", () => {
+  const e = (id: string, o: Partial<Entry>): Entry => ({ id, direction: "out", occurred_on: "2026-10-10", amount_kes: 0, ...o });
+  it("owes people what they paid themselves, less paybacks; paybacks are not new spending", () => {
+    const entries = [
+      e("1", { amount_kes: 3300, paid_from: "own", spent_by: "wanini", category_id: "gas" }),
+      e("2", { amount_kes: 640, paid_from: "own", spent_by: "vinnie" }),
+      e("3", { amount_kes: 400, paid_from: "own", spent_by: "greg" }),
+      e("4", { amount_kes: 400, payback_to: "greg", occurred_on: "2026-10-12" }),
+      e("5", { amount_kes: 1000, paid_from: "house", spent_by: "greg" }),
+    ];
+    expect(owedTo(entries).map((o) => [o.member, o.owed])).toEqual([["wanini", 3300], ["vinnie", 640]]);
+    expect(monthSummary(entries, "2026-10").moneyOut).toBe(3300 + 640 + 400 + 1000);
+  });
+  it("lists givers in the order they first gave", () => {
+    const p = { id: "g", title: "Gate", kind: "house_work" as const, target_kes: 12000, status: "saving" };
+    const gifts = [
+      e("a", { direction: "in", project_id: "g", occurred_on: "2026-10-03", amount_kes: 5000, counterparty: "Peter" }),
+      e("b", { direction: "in", project_id: "g", occurred_on: "2026-10-01", amount_kes: 200, spent_by: "dan" }),
+      e("c", { direction: "in", project_id: "g", occurred_on: "2026-10-09", amount_kes: 900, counterparty: "Peter" }),
+    ];
+    expect(chippedIn(p, gifts, (id) => (id === "dan" ? "Daniel" : id))).toEqual(["Daniel", "Peter"]);
   });
 });

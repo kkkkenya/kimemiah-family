@@ -85,6 +85,8 @@ export type NewEntry = {
   mpesa_code?: string | null;
   bill_id?: string | null;
   usage_qty?: number | null;
+  paid_from?: "house" | "own";
+  payback_to?: string | null;
 };
 
 /**

@@ -1,6 +1,8 @@
 // Money alerts: a kind of spending at 80% and at 100% of its plan (once each a month, to the
-// people at home), and a question about an entry (once, to the person asked). Each carries a key
+// people at home), a question about an entry (once, to the person asked), and a bill due
+// tomorrow (once per due date, sent from 18:00). Each carries a key
 // the server records, so it's sent once. Quiet hours hold them until morning.
+import { billStats, type Bill } from "@/lib/money/bills";
 import { flexSummary, type Kind } from "@/lib/money/flex";
 import type { Budget, Entry } from "@/lib/money/money";
 import { isQuiet, type Alert } from "./plan";
@@ -11,7 +13,7 @@ type Person = { id: string; name: string; active?: boolean; is_remote?: boolean 
 
 const kes = (x: number) => `KES ${Math.round(x).toLocaleString("en-KE")}`;
 
-export function planMoneyAlerts(kinds: Kind[], budgets: Budget[], entries: Entry[], reviews: Review[], people: Person[], now: number): MoneyAlert[] {
+export function planMoneyAlerts(kinds: Kind[], budgets: Budget[], entries: Entry[], reviews: Review[], people: Person[], now: number, bills: (Bill & { remind?: boolean })[] = []): MoneyAlert[] {
   if (isQuiet(now)) return [];
   const today = new Date(now + 3 * 3600_000).toISOString().slice(0, 10);
   const month = today.slice(0, 7);
@@ -45,6 +47,23 @@ export function planMoneyAlerts(kinds: Kind[], budgets: Budget[], entries: Entry
       title: `${nameOf(v.actor_id)} has a question about a payment`,
       body: `${v.question || "Can you check this?"}${e ? ` (${e.note || e.counterparty || "payment"}, ${kes(Number(e.amount_kes))})` : ""}`,
     });
+  }
+  // Bills due tomorrow, in the evening so it's fresh for the morning.
+  if (new Date(now + 3 * 3600_000).getUTCHours() >= 18) {
+    const tomorrow = new Date(now + 27 * 3600_000).toISOString().slice(0, 10);
+    for (const b of bills) {
+      if (b.deleted_at || b.remind === false) continue;
+      const st = billStats(b, entries, today);
+      if (st.nextDue !== tomorrow) continue;
+      out.push({
+        key: `billdue:${b.id}:${tomorrow}`,
+        kind: "funds",
+        to: home,
+        url: `/money?pay=${b.id}`,
+        title: `${b.name} is due tomorrow`,
+        body: st.last ? `Last time ${kes(Number(st.last.amount_kes))}. Log it in Money once it's paid.` : "Log it in Money once it's paid.",
+      });
+    }
   }
   return out;
 }

@@ -12,6 +12,9 @@ export type Entry = {
   project_id?: string | null;
   bill_id?: string | null;
   usage_qty?: number | null;
+  spent_by?: string | null;
+  paid_from?: "house" | "own" | null;
+  payback_to?: string | null;
   voids_entry_id?: string | null;
   note?: string | null;
   counterparty?: string | null;
@@ -31,9 +34,12 @@ export function liveEntries(entries: Entry[]): Entry[] {
 
 export const monthOf = (day: string) => day.slice(0, 7);
 
-/** This month's household money (projects left out): in, out, left, and spending by category. */
+/**
+ * This month's household money (projects left out): in, out, left, and spending by category.
+ * Paying someone back isn't new spending: the cost already counted when they paid it.
+ */
 export function monthSummary(entries: Entry[], month: string) {
-  const live = liveEntries(entries).filter((e) => !e.project_id && monthOf(e.occurred_on) === month);
+  const live = liveEntries(entries).filter((e) => !e.project_id && !e.payback_to && monthOf(e.occurred_on) === month);
   const sum = (dir: "in" | "out") => live.filter((e) => e.direction === dir).reduce((s, e) => s + n(e.amount_kes), 0);
   const byCategory = new Map<string | null, number>();
   for (const e of live.filter((x) => x.direction === "out")) byCategory.set(e.category_id ?? null, (byCategory.get(e.category_id ?? null) ?? 0) + n(e.amount_kes));
@@ -173,4 +179,38 @@ export function budgetAvailable(budgets: Budget[], entries: Entry[], categoryId:
   }
   const spent = monthSummary(entries, month).byCategory.get(categoryId) ?? 0;
   return { plan, carry, available: plan + carry, spent, left: plan + carry - spent };
+}
+
+/**
+ * Settle up: what the house owes each person who paid a house cost from their own money, less
+ * what's been paid back. Only people still owed, most first.
+ */
+export function owedTo(entries: Entry[]) {
+  const live = liveEntries(entries);
+  const owed = new Map<string, { owed: number; items: Entry[] }>();
+  for (const e of live) {
+    if (e.direction !== "out" || e.paid_from !== "own" || !e.spent_by || e.payback_to) continue;
+    const o = owed.get(e.spent_by) ?? { owed: 0, items: [] };
+    o.owed += n(e.amount_kes);
+    o.items.push(e);
+    owed.set(e.spent_by, o);
+  }
+  for (const e of live) if (e.payback_to && owed.has(e.payback_to)) owed.get(e.payback_to)!.owed -= n(e.amount_kes);
+  return [...owed]
+    .map(([member, o]) => ({ member, owed: Math.max(0, Math.round(o.owed)), items: o.items.sort((a, b) => b.occurred_on.localeCompare(a.occurred_on)) }))
+    .filter((x) => x.owed > 0)
+    .sort((a, b) => b.owed - a.owed);
+}
+
+/** Who has put money toward a goal, in the order they first gave (never ranked by amount). */
+export function chippedIn(p: Project, entries: Entry[], nameOf: (id: string) => string): string[] {
+  const out: string[] = [];
+  const gifts = liveEntries(entries)
+    .filter((x) => x.project_id === p.id && x.direction === "in")
+    .sort((a, b) => a.occurred_on.localeCompare(b.occurred_on));
+  for (const e of gifts) {
+    const who = e.counterparty?.trim() || (e.spent_by ? nameOf(e.spent_by) : "");
+    if (who && !out.includes(who)) out.push(who);
+  }
+  return out;
 }
