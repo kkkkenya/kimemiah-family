@@ -401,3 +401,20 @@ export function GoalThanksCard() {
     </>
   );
 }
+
+/** From the 1st to the 7th: last month's money review is ready (and feeds the meeting). */
+export function ReviewReadyCard() {
+  const today = nairobiToday();
+  if (Number(today.slice(8, 10)) > 7) return null;
+  const d = new Date(`${today.slice(0, 7)}-15T00:00:00Z`);
+  d.setUTCMonth(d.getUTCMonth() - 1);
+  const last = d.toISOString().slice(0, 7);
+  const name = new Date(`${last}-15T09:00:00Z`).toLocaleDateString("en-KE", { month: "long" });
+  return (
+    <Link href={`/money/review?month=${last}`} className="block rounded-2xl border border-line bg-raised p-5">
+      <p className="eyebrow eyebrow-accent">Monthly review</p>
+      <p className="font-display text-2xl">{name}&apos;s money review is ready</p>
+      <p className="text-sm text-muted">A few cards to go through at the meeting, and send to Peter.</p>
+    </Link>
+  );
+}

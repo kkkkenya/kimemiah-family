@@ -147,7 +147,7 @@ export async function correctEntry(e: Entry) {
  * "Ask at the meeting": puts a question on the next family meeting's agenda, planning that
  * meeting for Sunday if none is planned yet. Returns the meeting day.
  */
-export async function flagForMeeting(title: string, jobId: string | null = null): Promise<string> {
+export async function flagForMeeting(title: string, jobId: string | null = null, source: "flag" | "money_review" = "flag"): Promise<string> {
   const db = localDB();
   const engine = syncEngine();
   type Meeting = { id: string; held_on: string; status: string; deleted_at?: string | null };
@@ -161,6 +161,6 @@ export async function flagForMeeting(title: string, jobId: string | null = null)
   }
   const items = ((await db.rows("agenda_items").toArray()) as unknown as { meeting_id: string; sort: number; deleted_at?: string | null }[]).filter((a) => a.meeting_id === next.id && !a.deleted_at);
   const sort = Math.max(0, ...items.map((a) => a.sort)) + 1;
-  await engine.queue("agenda_items", "insert", { id: crypto.randomUUID(), meeting_id: next.id, title: title.slice(0, 120), minutes: 5, source: "flag", source_job_id: jobId, sort });
+  await engine.queue("agenda_items", "insert", { id: crypto.randomUUID(), meeting_id: next.id, title: title.slice(0, 120), minutes: source === "money_review" ? 15 : 5, source, source_job_id: jobId, sort });
   return next.held_on;
 }

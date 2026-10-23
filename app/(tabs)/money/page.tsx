@@ -10,10 +10,12 @@ import { EntriesView } from "@/components/money/EntriesView";
 import { EntryForm, type Draft } from "@/components/money/EntryForm";
 import { FlexBudget } from "@/components/money/FlexBudget";
 import { Projects, type Goal } from "@/components/money/Projects";
+import { Reports } from "@/components/money/Reports";
+import { monthlyReview, reviewText } from "@/lib/money/review";
 import { dayPlus, dueOnDay, postJob } from "@/lib/jobs/actions";
 import { billsDue, type Bill } from "@/lib/money/bills";
 import { flexSummary, type Group, type Kind } from "@/lib/money/flex";
-import { cashFlow, foodStats, liveEntries, monthSummary, owedTo, projectProgress, summaryText, type Entry, type Project } from "@/lib/money/money";
+import { cashFlow, foodStats, liveEntries, monthSummary, owedTo, projectProgress, type Entry, type Project } from "@/lib/money/money";
 import { shrinkPhoto } from "@/lib/images";
 import { supabase } from "@/lib/supabase/client";
 import { ruleFor, suggestMatch, type Rule } from "@/lib/money/rules";
@@ -29,7 +31,7 @@ type Category = Row & Kind & { sort: number };
 type Budget = Row & { month: string; category_id: string; amount_kes: number };
 type Shop = Row & { name: string };
 type Person = Row & { name: string; is_remote?: boolean; phone?: string | null; active?: boolean; sort?: number };
-type View = "overview" | "budget" | "entries" | "bills" | "goals";
+type View = "overview" | "budget" | "entries" | "bills" | "goals" | "reports";
 type CardId = "flex" | "settle" | "bills" | "goals" | "recent" | "food" | "flow";
 
 const VIEWS: { id: View; label: string }[] = [
@@ -38,6 +40,7 @@ const VIEWS: { id: View; label: string }[] = [
   { id: "entries", label: "Entries" },
   { id: "bills", label: "Bills" },
   { id: "goals", label: "Goals" },
+  { id: "reports", label: "Reports" },
 ];
 const CARDS: { id: CardId; label: string }[] = [
   { id: "flex", label: "Flexible money left" },
@@ -128,7 +131,8 @@ export default function MoneyPage() {
   const catName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? "Other";
   const nameOf = (id?: string | null) => people.find((p) => p.id === id)?.name ?? "";
   const peter = people.find((p) => p.is_remote);
-  const summary = summaryText(month, s, catName, saving.map((p) => ({ title: p.title, raised: projectProgress(p, entries).raised, target: Number(p.target_kes) })));
+  // Peter's summary comes from the same review the family sees.
+  const summary = reviewText(monthlyReview(month, { entries, kinds: categories, budgets, bills, projects, reviews, nameOf: (id) => nameOf(id) }));
   // Who put money in this month (several people do): by who sent it, else who logged it.
   const sources = [...live.filter((e) => e.direction === "in" && !e.project_id && e.occurred_on.startsWith(month)).reduce((m, e) => {
     const who = e.counterparty || nameOf((e as Entry & { spent_by?: string | null }).spent_by) || "Not given";
@@ -617,6 +621,11 @@ export default function MoneyPage() {
           nameOf={nameOf}
           today={today}
         />
+      </div>
+
+      {/* Reports */}
+      <div className={inView("reports")}>
+        <Reports entries={entries} kinds={categories} bills={bills} shops={shops} month={month} nameOf={(id) => nameOf(id)} onOpenReview={() => (window.location.href = "/money/review")} />
       </div>
 
       {editingCards && (

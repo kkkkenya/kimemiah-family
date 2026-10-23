@@ -3,7 +3,7 @@
 import { Avatar } from "@/components/Avatar";
 import { ContactSearch } from "@/components/ContactSearch";
 import { FamilyPhoto } from "@/components/FamilyPhoto";
-import { BillsDueCard, EssentialsCard, GoalThanksCard, MoneyGlanceCard, LiveBanners, MyJobs, OpenJobsCard, PeterCard, QuickStrip, SupperPill, UpgradeDealsCard } from "@/components/home/HomeCards";
+import { BillsDueCard, EssentialsCard, GoalThanksCard, MoneyGlanceCard, ReviewReadyCard, LiveBanners, MyJobs, OpenJobsCard, PeterCard, QuickStrip, SupperPill, UpgradeDealsCard } from "@/components/home/HomeCards";
 import { PresenceCard } from "@/components/Presence";
 import { PushCard } from "@/components/PushCard";
 import { Screen } from "@/components/Screen";
@@ -29,6 +29,7 @@ export default function HomePage() {
       <QuickStrip />
       <EssentialsCard />
       <section aria-label="Money" className="monarch flex flex-col gap-4">
+        <ReviewReadyCard />
         <GoalThanksCard />
         <MoneyGlanceCard />
         <BillsDueCard />
