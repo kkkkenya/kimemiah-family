@@ -1,0 +1,729 @@
+<title>Kimemiah Money MVP</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..400&family=Inter:wght@350;400;500&display=swap">
+<style>
+/* Layout: one reading column (760px) for the spec, widening to 1120px where mock-ups sit beside the text. Monarch's own language: linen canvas, paper cards, one ember accent, serif headings with tight tracking. */
+:root {
+  --linen: #efecea;
+  --paper: #ffffff;
+  --ink: #22201d;
+  --graphite: #6b6966;
+  --stone: #dcd9d6;
+  --ember: #ff692d;
+  --ember-ink: #22201d;
+  --ember-text: #c2410c;
+  --ok: #3f6b2a;
+  --ok-bg: #e8f0dc;
+  --warn: #8a5300;
+  --warn-bg: #fbecc9;
+  --bad: #a3321f;
+  --bad-bg: #f8dcd5;
+  --shadow: 0 1px 2px rgba(34, 32, 29, 0.05);
+  --shadow-md: 0 10px 15px -3px rgba(34, 32, 29, 0.10), 0 4px 6px -4px rgba(34, 32, 29, 0.10);
+  --serif: "Fraunces", "Source Serif 4", Georgia, serif;
+  --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --linen: #1b1a18; --paper: #262421; --ink: #efecea; --graphite: #aaa6a1; --stone: #3a3734;
+    --ember: #ff7a45; --ember-ink: #1b1a18; --ember-text: #ff9a6b;
+    --ok: #b5d48f; --ok-bg: #26331c; --warn: #f2cf7e; --warn-bg: #3a2f12; --bad: #f4ada3; --bad-bg: #42221c;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3); --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --linen: #1b1a18; --paper: #262421; --ink: #efecea; --graphite: #aaa6a1; --stone: #3a3734;
+  --ember: #ff7a45; --ember-ink: #1b1a18; --ember-text: #ff9a6b;
+  --ok: #b5d48f; --ok-bg: #26331c; --warn: #f2cf7e; --warn-bg: #3a2f12; --bad: #f4ada3; --bad-bg: #42221c;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3); --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--linen);
+  color: var(--ink);
+  font: 400 16px/1.55 var(--sans);
+  letter-spacing: -0.01em;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 48px 96px; display: flex; flex-direction: column; gap: 72px; }
+.col { max-width: 760px; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 350; text-wrap: balance; margin: 0; color: var(--ink); }
+h1 { font-size: clamp(2.4rem, 6vw, 3.6rem); line-height: 1.05; letter-spacing: -0.055em; }
+h2 { font-size: clamp(1.8rem, 4vw, 2.5rem); line-height: 1.15; letter-spacing: -0.05em; }
+h3 { font-size: 1.45rem; line-height: 1.2; letter-spacing: -0.035em; }
+p { margin: 0; }
+.lede { font-size: 1.15rem; color: var(--graphite); max-width: 62ch; }
+.eyebrow { font: 500 0.8rem/1.2 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ember-text); }
+.muted { color: var(--graphite); }
+.small { font-size: 0.875rem; }
+.tab { font-variant-numeric: tabular-nums; }
+a { color: inherit; text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+.stack { display: flex; flex-direction: column; gap: 16px; }
+.stack-lg { display: flex; flex-direction: column; gap: 32px; }
+
+/* Header */
+.mast { display: flex; flex-direction: column; gap: 20px; }
+.mast .meta { display: flex; flex-wrap: wrap; gap: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 0.875rem; color: var(--graphite); }
+
+/* Tags and buttons: pills, as Monarch does */
+.tag { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 3px 10px; font: 500 0.78rem/1.3 var(--sans); white-space: nowrap; }
+.t-live { background: var(--ok-bg); color: var(--ok); }
+.t-mvp { background: var(--ember); color: var(--ember-ink); }
+.t-later { background: transparent; color: var(--graphite); box-shadow: inset 0 0 0 1px var(--stone); }
+.t-skip { background: var(--linen); color: var(--graphite); text-decoration: line-through; }
+.pill { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 22px; border-radius: 999px; font: 500 0.95rem/1 var(--sans); border: 0; cursor: default; }
+.pill.primary { background: var(--ember); color: var(--ember-ink); box-shadow: var(--shadow); }
+.pill.ghost { background: transparent; color: var(--ink); }
+.pill.outline { background: transparent; color: var(--ember-text); box-shadow: inset 0 0 0 1.5px var(--ember); }
+.pill.sm { min-height: 34px; padding: 0 14px; font-size: 0.85rem; }
+
+/* Principles */
+.principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.card { background: var(--paper); border: 1px solid var(--stone); border-radius: 12px; padding: 24px; box-shadow: var(--shadow); min-width: 0; }
+.card h3 { font-size: 1.2rem; margin-bottom: 8px; }
+
+/* Feature map */
+.tablewrap { overflow-x: auto; background: var(--paper); border: 1px solid var(--stone); border-radius: 12px; box-shadow: var(--shadow); }
+table { border-collapse: collapse; width: 100%; min-width: 860px; font-size: 0.92rem; }
+th, td { text-align: left; vertical-align: top; padding: 12px 16px; border-bottom: 1px solid var(--stone); }
+th { font: 500 0.75rem/1.3 var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--graphite); background: var(--paper); position: sticky; top: 0; }
+tr:last-child td { border-bottom: 0; }
+td:first-child { font-weight: 500; white-space: nowrap; }
+.group-row td { background: var(--linen); font: 500 0.75rem/1.3 var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--graphite); padding-block: 8px; }
+
+/* Feature specs */
+.feature { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 40px; align-items: start; padding-top: 40px; border-top: 1px solid var(--stone); }
+.feature .text { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.feature .head { display: flex; flex-direction: column; gap: 8px; }
+.feature .head .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.kv { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: 6px 16px; font-size: 0.95rem; }
+.kv dt { color: var(--graphite); }
+.kv dd { margin: 0; }
+.done { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 0.95rem; }
+.done li { display: grid; grid-template-columns: 18px 1fr; gap: 8px; }
+.done li::before { content: ""; width: 14px; height: 14px; margin-top: 4px; border-radius: 4px; box-shadow: inset 0 0 0 1.5px var(--ember); }
+pre.schema { margin: 0; overflow-x: auto; background: var(--linen); border: 1px solid var(--stone); border-radius: 8px; padding: 12px 14px; font: 400 0.8rem/1.55 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; color: var(--ink); }
+.ties { display: flex; flex-wrap: wrap; gap: 6px; }
+.ties span { font-size: 0.8rem; border-radius: 999px; padding: 2px 10px; background: var(--paper); box-shadow: inset 0 0 0 1px var(--stone); }
+
+/* Phone mock-ups, in Monarch's product style */
+.phone { width: 340px; max-width: 100%; background: var(--linen); border: 1px solid var(--stone); border-radius: 28px; padding: 14px; box-shadow: var(--shadow-md); position: sticky; top: 24px; }
+.phone .bar { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 6px 12px; }
+.phone .bar b { font-family: var(--serif); font-weight: 350; font-size: 1.35rem; letter-spacing: -0.04em; }
+.phone .bar span { font-size: 0.75rem; color: var(--graphite); }
+.scr { display: flex; flex-direction: column; gap: 10px; }
+.m-card { background: var(--paper); border-radius: 12px; border: 1px solid var(--stone); padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.m-label { font: 500 0.68rem/1.2 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--graphite); }
+.m-big { font: 350 1.7rem/1.1 var(--serif); letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.m-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 0.85rem; }
+.m-row .l { min-width: 0; display: flex; align-items: center; gap: 10px; }
+.m-row .l > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m-row .r { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ico { flex: none; width: 30px; height: 30px; border-radius: 999px; background: var(--linen); display: grid; place-items: center; font-size: 0.95rem; }
+.bar-track { height: 8px; border-radius: 999px; background: var(--linen); overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 999px; background: var(--ember); }
+.bar-fill.ok { background: var(--ok); }
+.bar-fill.ink { background: var(--ink); }
+.chip { display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 9px; font-size: 0.72rem; font-weight: 500; }
+.chip.need { background: var(--warn-bg); color: var(--warn); }
+.chip.okc { background: var(--ok-bg); color: var(--ok); }
+.chip.line { box-shadow: inset 0 0 0 1px var(--stone); color: var(--graphite); }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--paper); border: 1px solid var(--stone); border-radius: 999px; padding: 3px; font-size: 0.78rem; text-align: center; }
+.seg span { border-radius: 999px; padding: 6px 0; color: var(--graphite); }
+.seg span.on { background: var(--ink); color: var(--linen); }
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; font-size: 0.7rem; text-align: center; font-variant-numeric: tabular-nums; }
+.cal .dow { color: var(--graphite); font-weight: 500; }
+.cal .d { aspect-ratio: 1; border-radius: 8px; display: grid; place-items: center; position: relative; color: var(--graphite); }
+.cal .d.has { background: var(--linen); color: var(--ink); font-weight: 500; }
+.cal .d.has::after { content: ""; position: absolute; bottom: 4px; width: 5px; height: 5px; border-radius: 999px; background: var(--ember); }
+.cal .d.today { box-shadow: inset 0 0 0 1.5px var(--ink); color: var(--ink); }
+.ring { width: 132px; height: 132px; margin: 4px auto 0; position: relative; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring .c { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
+.sheet { background: var(--paper); border-radius: 18px 18px 12px 12px; border: 1px solid var(--stone); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.grab { width: 40px; height: 4px; border-radius: 999px; background: var(--stone); margin: 0 auto 4px; }
+.field { border: 1px solid var(--stone); border-radius: 8px; padding: 9px 12px; font-size: 0.85rem; background: var(--paper); display: flex; justify-content: space-between; gap: 8px; }
+.field b { font-weight: 500; }
+.example { font-size: 0.72rem; color: var(--graphite); text-align: center; padding-top: 10px; }
+
+/* Token map and phases */
+.tokens { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.tok { display: flex; gap: 12px; align-items: center; background: var(--paper); border: 1px solid var(--stone); border-radius: 12px; padding: 12px; min-width: 0; }
+.sw { flex: none; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--stone); }
+.tok code { font: 400 0.78rem/1.4 ui-monospace, Menlo, Consolas, monospace; color: var(--graphite); display: block; }
+.phases { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+.phase ol { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 6px; font-size: 0.95rem; }
+.phase .when { font-size: 0.85rem; color: var(--graphite); }
+.qs { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 10px; }
+
+@media (max-width: 860px) {
+  .feature { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .phone { position: static; margin-inline: auto; }
+}
+@media (max-width: 480px) {
+  .kv { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .kv dd { margin-bottom: 8px; }
+  .card { padding: 18px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bar-fill { transition: width 0.4s ease-out; }
+}
+</style>
+
+<div class="wrap">
+
+  <header class="mast col">
+    <p class="eyebrow">Kimemiah Home · product spec · 24 Oct 2026</p>
+    <h1>Kimemiah Money, built the Monarch way</h1>
+    <p class="lede">Monarch is a household money app: one place for spending, budgets, bills, goals and reports that a family shares. This is the MVP for bringing its best ideas into Kimemiah's Money and Jobs tabs, with Monarch's screen design on those tabs and on the money cards on Home. Stock and Shop keep their current look.</p>
+    <div class="legend" aria-label="Status key">
+      <span><span class="tag t-live">Live</span> already in the app</span>
+      <span><span class="tag t-mvp">MVP</span> build next</span>
+      <span><span class="tag t-later">Later</span> after the MVP</span>
+      <span><span class="tag t-skip">Skip</span> doesn't fit a Kenyan family</span>
+    </div>
+  </header>
+
+  <section class="stack-lg" aria-labelledby="fit">
+    <div class="col stack">
+      <p class="eyebrow">How it fits</p>
+      <h2 id="fit">What we take from Monarch, and what we change</h2>
+    </div>
+    <div class="principles">
+      <div class="card">
+        <h3>M-Pesa instead of bank sync</h3>
+        <p class="muted">Monarch connects to 13,000 banks. Kenyan family money moves through M-Pesa, cash and a few bank accounts, so entries come from a pasted M-Pesa SMS, a receipt photo, or a quick tap. Rules sort them automatically.</p>
+      </div>
+      <div class="card">
+        <h3>A house, not a couple</h3>
+        <p class="muted">Monarch is built for two partners. Kimemiah has six people, and Peter funds most of it from away. Review, "who paid" and settling up work for any number of people, and the monthly summary goes to Peter on WhatsApp.</p>
+      </div>
+      <div class="card">
+        <h3>Money and Jobs move together</h3>
+        <p class="muted">Monarch stops at money. Here a bill nearly due posts a job, a funded goal opens its job, and a question about a spend goes on Sunday's meeting agenda. People see what the house uses and do something about it.</p>
+      </div>
+      <div class="card">
+        <h3>Never ranked, never blamed</h3>
+        <p class="muted">Usage notes talk about the house ("water 40% above usual"), not about a person. "Who paid" exists so money gets paid back, not to compare people.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="stack-lg" aria-labelledby="map">
+    <div class="col stack">
+      <p class="eyebrow">Feature map</p>
+      <h2 id="map">Every Monarch feature, and where it lands</h2>
+      <p class="muted">Effort is for one person working on this app: S is under a day, M is two or three days, L is about a week.</p>
+    </div>
+    <div class="tablewrap" role="region" aria-label="Feature map, scrolls sideways on small screens" tabindex="0">
+      <table>
+        <thead>
+          <tr><th scope="col">Monarch</th><th scope="col">What it does there</th><th scope="col">Kimemiah version</th><th scope="col">Status</th><th scope="col">Effort</th></tr>
+        </thead>
+        <tbody>
+          <tr class="group-row"><td colspan="5">Track</td></tr>
+          <tr><td>Dashboard</td><td>Drag-and-drop widgets: net worth, recent spending, goals, investments.</td><td>Money opens on a dashboard of the household's numbers: left this month, flexible spending, bills this week, goals. Each person can hide or reorder cards.</td><td><span class="tag t-mvp">MVP</span></td><td>M</td></tr>
+          <tr><td>Monthly review</td><td>Swipe through a short summary of last month's cash flow and spending.</td><td>A swipeable review that opens on the 1st and doubles as the money part of the first family meeting of the month. Sends to Peter.</td><td><span class="tag t-mvp">MVP</span></td><td>M</td></tr>
+          <tr><td>Transactions</td><td>One searchable list of every transaction. Swipe to review or edit.</td><td>Entries get search, filters (person, kind, shop, bill, month) and a Reviewed state. Entries still can't be edited. A correction voids them.</td><td><span class="tag t-mvp">MVP</span></td><td>M</td></tr>
+          <tr><td>Review by a partner</td><td>Tag a partner to check a transaction.</td><td>"Ask Vinnie about this" sends it to one person, and "Ask at the meeting" puts it on Sunday's agenda.</td><td><span class="tag t-live">Live</span> agenda · <span class="tag t-mvp">MVP</span> person</td><td>S</td></tr>
+          <tr><td>Auto-categorise</td><td>AI and rules put each merchant in a category.</td><td>Rules learned from pasted M-Pesa SMSes: "NAIVAS → Food", "NAIROBI WATER → Water bill". The first time, one tap saves the rule.</td><td><span class="tag t-mvp">MVP</span></td><td>M</td></tr>
+          <tr><td>Recurring</td><td>Bills and subscriptions found automatically, shown as a calendar or list, with reminders.</td><td>Bills with usage (litres, kg, GB) are live. MVP adds the calendar view, push reminders the day before, and spotting a repeat payment ("You've paid ZUKU on the 5th three months running. Make it a bill?").</td><td><span class="tag t-live">Live</span> list · <span class="tag t-mvp">MVP</span> calendar</td><td>M</td></tr>
+          <tr><td>Reports</td><td>Spending by category, income, trends, and a Sankey of where money flows.</td><td>Cash flow and Food are live. MVP adds the Sankey (Peter's money → kinds → shops), spending by kind over months, and spending by shop.</td><td><span class="tag t-live">Live</span> cash flow · <span class="tag t-mvp">MVP</span> Sankey</td><td>L</td></tr>
+          <tr><td>Net worth</td><td>Every account, property and loan, charted over time.</td><td>"Where the money is": M-Pesa, the cash tin, a bank account, the chama or SACCO, with balances typed in monthly. Total savings over time. No property values.</td><td><span class="tag t-later">Later</span></td><td>M</td></tr>
+          <tr><td>Investments</td><td>Stocks, funds, crypto, allocation.</td><td>Not a household need.</td><td><span class="tag t-skip">Skip</span></td><td>–</td></tr>
+          <tr class="group-row"><td colspan="5">Budget</td></tr>
+          <tr><td>Category budgets</td><td>A limit per category, with progress bars.</td><td>Live. Plans repeat each month until changed.</td><td><span class="tag t-live">Live</span></td><td>–</td></tr>
+          <tr><td>Flex budgeting</td><td>Spending split into fixed, flexible and non-monthly, so you watch one number: the flexible total.</td><td>Every kind is Fixed (internet, school transport), Flexible (food, market, airtime) or Non-monthly (school fees, insurance). The dashboard shows one number: flexible money left.</td><td><span class="tag t-mvp">MVP</span></td><td>M</td></tr>
+          <tr><td>Rollovers</td><td>Leftovers carry to next month, and non-monthly costs are saved a bit each month.</td><td>Live: carry leftovers, and "save up for a yearly cost".</td><td><span class="tag t-live">Live</span></td><td>–</td></tr>
+          <tr><td>Forecast</td><td>Where spending will end the month at the current pace.</td><td>Each flexible kind shows "on pace for KES 14,200 by the 31st" once a third of the month has passed.</td><td><span class="tag t-mvp">MVP</span></td><td>S</td></tr>
+          <tr><td>Budget alerts</td><td>Notifications when a budget nears its limit.</td><td>Push at 80% and 100% of a kind, once each per month, outside quiet hours.</td><td><span class="tag t-mvp">MVP</span></td><td>S</td></tr>
+          <tr class="group-row"><td colspan="5">Plan</td></tr>
+          <tr><td>Goals</td><td>Target, planned monthly contribution, image, progress, mark complete.</td><td>Projects with a date and pace are live. MVP adds an emoji or photo, a planned monthly amount, who chipped in, and a celebration card on Home when one completes.</td><td><span class="tag t-live">Live</span> pace · <span class="tag t-mvp">MVP</span> rest</td><td>S</td></tr>
+          <tr><td>Goals from accounts</td><td>Assign a savings account to a goal and track its balance.</td><td>Link a goal to a "where the money is" account, such as the chama.</td><td><span class="tag t-later">Later</span></td><td>S</td></tr>
+          <tr class="group-row"><td colspan="5">Collaborate</td></tr>
+          <tr><td>Household view</td><td>Everyone's accounts in one dashboard, with spending shown for the household whoever paid.</td><td>Already one shared house. Each entry has "spent by".</td><td><span class="tag t-live">Live</span></td><td>–</td></tr>
+          <tr><td>What we owe each other</td><td>Keep track of who owes whom.</td><td>Settle up: when someone pays a house cost from their own pocket, the house owes them. One tap logs the payback.</td><td><span class="tag t-mvp">MVP</span></td><td>M</td></tr>
+          <tr><td>Shared views</td><td>Mark accounts and transactions as personal, partner or shared.</td><td>Not needed: Kimemiah only tracks house money.</td><td><span class="tag t-skip">Skip</span></td><td>–</td></tr>
+          <tr><td>Advisor access</td><td>Invite a planner or tax pro.</td><td>Peter's WhatsApp summary covers this.</td><td><span class="tag t-skip">Skip</span></td><td>–</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="stack-lg" aria-labelledby="specs">
+    <div class="col stack">
+      <p class="eyebrow">MVP specs</p>
+      <h2 id="specs">Nine features, in build order</h2>
+      <p class="muted">Each spec has the Monarch screen it copies, what changes for Kimemiah, the data it needs, what ties it to the rest of the app, and how we'll know it's done. Mock-ups use Monarch's design and example figures, not the family's real numbers.</p>
+    </div>
+
+    <!-- 1. Dashboard -->
+    <article class="feature" aria-labelledby="f1">
+      <div class="text">
+        <div class="head">
+          <div class="row"><span class="tag t-mvp">MVP</span><span class="small muted">Phase 1 · M</span></div>
+          <h3 id="f1">1. Money dashboard</h3>
+        </div>
+        <p>Money opens on the household picture instead of a form. Monarch's dashboard is a stack of widgets the user chooses. Ours starts with five that answer "can we afford it this week?".</p>
+        <dl class="kv">
+          <dt>Monarch screen</dt><dd>Dashboard of cards on the linen canvas, a serif number per card, a small chart underneath, "View all" link top right.</dd>
+          <dt>Kimemiah cards</dt><dd>Left this month · Flexible money left (from Flex budgeting) · Bills in the next 7 days · Goals in progress · Recent entries. Each person can hide or reorder them, and the order is kept on that phone.</dd>
+          <dt>Ties</dt><dd><div class="ties"><span>Home: same "left this month" figure</span><span>Bills</span><span>Projects</span></div></dd>
+        </dl>
+        <pre class="schema">-- per phone, no server table
+localStorage "money.cards" = ["left","flex","bills","goals","recent"]</pre>
+        <ul class="done">
+          <li>Money opens on the dashboard, and logging money is one tap from it.</li>
+          <li>Every card's number matches the detail screen it opens.</li>
+          <li>Hiding a card on one phone doesn't hide it for anyone else.</li>
+        </ul>
+      </div>
+      <div class="phone" aria-label="Example: Money dashboard">
+        <div class="bar"><b>Money</b><span>October</span></div>
+        <div class="scr">
+          <div class="m-card">
+            <span class="m-label">Left this month</span>
+            <span class="m-big">KES 23,450</span>
+            <div class="bar-track"><div class="bar-fill" style="width:61%"></div></div>
+            <span class="small muted">KES 36,550 spent of 60,000 in</span>
+          </div>
+          <div class="m-card">
+            <div class="m-row"><span class="m-label">Bills this week</span><span class="small muted">View all</span></div>
+            <div class="m-row"><span class="l"><span class="ico">🔥</span><span>Cooking gas · Thu</span></span><span class="r">KES 3,300</span></div>
+            <div class="m-row"><span class="l"><span class="ico">📶</span><span>Internet · Sat</span></span><span class="r">KES 3,000</span></div>
+          </div>
+          <div class="m-card">
+            <span class="m-label">Goals</span>
+            <div class="m-row"><span>🔨 Repaint the gate</span><span class="r">62%</span></div>
+            <div class="bar-track"><div class="bar-fill ok" style="width:62%"></div></div>
+          </div>
+          <span class="pill primary">+ Log money</span>
+        </div>
+        <p class="example">Example figures</p>
+      </div>
+    </article>
+
+    <!-- 2. Flex budgeting -->
+    <article class="feature" aria-labelledby="f2">
+      <div class="text">
+        <div class="head">
+          <div class="row"><span class="tag t-mvp">MVP</span><span class="small muted">Phase 1 · M</span></div>
+          <h3 id="f2">2. Flex budgeting: one number to watch</h3>
+        </div>
+        <p>Monarch's signature budget. Fixed costs are known, non-monthly costs are saved for separately, so the only number anyone needs to watch day to day is flexible money left. For the family that's food, market and airtime.</p>
+        <dl class="kv">
+          <dt>Monarch screen</dt><dd>A Fixed / Flexible / Non-monthly switch, a big ring for the flexible total, and the three groups listed under it with progress bars.</dd>
+          <dt>Kimemiah rules</dt><dd>Each kind of spending gets a group: Internet starts as Fixed, school fees and insurance as Non-monthly, everything else as Flexible. Non-monthly kinds roll over automatically. Plans repeat each month. Category budgeting stays available as one switch in Settings.</dd>
+          <dt>Forecast</dt><dd>After the 10th, each flexible kind says where it will end the month at the current pace.</dd>
+          <dt>Ties</dt><dd><div class="ties"><span>Shop: money left while shopping</span><span>Home: Essentials card</span><span>Push alerts at 80% and 100%</span></div></dd>
+        </dl>
+        <pre class="schema">alter table budget_categories
+  add column budget_group text not null default 'flexible'
+    check (budget_group in ('fixed','flexible','non_monthly'));
+alter table members add column budget_style text default 'flex';</pre>
+        <ul class="done">
+          <li>Fixed + flexible + non-monthly plans add up to the month's plan.</li>
+          <li>The ring shows flexible plan minus flexible spent, never project money.</li>
+          <li>Forecast hidden before the 10th, and never below what's already spent.</li>
+          <li>One alert per kind at 80% and one at 100% per month.</li>
+        </ul>
+      </div>
+      <div class="phone" aria-label="Example: Flex budget">
+        <div class="bar"><b>Budget</b><span>October</span></div>
+        <div class="scr">
+          <div class="seg" aria-hidden="true"><span>Fixed</span><span class="on">Flexible</span><span>Non-monthly</span></div>
+          <div class="m-card">
+            <div class="ring">
+              <svg viewBox="0 0 36 36" aria-hidden="true">
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--linen)" stroke-width="3.2"></circle>
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--ember)" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="58 100" pathLength="100"></circle>
+              </svg>
+              <div class="c"><div><div class="m-label">Flexible left</div><div class="m-big" style="font-size:1.45rem">KES 9,240</div></div></div>
+            </div>
+            <span class="small muted" style="text-align:center">of KES 22,000 · 8 days to go</span>
+          </div>
+          <div class="m-card">
+            <div class="m-row"><span>Food</span><span class="r">8,550 / 12,000</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:71%"></div></div>
+            <span class="small muted">On pace for KES 11,700 by the 31st</span>
+            <div class="m-row"><span>Market and fresh</span><span class="r">3,100 / 5,000</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:62%"></div></div>
+            <div class="m-row"><span>Airtime and data</span><span class="r">1,110 / 1,500</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:74%"></div></div>
+          </div>
+        </div>
+        <p class="example">Example figures</p>
+      </div>
+    </article>
+
+    <!-- 3. Transactions + review -->
+    <article class="feature" aria-labelledby="f3">
+      <div class="text">
+        <div class="head">
+          <div class="row"><span class="tag t-mvp">MVP</span><span class="small muted">Phase 1 · M</span></div>
+          <h3 id="f3">3. Entries you can search and review</h3>
+        </div>
+        <p>Monarch's transaction list is one long, searchable list grouped by day, with a Needs review state that someone clears. Here, entries stay insert-only (corrections void them), so review lives in its own table.</p>
+        <dl class="kv">
+          <dt>Monarch screen</dt><dd>Search bar, filter pills, rows grouped under day headers: icon, payee, category, amount right-aligned. A Needs review chip, cleared with a swipe.</dd>
+          <dt>Kimemiah rules</dt><dd>Filters: person, kind, shop, bill, month. "Ask Wanini" assigns a review to one person, who gets a push. "Ask at the meeting" is live. Reviewed rows lose the chip.</dd>
+          <dt>Ties</dt><dd><div class="ties"><span>Meeting agenda</span><span>Push alerts</span><span>Monthly review counts open questions</span></div></dd>
+        </dl>
+        <pre class="schema">create table entry_reviews (
+  id uuid primary key, entry_id uuid references money_entries,
+  asked_by uuid, ask_to uuid,           -- null = anyone
+  question text, status text check (status in ('open','ok')),
+  answer text, created_at, updated_at, deleted_at, actor_id);</pre>
+        <ul class="done">
+          <li>Search finds an entry by note, payee, M-Pesa code or amount.</li>
+          <li>The person asked gets one push, and it clears when they mark it OK.</li>
+          <li>The list stays fast with 2,000 entries offline.</li>
+        </ul>
+      </div>
+      <div class="phone" aria-label="Example: Entries with review">
+        <div class="bar"><b>Entries</b><span>Search</span></div>
+        <div class="scr">
+          <div class="field"><span class="muted">Search payee, note, code…</span><span>⌕</span></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="chip line">Everyone</span><span class="chip line">Food</span><span class="chip need">Needs review · 2</span></div>
+          <div class="m-card">
+            <span class="m-label">Wed 21 Oct</span>
+            <div class="m-row"><span class="l"><span class="ico">🛒</span><span>Naivas Kahawa Sukari</span></span><span class="r">−8,550</span></div>
+            <div class="m-row"><span class="small muted">Food · Greg</span><span class="chip need">Ask Peter</span></div>
+            <span class="m-label">Mon 19 Oct</span>
+            <div class="m-row"><span class="l"><span class="ico">🔥</span><span>Gas refill 13 kg</span></span><span class="r">−3,300</span></div>
+            <div class="m-row"><span class="small muted">Cooking gas · Wanini</span><span class="chip okc">Reviewed</span></div>
+            <div class="m-row"><span class="l"><span class="ico">💸</span><span>From Peter</span></span><span class="r" style="color:var(--ok)">+30,000</span></div>
+          </div>
+        </div>
+        <p class="example">Example figures</p>
+      </div>
+    </article>
+
+    <!-- 4. Rules -->
+    <article class="feature" aria-labelledby="f4">
+      <div class="text">
+        <div class="head">
+          <div class="row"><span class="tag t-mvp">MVP</span><span class="small muted">Phase 1 · M</span></div>
+          <h3 id="f4">4. Rules that sort M-Pesa for you</h3>
+        </div>
+        <p>Monarch's rules engine is what keeps budgets accurate without effort. Our version learns from pasted M-Pesa messages: the first time a payee appears, a sheet offers to remember its kind, bill and shop.</p>
+        <dl class="kv">
+          <dt>Monarch screen</dt><dd>A bottom sheet: "If merchant is X → set category to Y", with a preview of how many past transactions match.</dd>
+          <dt>Kimemiah rules</dt><dd>Match on the M-Pesa payee, paybill or till number. Set kind, bill, shop. Applies when an SMS is pasted. Past entries stay as they are, since they can't be edited.</dd>
+          <dt>Ties</dt><dd><div class="ties"><span>Bills: usage asked straight away</span><span>Food stats by shop</span></div></dd>
+        </dl>
+        <pre class="schema">create table money_rules (
+  id uuid primary key, match text not null,  -- "NAIVAS", "888880"
+  category_id uuid, bill_id uuid, shop_id uuid,
+  sort int, created_at, updated_at, deleted_at, actor_id);</pre>
+        <ul class="done">
+          <li>Pasting a known payee fills kind, bill and shop with no taps.</li>
+          <li>The sheet appears once per new payee and never blocks saving.</li>
+          <li>Rules are listed and removable in Money settings.</li>
+        </ul>
+      </div>
+      <div class="phone" aria-label="Example: Save a rule">
+        <div class="bar"><b>New entry</b><span>From M-Pesa</span></div>
+        <div class="scr">
+          <div class="m-card">
+            <span class="m-label">Filled in from SJK7AB12CD</span>
+            <div class="m-row"><span>NAIROBI WATER (123456)</span><span class="r">KES 1,400</span></div>
+          </div>
+          <div class="sheet">
+            <div class="grab" aria-hidden="true"></div>
+            <b style="font-family:var(--serif);font-weight:350;font-size:1.2rem;letter-spacing:-0.03em">Remember this payee?</b>
+            <div class="field"><span class="muted">When paid to</span><b>NAIROBI WATER</b></div>
+            <div class="field"><span class="muted">Kind</span><b>Utilities</b></div>
+            <div class="field"><span class="muted">Bill</span><b>Water</b></div>
+            <span class="small muted">Next time it fills in by itself.</span>
+            <div style="display:flex;gap:8px"><span class="pill primary sm" style="flex:1">Save rule</span><span class="pill ghost sm">Not now</span></div>
+          </div>
+        </div>
+        <p class="example">Example figures</p>
+      </div>
+    </article>
+
+    <!-- 5. Recurring calendar -->
+    <article class="feature" aria-labelledby="f5">
+      <div class="text">
+        <div class="head">
+          <div class="row"><span class="tag t-live">Live</span><span class="tag t-mvp">MVP</span><span class="small muted">Phase 2 · M</span></div>
+          <h3 id="f5">5. Recurring: calendar, reminders, spotting repeats</h3>
+        </div>
+        <p>Bills with usage, bill jobs and Home notes are live. Monarch adds the calendar view, which makes a heavy week visible before it arrives, and finds repeat payments you never set up.</p>
+        <dl class="kv">
+          <dt>Monarch screen</dt><dd>A List / Calendar switch. The month grid marks days with a dot, and tapping a day lists what's due and the total.</dd>
+          <dt>Kimemiah rules</dt><dd>Due dates from each bill's cycle or how long one lasts. A push the evening before. A payee paid three months running on about the same day suggests "Make it a bill?".</dd>
+          <dt>Ties</dt><dd><div class="ties"><span>Jobs: bill job posted 2 days ahead</span><span>Home: bills coming up</span><span>Flex: fixed group</span></div></dd>
+        </dl>
+        <pre class="schema">alter table bills add column remind boolean default true;
+alter table bills add column reminded_for date;  -- server: once per due date</pre>
+        <ul class="done">
+          <li>Calendar and list show the same bills and totals.</li>
+          <li>One reminder per bill per due date, outside 21:00 to 07:00.</li>
+          <li>A suggested bill is never created without a tap.</li>
+        </ul>
+      </div>
+      <div class="phone" aria-label="Example: Bills calendar">
+        <div class="bar"><b>Recurring</b><span>November</span></div>
+        <div class="scr">
+          <div class="seg" style="grid-template-columns:1fr 1fr" aria-hidden="true"><span>List</span><span class="on">Calendar</span></div>
+          <div class="m-card">
+            <div class="cal" aria-hidden="true">
+              <span class="dow">M</span><span class="dow">T</span><span class="dow">W</span><span class="dow">T</span><span class="dow">F</span><span class="dow">S</span><span class="dow">S</span>
+              <span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d"></span><span class="d">1</span>
+              <span class="d">2</span><span class="d">3</span><span class="d">4</span><span class="d has">5</span><span class="d">6</span><span class="d">7</span><span class="d">8</span>
+              <span class="d">9</span><span class="d">10</span><span class="d has">11</span><span class="d">12</span><span class="d">13</span><span class="d">14</span><span class="d">15</span>
+              <span class="d">16</span><span class="d">17</span><span class="d">18</span><span class="d has today">19</span><span class="d">20</span><span class="d">21</span><span class="d">22</span>
+              <span class="d">23</span><span class="d">24</span><span class="d">25</span><span class="d">26</span><span class="d">27</span><span class="d has">28</span><span class="d">29</span>
+            </div>
+          </div>
+          <div class="m-card">
+            <span class="m-label">Thu 19 Nov · KES 4,700</span>
+            <div class="m-row"><span class="l"><span class="ico">🔥</span><span>Cooking gas · lasts ~41 days</span></span><span class="r">3,300</span></div>
+            <div class="m-row"><span class="l"><span class="ico">💧</span><span>Water · 5,000 L</span></span><span class="r">1,400</span></div>
+          </div>
+        </div>
+        <p class="example">Example figures</p>
+      </div>
+    </article>
+
+    <!-- 6. Goals -->
+    <article class="feature" aria-labelledby="f6">
+      <div class="text">
+        <div class="head">
+          <div class="row"><span class="tag t-live">Live</span><span class="tag t-mvp">MVP</span><span class="small muted">Phase 2 · S</span></div>
+          <h3 id="f6">6. Goals that feel like progress</h3>
+        </div>
+        <p>Target, date and monthly pace are live. Monarch's goals also have a picture, a planned monthly amount, and a finish worth celebrating. For a family, who chipped in matters too, said as thanks and never as a ranking.</p>
+        <dl class="kv">
+          <dt>Monarch screen</dt><dd>Large image card, serif goal name, progress bar, "KES x of y", planned monthly contribution, a Mark complete button.</dd>
+          <dt>Kimemiah rules</dt><dd>Emoji or a photo from the phone. "Planned per month" defaults to the pace. On complete: a thank-you card on Home naming everyone who gave, and the linked job opens up.</dd>
+          <dt>Ties</dt><dd><div class="ties"><span>Jobs: a funded house-work goal opens its job</span><span>Asante cards</span><span>Peter's summary</span></div></dd>
+        </dl>
+        <pre class="schema">alter table projects
+  add column emoji text, add column photo_path text,
+  add column planned_monthly_kes numeric;</pre>
+        <ul class="done">
+          <li>"Who chipped in" lists names in the order they gave, never sorted by amount.</li>
+          <li>Completing a goal shows the thank-you card for 3 days.</li>
+        </ul>
+      </div>
+      <div class="phone" aria-label="Example: Goal card">
+        <div class="bar"><b>Goals</b><span>2 saving</span></div>
+        <div class="scr">
+          <div class="m-card" style="padding:0;overflow:hidden">
+            <div style="height:96px;background:linear-gradient(135deg,var(--warn-bg),var(--linen));display:grid;place-items:center;font-size:2.4rem" aria-hidden="true">🔨</div>
+            <div style="padding:14px;display:flex;flex-direction:column;gap:10px">
+              <b style="font-family:var(--serif);font-weight:350;font-size:1.3rem;letter-spacing:-0.04em">Repaint the gate</b>
+              <div class="bar-track"><div class="bar-fill ok" style="width:62%"></div></div>
+              <div class="m-row"><span class="tab">KES 7,440 of 12,000</span><span class="chip okc">On track</span></div>
+              <span class="small muted">KES 1,520 a month to finish by March</span>
+              <span class="small">Chipped in: Peter, Daniel, Juliet</span>
+              <div style="display:flex;gap:8px"><span class="pill primary sm" style="flex:1">+ Add money</span><span class="pill outline sm">Details</span></div>
+            </div>
+          </div>
+        </div>
+        <p class="example">Example figures</p>
+      </div>
+    </article>
+
+    <!-- 7. Settle up -->
+    <article class="feature" aria-labelledby="f7">
+      <div class="text">
+        <div class="head">
+          <div class="row"><span class="tag t-mvp">MVP</span><span class="small muted">Phase 2 · M</span></div>
+          <h3 id="f7">7. Settle up: what the house owes each person</h3>
+        </div>
+        <p>A reviewer's favourite Monarch feature is staying up to date on what partners owe each other. In a family, people often pay a house cost from their own M-Pesa and forget to get it back. This makes it visible and easy to clear.</p>
+        <dl class="kv">
+          <dt>Monarch screen</dt><dd>A balance card per person with "owes" in the accent colour and a Settle button.</dd>
+          <dt>Kimemiah rules</dt><dd>A new "Paid from" field on money out: House money or "My own money". Own-money spends add to what the house owes that person. Paying them back is a money-out entry marked as a payback, which clears it.</dd>
+          <dt>Ties</dt><dd><div class="ties"><span>Spent by</span><span>Peter's summary lists open paybacks</span><span>Monthly review</span></div></dd>
+        </dl>
+        <pre class="schema">alter table money_entries
+  add column paid_from text default 'house' check (paid_from in ('house','own')),
+  add column payback_to uuid references members;  -- a payback entry</pre>
+        <ul class="done">
+          <li>Owed = own-money spends minus paybacks, per person, never negative.</li>
+          <li>A payback counts once in Money and isn't counted as new spending.</li>
+        </ul>
+      </div>
+      <div class="phone" aria-label="Example: Settle up">
+        <div class="bar"><b>Settle up</b><span>House owes</span></div>
+        <div class="scr">
+          <div class="m-card">
+            <span class="m-label">Paid from their own money</span>
+            <div class="m-row"><span class="l"><span class="ico">W</span><span>Wanini · gas, 19 Oct</span></span><span class="r">3,300</span></div>
+            <div class="m-row"><span class="l"><span class="ico">V</span><span>Vinnie · 2 items</span></span><span class="r">640</span></div>
+            <div class="m-row"><span class="l"><span class="ico">G</span><span>Greg</span></span><span class="r muted">Settled</span></div>
+          </div>
+          <span class="pill primary">Pay Wanini back KES 3,300</span>
+        </div>
+        <p class="example">Example figures</p>
+      </div>
+    </article>
+
+    <!-- 8. Reports / Sankey -->
+    <article class="feature" aria-labelledby="f8">
+      <div class="text">
+        <div class="head">
+          <div class="row"><span class="tag t-live">Live</span><span class="tag t-mvp">MVP</span><span class="small muted">Phase 3 · L</span></div>
+          <h3 id="f8">8. Reports: where the money flows</h3>
+        </div>
+        <p>Cash flow and Food are live. Monarch's best-loved report is the Sankey: money in on the left, splitting into what it was spent on. It's the clearest way to show Peter where his money went.</p>
+        <dl class="kv">
+          <dt>Monarch screen</dt><dd>Reports tab with a time range picker, then Sankey, spending by category over months (stacked bars), and a breakdown table.</dd>
+          <dt>Kimemiah reports</dt><dd>Sankey (each person who put money in → groups → kinds), kinds over 6 months, spending by shop, bill usage over time (litres, kg). Month, 3 months, 6 months.</dd>
+          <dt>Ties</dt><dd><div class="ties"><span>Monthly review</span><span>Meeting</span><span>Bills usage</span></div></dd>
+        </dl>
+        <pre class="schema">-- no new tables: computed on the phone from money_entries,
+-- budget_categories, bills; drawn as inline SVG</pre>
+        <ul class="done">
+          <li>Band widths add up to the totals shown beside them.</li>
+          <li>Readable in dark mode and at phone width, and each chart has a text summary for screen readers.</li>
+        </ul>
+      </div>
+      <div class="phone" aria-label="Example: Sankey of October money">
+        <div class="bar"><b>Reports</b><span>October</span></div>
+        <div class="scr">
+          <div class="m-card">
+            <span class="m-label">Where October's money went</span>
+            <svg viewBox="0 0 300 206" width="100%" role="img" aria-label="Example: KES 60,000 in, split into Fixed 9,000, Flexible 22,000, Non-monthly 5,000, and 24,000 kept">
+              <rect x="0" y="10" width="10" height="170" rx="3" fill="var(--ok)"></rect>
+              <path d="M10 10 C 110 10, 110 10, 200 10 L200 36 C 110 36, 110 36, 10 36 Z" fill="var(--stone)"></path>
+              <path d="M10 36 C 110 36, 110 44, 200 44 L200 106 C 110 106, 110 98, 10 98 Z" fill="var(--ember)" opacity="0.85"></path>
+              <path d="M10 98 C 110 98, 110 114, 200 114 L200 128 C 110 128, 110 112, 10 112 Z" fill="var(--warn)" opacity="0.55"></path>
+              <path d="M10 112 C 110 112, 110 136, 200 136 L200 204 C 110 204, 110 180, 10 180 Z" fill="var(--ok)" opacity="0.35"></path>
+              <rect x="200" y="10" width="8" height="26" rx="2" fill="var(--ink)"></rect>
+              <rect x="200" y="44" width="8" height="62" rx="2" fill="var(--ink)"></rect>
+              <rect x="200" y="114" width="8" height="14" rx="2" fill="var(--ink)"></rect>
+              <rect x="200" y="136" width="8" height="68" rx="2" fill="var(--ink)"></rect>
+              <g font-family="Inter, sans-serif" font-size="10" fill="var(--ink)">
+                <text x="214" y="21">Fixed</text><text x="214" y="33" fill="var(--graphite)">9,000</text>
+                <text x="214" y="72">Flexible</text><text x="214" y="84" fill="var(--graphite)">22,000</text>
+                <text x="214" y="124">Non-monthly 5,000</text>
+                <text x="214" y="166">Kept</text><text x="214" y="178" fill="var(--graphite)">24,000</text>
+              </g>
+            </svg>
+            <span class="small muted">In: KES 60,000 from Peter, Daniel and Greg</span>
+          </div>
+        </div>
+        <p class="example">Example figures</p>
+      </div>
+    </article>
+
+    <!-- 9. Monthly review -->
+    <article class="feature" aria-labelledby="f9">
+      <div class="text">
+        <div class="head">
+          <div class="row"><span class="tag t-mvp">MVP</span><span class="small muted">Phase 3 · M</span></div>
+          <h3 id="f9">9. Monthly review, ready for the meeting</h3>
+        </div>
+        <p>Monarch's monthly review is a short swipe-through on the 1st. Here it becomes the money part of the month's first family meeting, and the message to Peter.</p>
+        <dl class="kv">
+          <dt>Monarch screen</dt><dd>Full-screen cards, one fact each: income, spending, top categories, goals moved, with a dot pager.</dd>
+          <dt>Kimemiah cards</dt><dd>In and spent · Kept · Biggest kinds against plan · Bills and usage (water, gas) against usual · Goals moved · Open questions and paybacks · "Send to Peter".</dd>
+          <dt>Ties</dt><dd><div class="ties"><span>Meeting agenda: "Money review" item</span><span>WhatsApp summary</span><span>Reports</span></div></dd>
+        </dl>
+        <pre class="schema">-- computed; the meeting gets an agenda item linking here
+agenda_items.source = 'money_review'</pre>
+        <ul class="done">
+          <li>Appears on Home from the 1st to the 7th, then lives under Money.</li>
+          <li>Six cards or fewer, each making sense on its own.</li>
+          <li>"Send to Peter" opens WhatsApp with the same text as the cards.</li>
+        </ul>
+      </div>
+      <div class="phone" aria-label="Example: Monthly review card">
+        <div class="bar"><b>October review</b><span>3 of 6</span></div>
+        <div class="scr">
+          <div class="m-card" style="min-height:300px;justify-content:space-between">
+            <span class="m-label">Bills and usage</span>
+            <div class="stack" style="gap:10px">
+              <b style="font-family:var(--serif);font-weight:350;font-size:1.5rem;line-height:1.2;letter-spacing:-0.04em">Water was 40% above a usual month.</b>
+              <span class="small muted">7,000 L against about 5,000. Gas lasted 41 days, about the same as usual.</span>
+            </div>
+            <div style="display:flex;justify-content:center;gap:6px" aria-hidden="true">
+              <span style="width:6px;height:6px;border-radius:9px;background:var(--stone)"></span><span style="width:6px;height:6px;border-radius:9px;background:var(--stone)"></span><span style="width:18px;height:6px;border-radius:9px;background:var(--ember)"></span><span style="width:6px;height:6px;border-radius:9px;background:var(--stone)"></span><span style="width:6px;height:6px;border-radius:9px;background:var(--stone)"></span><span style="width:6px;height:6px;border-radius:9px;background:var(--stone)"></span>
+            </div>
+          </div>
+          <span class="pill outline">Send to Peter on WhatsApp</span>
+        </div>
+        <p class="example">Example figures</p>
+      </div>
+    </article>
+  </section>
+
+  <section class="stack-lg" aria-labelledby="design">
+    <div class="col stack">
+      <p class="eyebrow">Design</p>
+      <h2 id="design">Monarch's look, on Money, Jobs and Home's money cards</h2>
+      <p class="muted">Money, Jobs and the money cards on Home get a <code>.monarch</code> wrapper that swaps these tokens in. Stock and Shop keep the current look. Tailwind classes stay the same, and only the token values change inside the wrapper.</p>
+    </div>
+    <div class="tokens">
+      <div class="tok"><span class="sw" style="background:#efecea"></span><span><b>Linen canvas</b><code>#efecea → --surface-base</code></span></div>
+      <div class="tok"><span class="sw" style="background:#ffffff"></span><span><b>Paper card</b><code>#ffffff → --surface-raised</code></span></div>
+      <div class="tok"><span class="sw" style="background:#22201d"></span><span><b>Ink</b><code>#22201d → --text-primary</code></span></div>
+      <div class="tok"><span class="sw" style="background:#777573"></span><span><b>Graphite</b><code>#777573 → --text-muted</code></span></div>
+      <div class="tok"><span class="sw" style="background:#dcd9d6"></span><span><b>Stone hairline</b><code>#dcd9d6 → --line</code></span></div>
+      <div class="tok"><span class="sw" style="background:#ff692d"></span><span><b>Ember action</b><code>#ff692d → --action, ink text</code></span></div>
+    </div>
+    <div class="principles">
+      <div class="card"><h3>Type</h3><p class="muted">Headings in Fraunces 350 with tight tracking (Monarch's Copernicus is paid). Body in Inter 400. Big money figures in the serif, with tabular digits.</p></div>
+      <div class="card"><h3>Shape</h3><p class="muted">Pill buttons and chips, 12px cards, 8px inputs. Cards get a hairline border and a 5% shadow, nothing heavier.</p></div>
+      <div class="card"><h3>Accent</h3><p class="muted">Ember only on the main button, the active tab, progress and eyebrow labels. Buttons use ink text on ember: white text on #ff692d is 2.9:1, too faint in sunlight.</p></div>
+      <div class="card"><h3>Example buttons</h3><div style="display:flex;flex-wrap:wrap;gap:8px"><span class="pill primary">Log money</span><span class="pill outline">Details</span><span class="pill ghost">Cancel</span></div></div>
+    </div>
+  </section>
+
+  <section class="stack-lg" aria-labelledby="plan">
+    <div class="col stack">
+      <p class="eyebrow">Build order</p>
+      <h2 id="plan">Three phases, about four weeks</h2>
+      <p class="muted">Each phase ships to the family on its own. Later items wait until the MVP has been used for a month.</p>
+    </div>
+    <div class="phases">
+      <div class="card phase stack">
+        <span class="tag t-mvp" style="align-self:flex-start">Phase 1 · about 1.5 weeks</span>
+        <h3>See and sort</h3>
+        <ol><li>Monarch look on Money, Jobs and Home's money cards</li><li>Money dashboard</li><li>Flex budgeting, forecast, budget alerts</li><li>Searchable entries and review</li><li>M-Pesa rules</li></ol>
+      </div>
+      <div class="card phase stack">
+        <span class="tag t-mvp" style="align-self:flex-start">Phase 2 · about 1 week</span>
+        <h3>Plan ahead</h3>
+        <ol><li>Bills calendar and reminders</li><li>Spotting repeat payments</li><li>Goals: picture, planned amount, thanks</li><li>Settle up</li></ol>
+      </div>
+      <div class="card phase stack">
+        <span class="tag t-mvp" style="align-self:flex-start">Phase 3 · about 1.5 weeks</span>
+        <h3>Look back together</h3>
+        <ol><li>Reports and the Sankey</li><li>Monthly review and meeting item</li><li>Peter's summary from the review</li></ol>
+      </div>
+      <div class="card phase stack">
+        <span class="tag t-later" style="align-self:flex-start">Later</span>
+        <h3>After a month of use</h3>
+        <ol><li>Where the money is (accounts, savings over time)</li><li>Goals linked to an account</li><li>Receipt photo straight into an entry</li></ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="col stack" aria-labelledby="qs">
+    <p class="eyebrow">Decided · 24 Oct 2026</p>
+    <h2 id="qs">What the family chose</h2>
+    <dl class="kv">
+      <dt>Look</dt><dd>Monarch's look on Money, Jobs, and the money cards on Home (left this month, bills, goals). Stock and Shop keep the current look.</dd>
+      <dt>Budgeting</dt><dd>Flex budgeting from the start. Category budgeting stays one switch away in Settings.</dd>
+      <dt>Fixed costs</dt><dd>Internet. Everything else starts as Flexible; school fees and insurance go under Non-monthly when they're added.</dd>
+      <dt>Money in</dt><dd>Several people put money into the house. Each one is a source in the Sankey and in Peter's summary, and settle up stays in the MVP for costs paid from someone's own pocket.</dd>
+    </dl>
+    <p class="small muted">Sources: monarch.com (home, features/tracking, features/budgeting, features/planning, for-couples), read 24 Oct 2026, plus reviews from Experian and NerdWallet. Mock-up figures are examples.</p>
+  </section>
+
+</div>

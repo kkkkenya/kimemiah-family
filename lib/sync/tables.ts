@@ -14,6 +14,8 @@ export const SYNC_TABLES = [
   "job_rota",
   "projects",
   "bills",
+  "entry_reviews",
+  "money_rules",
   "thanks",
   "budget_categories",
   "money_entries",

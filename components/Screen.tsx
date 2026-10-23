@@ -10,9 +10,9 @@ const HEADER_LINKS = [
 
 // Page frame: frosted white title bar on a hairline, optional back arrow, Contacts / Meeting /
 // Settings at the top right, then the content.
-export function Screen({ title, back, children }: { title: string; back?: string; children: ReactNode }) {
+export function Screen({ title, back, tone, children }: { title: string; back?: string; tone?: "monarch"; children: ReactNode }) {
   return (
-    <>
+    <div className={tone === "monarch" ? "monarch min-h-dvh bg-base" : undefined}>
       <header className="sticky top-0 z-10 mb-4 border-b border-line bg-raised/85 pt-[env(safe-area-inset-top)] backdrop-blur-md">
         <div className="mx-auto flex max-w-xl items-center gap-2 px-4 py-3 lg:max-w-5xl lg:px-6">
           {back && (
@@ -36,7 +36,7 @@ export function Screen({ title, back, children }: { title: string; back?: string
         </div>
       </header>
       <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 pb-6 lg:block lg:max-w-5xl lg:columns-2 lg:gap-4 lg:px-6 lg:[&>*]:mb-4 lg:[&>*]:break-inside-avoid lg:[&>:not(section)]:[column-span:all]">{children}</main>
-    </>
+    </div>
   );
 }
 

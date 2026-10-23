@@ -21,6 +21,7 @@ export type Alert = {
   jobId?: string;
   partId?: string; // for reminders and handovers: the participant row it's about
   memberId?: string; // for nudge and ease: the person it's about (marked once a week)
+  key?: string; // money alerts: recorded once in money_alerts
   url?: string;
   to: string[]; // member ids (empty: just mark it handled, e.g. too old to send)
   title: string;
@@ -184,8 +185,8 @@ export function groupByPerson(alerts: Alert[]): Map<string, { title: string; bod
     out.set(
       m,
       list.length === 1
-        ? { title: list[0].title, body: list[0].body, tag: `${list[0].kind}-${list[0].jobId ?? list[0].memberId}`, url: list[0].url ?? "/jobs" }
-        : { title: `${list.length} job updates`, body: list.map((a) => a.title).join(" · "), tag: "jobs", url: "/jobs" },
+        ? { title: list[0].title, body: list[0].body, tag: `${list[0].kind}-${list[0].key ?? list[0].jobId ?? list[0].memberId}`, url: list[0].url ?? "/jobs" }
+        : { title: list.some((a) => a.key) ? `${list.length} updates from the house` : `${list.length} job updates`, body: list.map((a) => a.title).join(" · "), tag: "jobs", url: list.every((a) => a.key) ? "/money" : "/jobs" },
     );
   }
   return out;

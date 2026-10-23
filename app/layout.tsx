@@ -1,11 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
+
+// Headings in the Money, Jobs and Home money cards (Monarch look).
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  display: "swap",
+  preload: false,
+});
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: "400",
+  weight: ["400", "500"],
   display: "swap",
 });
 
@@ -30,7 +38,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en-KE" className={inter.variable}>
+    <html lang="en-KE" className={`${inter.variable} ${fraunces.variable}`}>
       <body className="min-h-dvh antialiased">{children}</body>
     </html>
   );

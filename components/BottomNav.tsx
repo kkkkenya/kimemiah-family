@@ -21,6 +21,8 @@ const TABS = [
 export function BottomNav() {
   const path = usePathname();
   const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+  // Money and Jobs use the Monarch look, so their tab lights up in its orange.
+  const tint = (href: string) => (href === "/money" || href === "/jobs" ? "bg-[#ff692d] text-[#22201d]" : "bg-action text-action-ink");
 
   return (
     <nav
@@ -35,10 +37,10 @@ export function BottomNav() {
               href={t.href}
               aria-current={active(t.href) ? "page" : undefined}
               className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-bold lg:min-h-12 lg:flex-row lg:justify-start lg:gap-3 lg:rounded-md lg:px-3 lg:text-base ${
-                active(t.href) ? "text-ink lg:bg-action lg:text-action-ink" : "text-muted lg:text-[#d3d3d3] lg:hover:bg-white/10"
+                !active(t.href) ? "text-muted lg:text-[#d3d3d3] lg:hover:bg-white/10" : t.href === "/money" || t.href === "/jobs" ? "text-ink lg:bg-[#ff692d] lg:text-[#22201d]" : "text-ink lg:bg-action lg:text-action-ink"
               }`}
             >
-              <span className={`flex h-7 w-12 items-center justify-center rounded-md lg:w-auto lg:bg-transparent ${active(t.href) ? "bg-action text-action-ink" : ""}`}>{t.icon}</span>
+              <span className={`flex h-7 w-12 items-center justify-center rounded-md lg:w-auto lg:bg-transparent ${active(t.href) ? tint(t.href) : ""}`}>{t.icon}</span>
               <span>{t.label}</span>
             </Link>
           </li>

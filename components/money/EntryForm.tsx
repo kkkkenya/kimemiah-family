@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { parseMpesa } from "@/lib/money/mpesa";
+import { ruleFor, type Rule } from "@/lib/money/rules";
 import type { Bill } from "@/lib/money/bills";
 import type { Project } from "@/lib/money/money";
 import type { NewEntry } from "@/lib/sync/workflows";
@@ -20,6 +21,7 @@ export function EntryForm({
   categories,
   projects,
   bills = [],
+  rules = [],
   meId,
   onSave,
   onCancel,
@@ -28,6 +30,7 @@ export function EntryForm({
   categories: Category[];
   projects: Project[];
   bills?: Bill[];
+  rules?: Rule[];
   meId?: string;
   onSave: (e: NewEntry) => Promise<string | null>;
   onCancel: () => void;
@@ -49,8 +52,19 @@ export function EntryForm({
     if (!m) return setNote(text.trim() ? "That doesn't look like an M-Pesa confirmation." : null);
     if (m.kind === "withdraw") return setNote(`A cash withdrawal (${m.amount.toLocaleString("en-KE")}): money moving to cash, not spending, so it isn't logged.`);
     setAmount(String(m.amount));
-    set({ direction: m.direction!, counterparty: m.counterparty, occurred_on: m.date ?? today(), mpesa_code: m.code, method: "mpesa", note: d.note ?? m.counterparty });
-    setNote(`Filled in from ${m.code}. Check it and save.`);
+    // A saved rule for this payee sorts it: kind, bill and shop.
+    const r = m.direction === "out" ? ruleFor(m.counterparty, rules) : undefined;
+    const bill = r?.bill_id ? bills.find((b) => b.id === r.bill_id) : undefined;
+    set({
+      direction: m.direction!,
+      counterparty: m.counterparty,
+      occurred_on: m.date ?? today(),
+      mpesa_code: m.code,
+      method: "mpesa",
+      note: d.note ?? bill?.name ?? m.counterparty,
+      ...(r ? { category_id: r.category_id ?? bill?.category_id ?? d.category_id ?? null, bill_id: r.bill_id ?? null, shop_id: r.shop_id ?? null, project_id: null } : {}),
+    });
+    setNote(r ? `Filled in from ${m.code} and sorted by your rule for ${r.match}. Check it and save.` : `Filled in from ${m.code}. Check it and save.`);
   }
 
   async function submit(e: FormEvent) {
@@ -69,6 +83,7 @@ export function EntryForm({
       counterparty: d.counterparty ?? null,
       mpesa_code: d.mpesa_code ?? null,
       bill_id: d.bill_id ?? null,
+      shop_id: d.shop_id ?? null,
       usage_qty: bill?.usage_unit && used > 0 ? used : null,
     });
     setBusy(false);
