@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { kes } from "@/lib/shopping/pricing";
-import { projectProgress, type Entry, type Project } from "@/lib/money/money";
+import { projectPace, projectProgress, type Entry, type Project } from "@/lib/money/money";
 
 const field = "min-h-12 w-full rounded-xl border border-line bg-base px-3";
 
@@ -15,19 +15,22 @@ export function Projects({
   onGive,
   onSpend,
   onDone,
+  today,
 }: {
   projects: Project[];
   entries: Entry[];
-  onNew: (p: { title: string; kind: Project["kind"]; target_kes: number; notes: string; postJob: boolean }) => void;
+  onNew: (p: { title: string; kind: Project["kind"]; target_kes: number; notes: string; postJob: boolean; target_date: string | null }) => void;
   onGive: (p: Project) => void;
   onSpend: (p: Project) => void;
   onDone: (p: Project) => void;
+  today: string;
 }) {
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState("");
   const [kind, setKind] = useState<Project["kind"]>("house_work");
   const [target, setTarget] = useState("");
   const [notes, setNotes] = useState("");
+  const [by, setBy] = useState("");
   const [postJob, setPostJob] = useState(true);
   const live = projects.filter((p) => !p.deleted_at).sort((a, b) => (a.status === "done" ? 1 : 0) - (b.status === "done" ? 1 : 0));
   const value = Number(target.replace(/[, ]/g, ""));
@@ -35,11 +38,12 @@ export function Projects({
   function submit(e: FormEvent) {
     e.preventDefault();
     if (!title.trim() || !(value > 0)) return;
-    onNew({ title: title.trim(), kind, target_kes: value, notes: notes.trim(), postJob: kind === "house_work" && postJob });
+    onNew({ title: title.trim(), kind, target_kes: value, notes: notes.trim(), postJob: kind === "house_work" && postJob, target_date: by || null });
     setAdding(false);
     setTitle("");
     setTarget("");
     setNotes("");
+    setBy("");
   }
 
   return (
@@ -77,6 +81,10 @@ export function Projects({
           <label className="flex flex-col gap-1 text-sm font-bold">
             Target (KES)
             <input inputMode="numeric" value={target} onChange={(e) => setTarget(e.target.value)} className={`${field} tabular`} />
+          </label>
+          <label className="flex flex-col gap-1 text-sm font-bold">
+            By when? (optional)
+            <input type="date" value={by} min={today} onChange={(e) => setBy(e.target.value)} className={field} />
           </label>
           <label className="flex flex-col gap-1 text-sm font-bold">
             Notes
@@ -122,6 +130,23 @@ export function Projects({
                   {g.left > 0 ? ` · ${kes(g.left)} to go` : ""}
                   {g.spent > 0 ? ` · ${kes(g.spent)} spent` : ""}
                 </p>
+                {(() => {
+                  const pace = p.status === "saving" ? projectPace(p, entries, today) : null;
+                  if (!pace) return null;
+                  return (
+                    <p className="mt-1 text-sm">
+                      {pace.late ? (
+                        <span className="font-bold text-out-strong">Past its date. Pick a new one or add money.</span>
+                      ) : (
+                        <>
+                          Put aside <strong>{kes(pace.perMonth)}</strong> a month to make it by {new Date(`${(p as Project & { target_date?: string }).target_date}T09:00:00Z`).toLocaleDateString("en-KE", { month: "short", year: "numeric" })}
+                          {" · "}
+                          <span className={pace.ahead >= 0 ? "text-ok-fg" : "font-bold text-low-fg"}>{pace.ahead >= 0 ? "on track" : `${kes(-pace.ahead)} behind`}</span>
+                        </>
+                      )}
+                    </p>
+                  );
+                })()}
                 {p.status !== "done" && (
                   <div className="mt-2 flex flex-wrap gap-2">
                     {p.status === "saving" && (

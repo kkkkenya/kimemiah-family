@@ -10,6 +10,8 @@ export type Entry = {
   category_id?: string | null;
   shop_id?: string | null;
   project_id?: string | null;
+  bill_id?: string | null;
+  usage_qty?: number | null;
   voids_entry_id?: string | null;
   note?: string | null;
   counterparty?: string | null;
@@ -112,4 +114,63 @@ export function summaryText(month: string, s: ReturnType<typeof monthSummary>, c
   if (cats.length) lines.push("", "Spending:", ...cats.map(([id, v]) => `- ${categoryName(id)}: ${kes(v)}`));
   if (projects.length) lines.push("", "Projects:", ...projects.map((p) => `- ${p.title}: ${kes(p.raised)} of ${kes(p.target)}`));
   return lines.join("\n");
+}
+
+const shiftMonth = (month: string, by: number) => {
+  const d = new Date(`${month}-15T00:00:00Z`);
+  d.setUTCMonth(d.getUTCMonth() + by);
+  return d.toISOString().slice(0, 7);
+};
+
+/** Household money in and out for the `count` months up to `month`, and what was kept. */
+export function cashFlow(entries: Entry[], month: string, count = 6) {
+  return Array.from({ length: count }, (_, i) => {
+    const m = shiftMonth(month, i - count + 1);
+    const s = monthSummary(entries, m);
+    return { month: m, moneyIn: s.moneyIn, moneyOut: s.moneyOut, kept: s.moneyIn - s.moneyOut, keptPct: s.moneyIn > 0 ? Math.round(((s.moneyIn - s.moneyOut) / s.moneyIn) * 100) : null };
+  });
+}
+
+/**
+ * A project's pace toward its date: what to put aside each month from now, and how far ahead
+ * or behind a steady pace it is (positive = ahead).
+ */
+export function projectPace(p: Project & { target_date?: string | null; created_at?: string }, entries: Entry[], today: string) {
+  if (!p.target_date) return null;
+  const g = projectProgress(p, entries);
+  // Months still to save in, counting this one and the target's.
+  const monthsLeft = Math.max(1, (Number(p.target_date.slice(0, 4)) - Number(today.slice(0, 4))) * 12 + Number(p.target_date.slice(5, 7)) - Number(today.slice(5, 7)) + 1);
+  const perMonth = Math.ceil(g.left / monthsLeft);
+  const start = Date.parse((p.created_at ?? today).slice(0, 10));
+  const end = Date.parse(p.target_date);
+  const share = end > start ? Math.min(1, Math.max(0, (Date.parse(today) - start) / (end - start))) : 1;
+  const ahead = Math.round(g.raised - n(p.target_kes) * share);
+  return { perMonth, monthsLeft, ahead, late: today > p.target_date && !g.funded };
+}
+
+export type Budget = { category_id: string; month: string; amount_kes: number };
+
+/** The plan for a month: that month's own, or else the latest month before it that had one. */
+export function planFor(budgets: Budget[], categoryId: string, month: string): number {
+  const mine = budgets.filter((b) => b.category_id === categoryId && b.month.slice(0, 7) <= month).sort((a, b) => b.month.localeCompare(a.month));
+  return n(mine[0]?.amount_kes);
+}
+
+/**
+ * What a kind of spending has this month. With rollover on, what was left (or overspent) in
+ * earlier months since its first plan carries in, up to a year back.
+ */
+export function budgetAvailable(budgets: Budget[], entries: Entry[], categoryId: string, month: string, rollover: boolean) {
+  const plan = planFor(budgets, categoryId, month);
+  let carry = 0;
+  if (rollover) {
+    const first = budgets.filter((b) => b.category_id === categoryId).map((b) => b.month.slice(0, 7)).sort()[0];
+    for (let by = 12; by >= 1; by--) {
+      const m = shiftMonth(month, -by);
+      if (!first || m < first) continue;
+      carry += planFor(budgets, categoryId, m) - (monthSummary(entries, m).byCategory.get(categoryId) ?? 0);
+    }
+  }
+  const spent = monthSummary(entries, month).byCategory.get(categoryId) ?? 0;
+  return { plan, carry, available: plan + carry, spent, left: plan + carry - spent };
 }

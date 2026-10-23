@@ -83,6 +83,8 @@ export type NewEntry = {
   note?: string | null;
   counterparty?: string | null;
   mpesa_code?: string | null;
+  bill_id?: string | null;
+  usage_qty?: number | null;
 };
 
 /**
@@ -137,4 +139,26 @@ export async function correctEntry(e: Entry) {
     voids_entry_id: e.id,
     note: `Correction of: ${e.note ?? e.counterparty ?? "an entry"}`,
   });
+}
+
+/**
+ * "Ask at the meeting": puts a question on the next family meeting's agenda, planning that
+ * meeting for Sunday if none is planned yet. Returns the meeting day.
+ */
+export async function flagForMeeting(title: string, jobId: string | null = null): Promise<string> {
+  const db = localDB();
+  const engine = syncEngine();
+  type Meeting = { id: string; held_on: string; status: string; deleted_at?: string | null };
+  const meetings = ((await db.rows("meetings").toArray()) as unknown as Meeting[]).filter((m) => !m.deleted_at && m.status === "planned").sort((a, b) => a.held_on.localeCompare(b.held_on));
+  let next = meetings[0];
+  if (!next) {
+    const today = new Date(Date.now() + 3 * 3600_000);
+    const sunday = new Date(today.getTime() + ((7 - today.getUTCDay()) % 7) * 86_400_000).toISOString().slice(0, 10);
+    next = { id: crypto.randomUUID(), held_on: sunday, status: "planned" };
+    await engine.queue("meetings", "insert", { ...next, host_id: null, notes: null });
+  }
+  const items = ((await db.rows("agenda_items").toArray()) as unknown as { meeting_id: string; sort: number; deleted_at?: string | null }[]).filter((a) => a.meeting_id === next.id && !a.deleted_at);
+  const sort = Math.max(0, ...items.map((a) => a.sort)) + 1;
+  await engine.queue("agenda_items", "insert", { id: crypto.randomUUID(), meeting_id: next.id, title: title.slice(0, 120), minutes: 5, source: "flag", source_job_id: jobId, sort });
+  return next.held_on;
 }

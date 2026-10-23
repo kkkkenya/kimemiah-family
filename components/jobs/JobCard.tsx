@@ -23,6 +23,7 @@ import { BottomSheet } from "@/components/BottomSheet";
 import { whatsappHref } from "@/lib/contacts";
 import { useRows } from "@/lib/sync/hooks";
 import { syncEngine } from "@/lib/sync/client";
+import { flagForMeeting } from "@/lib/sync/workflows";
 import type { StockItem } from "@/lib/shopping/shops";
 import { kes } from "@/lib/shopping/pricing";
 
@@ -60,6 +61,7 @@ function JobDetails({ job, parts, meId, nameOf, thanked, onMessage, homeNames = 
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [asked, setAsked] = useState<string | null>(null);
 
   const status = jobStatus(job, parts);
   const size = jobSize(job);
@@ -391,6 +393,22 @@ function JobDetails({ job, parts, meId, nameOf, thanked, onMessage, homeNames = 
               </button>
             </>
           )}
+          {job.template_key?.startsWith("bill:") && (
+            <a href={`/money?pay=${job.template_key.slice(5)}`} className="flex min-h-12 items-center rounded-xl border border-line px-4 font-bold">
+              Log the payment
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={async () => {
+              const day = await flagForMeeting(`About the job: ${job.title}`, job.id);
+              void syncNow();
+              setAsked(day);
+            }}
+            className="min-h-12 rounded-xl px-3 text-sm font-bold text-muted underline underline-offset-4"
+          >
+            {asked ? `On the agenda (${new Date(`${asked}T09:00:00Z`).toLocaleDateString("en-KE", { weekday: "short", day: "numeric", month: "short" })})` : "Ask at the meeting"}
+          </button>
           {!online && !mine && <p className="w-full text-sm text-muted">Taking a job needs signal, so two people don&apos;t take the same share.</p>}
         </div>
       )}

@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ke.kimemiah.home",
+      "sha256_cert_fingerprints": [
+        "D1:D8:7B:15:03:28:E0:A2:6E:7F:5A:4E:39:78:E1:38:A1:3C:DD:6C:C4:10:99:94:00:01:EB:70:D0:51:EC:D1"
+      ]
+    }
+  }
+]

@@ -1,6 +1,7 @@
 import "server-only";
 import webpush from "web-push";
 import { groupByPerson, planAlerts, type Alert, type PushJob, type PushMember, type PushPart } from "@/lib/push/plan";
+import { ensureBillJobs } from "./bills";
 import { adminClient } from "./supabase-admin";
 
 const APP_URL = "https://kimemiah-family.vercel.app";
@@ -58,6 +59,7 @@ export async function runTick(now = new Date()) {
   const db = adminClient();
   const iso = now.toISOString();
   await db.rpc("ensure_rota_jobs");
+  await ensureBillJobs(db, now);
 
   const { data: settings } = await db.from("settings").select("push_kill_switch").limit(1).maybeSingle();
   if (settings?.push_kill_switch) return { alerts: 0, sent: 0, paused: true };

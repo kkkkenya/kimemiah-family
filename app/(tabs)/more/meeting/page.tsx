@@ -165,6 +165,7 @@ export default function MeetingPage() {
                       {a.title}
                       {a.minutes ? <span className="text-sm text-muted"> · {a.minutes} min</span> : null}
                       {a.source === "waiting_job" && <span className="ml-1 rounded-md bg-low-bg px-2 text-xs font-bold text-low-fg">waiting job</span>}
+                      {a.source === "flag" && <span className="ml-1 rounded-md bg-base px-2 text-xs font-bold">question</span>}
                     </span>
                     <button type="button" aria-label={`Remove ${a.title}`} onClick={() => change("agenda_items", "delete", { id: a.id })} className="flex size-12 shrink-0 items-center justify-center text-muted">
                       ✕
