@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { billInsight, billJob, billStats, billsDue, type Bill } from "./bills";
+import { billInsight, billJob, billStats, billsDue, dueDatesIn, findRepeats, type Bill } from "./bills";
 import type { Entry } from "./money";
 
 const pay = (id: string, occurred_on: string, amount_kes: number, usage_qty: number | null, bill_id = "gas"): Entry => ({ id, direction: "out", occurred_on, amount_kes, usage_qty, bill_id });
@@ -57,5 +57,23 @@ describe("bill jobs", () => {
     expect(j.due_at).toBe(`${s.nextDue}T18:00:00.000Z`);
     expect(j.notes).toContain("3,300");
     expect(billJob({ id: "n", name: "Internet", every_days: 30 }, s).title).toBe("Pay the internet bill");
+  });
+});
+
+describe("calendar and repeats", () => {
+  it("lists every due date in a month for a bill with a cycle", () => {
+    const net: Bill = { id: "n", name: "Internet", every_days: 14 };
+    const s = billStats(net, [pay("1", "2026-10-28", 1500, null, "n")], "2026-10-30");
+    expect(dueDatesIn(net, s, "2026-11")).toEqual(["2026-11-11", "2026-11-25"]);
+    expect(dueDatesIn(net, s, "2026-10")).toEqual([]);
+  });
+
+  it("spots a payee paid on about the same day three months running", () => {
+    const zuku = (id: string, d: string): Entry => ({ id, direction: "out", occurred_on: d, amount_kes: 2999, counterparty: "ZUKU FIBER (654321)", category_id: "net" });
+    const entries: Entry[] = [zuku("a", "2026-08-05"), zuku("b", "2026-09-06"), zuku("c", "2026-10-04"), { id: "d", direction: "out", occurred_on: "2026-10-09", amount_kes: 300, counterparty: "KIOSK" }];
+    const r = findRepeats(entries, [], "2026-10-23");
+    expect(r).toHaveLength(1);
+    expect(r[0]).toMatchObject({ payee: "ZUKU FIBER", months: 3, day: 5, usual: 2999 });
+    expect(findRepeats(entries, [{ id: "z", name: "Zuku fiber" }], "2026-10-23")).toEqual([]);
   });
 });

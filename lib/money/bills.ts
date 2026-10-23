@@ -109,3 +109,51 @@ export function billJob(bill: Bill, s: BillStats) {
     template_key: `bill:${bill.id}`,
   };
 }
+
+/**
+ * Due dates in a month: the next one, then every cycle after it while it's still that month.
+ * Payments already made show on their own day, so nothing is counted twice.
+ */
+export function dueDatesIn(bill: Bill, s: BillStats, month: string): string[] {
+  const cycle = bill.every_days ?? s.lasts;
+  if (!s.nextDue) return [];
+  const out: string[] = [];
+  for (let d = s.nextDue; d.slice(0, 7) <= month; d = plus(d, cycle ?? 9999)) {
+    if (d.slice(0, 7) === month) out.push(d);
+    if (!cycle) break;
+  }
+  return out;
+}
+
+const normPayee = (s: string) => s.toUpperCase().replace(/\(.*?\)/g, " ").replace(/[^A-Z ]+/g, " ").replace(/\s+/g, " ").trim();
+
+/**
+ * Payments that look like a bill nobody set up: the same payee paid in 3 of the last 4 months,
+ * on about the same day (within 6 days), and not already a bill.
+ */
+export function findRepeats(entries: Entry[], bills: Bill[], today: string) {
+  const since = plus(today, -125);
+  const known = bills.filter((b) => !b.deleted_at).map((b) => normPayee(b.name));
+  const groups = new Map<string, Entry[]>();
+  for (const e of liveEntries(entries)) {
+    if (e.direction !== "out" || e.bill_id || e.project_id || e.payback_to || !e.counterparty || e.occurred_on < since) continue;
+    const key = normPayee(e.counterparty);
+    if (!key || known.some((k) => key.includes(k) || k.includes(key))) continue;
+    groups.set(key, [...(groups.get(key) ?? []), e]);
+  }
+  return [...groups]
+    .map(([payee, list]) => {
+      const dayNums = list.map((e) => Number(e.occurred_on.slice(8, 10)));
+      return {
+        payee,
+        name: list.at(-1)!.counterparty!,
+        months: new Set(list.map((e) => monthOf(e.occurred_on))).size,
+        day: Math.round(dayNums.reduce((a, b) => a + b, 0) / dayNums.length),
+        usual: Math.round(list.reduce((a, e) => a + n(e.amount_kes), 0) / list.length),
+        spread: Math.max(...dayNums) - Math.min(...dayNums),
+        category_id: list.at(-1)!.category_id ?? null,
+      };
+    })
+    .filter((r) => r.months >= 3 && r.spread <= 6)
+    .sort((a, b) => b.usual - a.usual);
+}

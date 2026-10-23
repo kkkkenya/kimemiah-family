@@ -145,6 +145,10 @@ Usual jobs (one tap, all editable when posting):
 - **Flex budgeting**: each kind is Fixed (Internet), Flexible or Non-monthly; Overview shows flexible money left and about how much a day. From the 10th, flexible kinds show their month-end pace. A kind at 80% and at 100% sends one alert each month to the people at home.
 - **Questions on an entry**: "Ask someone" sends a question about a payment to one person (push), who marks it "Looks right". Entries can be searched by payee, note, M-Pesa code or amount, and filtered.
 - **M-Pesa rules**: after saving a new payee, the app offers to remember it ("NAIROBI WATER → Water bill"); next time a pasted message sorts itself.
+- **Bills calendar and reminders**: Bills shows as a list or a month calendar (orange for due, green for paid; on a laptop, both side by side with bill names in the days). Each bill can remind everyone the evening before it's due (from 18:00, once per due date).
+- **Spotting repeat payments**: a payee paid in 3 of the last 4 months on about the same day, and not already a bill, gets "Make it a bill?". Yes makes a monthly bill and a rule for that payee; "Not a bill" hides it on that phone.
+- **Goals**: each goal has an emoji or a photo, an optional planned amount a month, and "Chipped in" with the names of everyone who gave, in the order they first gave (never by amount). When a goal is done, Home shows a thank-you to them for 3 days.
+- **Settle up**: money out says whether it came from house money or the person's own money. Own-money spends add to what the house owes that person; "Pay back" logs the payback, which isn't counted as new spending.
 - **Summary for Peter**: one tap opens WhatsApp to Peter with the month (in, spent by kind, left, projects).
 
 ## 5. Meeting (under More)

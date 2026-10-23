@@ -55,6 +55,8 @@ export function EntriesView({
   const reviewOf = (id: string) => openReviews.find((r) => r.entry_id === id);
   const nameOf = (id?: string | null) => people.find((p) => p.id === id)?.name ?? "";
   const kindOf = (e: Entry) => {
+    if (e.payback_to) return `Paid back to ${nameOf(e.payback_to)}`;
+    if (e.paid_from === "own") return `${kinds.find((k) => k.id === e.category_id)?.name ?? "Not sorted"} · own money`;
     const p = projects.find((x) => x.id === e.project_id);
     if (p) return `${p.kind === "upgrade" ? "✨" : "🔨"} ${p.title}`;
     const b = bills.find((x) => x.id === e.bill_id);

@@ -84,6 +84,7 @@ export function EntryForm({
       mpesa_code: d.mpesa_code ?? null,
       bill_id: d.bill_id ?? null,
       shop_id: d.shop_id ?? null,
+      paid_from: d.direction === "out" && !d.project_id ? (d.paid_from ?? "house") : "house",
       usage_qty: bill?.usage_unit && used > 0 ? used : null,
     });
     setBusy(false);
@@ -159,6 +160,25 @@ export function EntryForm({
           )}
         </select>
       </label>
+
+      {d.direction === "out" && !d.project_id && (
+        <div role="radiogroup" aria-label="Paid from" className="flex flex-col gap-1">
+          <span className="text-sm font-bold">Paid from</span>
+          <div className="grid grid-cols-2 gap-2">
+            {(
+              [
+                ["house", "House money"],
+                ["own", "My own money"],
+              ] as const
+            ).map(([id, label]) => (
+              <button key={id} type="button" role="radio" aria-checked={(d.paid_from ?? "house") === id} onClick={() => set({ paid_from: id })} className={`min-h-12 rounded-xl border ${(d.paid_from ?? "house") === id ? "border-ink bg-ink text-raised" : "border-line"}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+          {d.paid_from === "own" && <span className="text-sm text-muted">The house will owe you this. It shows under Settle up until you&apos;re paid back.</span>}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-2">
         <label className="flex flex-col gap-1 text-sm font-bold">

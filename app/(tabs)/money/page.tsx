@@ -9,11 +9,13 @@ import { Bills } from "@/components/money/Bills";
 import { EntriesView } from "@/components/money/EntriesView";
 import { EntryForm, type Draft } from "@/components/money/EntryForm";
 import { FlexBudget } from "@/components/money/FlexBudget";
-import { Projects } from "@/components/money/Projects";
+import { Projects, type Goal } from "@/components/money/Projects";
 import { dayPlus, dueOnDay, postJob } from "@/lib/jobs/actions";
 import { billsDue, type Bill } from "@/lib/money/bills";
 import { flexSummary, type Group, type Kind } from "@/lib/money/flex";
-import { cashFlow, foodStats, liveEntries, monthSummary, projectProgress, summaryText, type Entry, type Project } from "@/lib/money/money";
+import { cashFlow, foodStats, liveEntries, monthSummary, owedTo, projectProgress, summaryText, type Entry, type Project } from "@/lib/money/money";
+import { shrinkPhoto } from "@/lib/images";
+import { supabase } from "@/lib/supabase/client";
 import { ruleFor, suggestMatch, type Rule } from "@/lib/money/rules";
 import type { Review } from "@/lib/push/money";
 import { whatsappHref } from "@/lib/contacts";
@@ -28,7 +30,7 @@ type Budget = Row & { month: string; category_id: string; amount_kes: number };
 type Shop = Row & { name: string };
 type Person = Row & { name: string; is_remote?: boolean; phone?: string | null; active?: boolean; sort?: number };
 type View = "overview" | "budget" | "entries" | "bills" | "goals";
-type CardId = "flex" | "bills" | "goals" | "recent" | "food" | "flow";
+type CardId = "flex" | "settle" | "bills" | "goals" | "recent" | "food" | "flow";
 
 const VIEWS: { id: View; label: string }[] = [
   { id: "overview", label: "Overview" },
@@ -39,6 +41,7 @@ const VIEWS: { id: View; label: string }[] = [
 ];
 const CARDS: { id: CardId; label: string }[] = [
   { id: "flex", label: "Flexible money left" },
+  { id: "settle", label: "Settle up" },
   { id: "bills", label: "Bills this week" },
   { id: "goals", label: "Goals" },
   { id: "recent", label: "Recent entries" },
@@ -65,7 +68,7 @@ export default function MoneyPage() {
   const { syncNow } = useSync();
   const me = useMe();
   const entries = (useRows<Entry & { id: string }>("money_entries") ?? []) as Entry[];
-  const projects = (useRows<Project & { id: string }>("projects") ?? []) as Project[];
+  const projects = (useRows<Goal & { id: string }>("projects") ?? []) as Goal[];
   const categories = (useRows<Category>("budget_categories") ?? []).filter((c) => !c.deleted_at).sort((a, b) => a.sort - b.sort);
   const budgets = useRows<Budget>("budgets") ?? [];
   const people = ((useRows<Person>("members") ?? []) as Person[]).filter((p) => p.active !== false).sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
@@ -131,6 +134,7 @@ export default function MoneyPage() {
     const who = e.counterparty || nameOf((e as Entry & { spent_by?: string | null }).spent_by) || "Not given";
     return m.set(who, (m.get(who) ?? 0) + Number(e.amount_kes));
   }, new Map<string, number>())].sort((a, b) => b[1] - a[1]);
+  const owed = owedTo(entries);
   const show = (id: CardId) => !hidden.includes(id);
   const inView = (v: View) => (view === v ? "" : "hidden lg:block");
 
@@ -148,14 +152,37 @@ export default function MoneyPage() {
     return null;
   }
 
-  async function newProject(p: { title: string; kind: Project["kind"]; target_kes: number; notes: string; postJob: boolean; target_date: string | null }) {
+  async function newProject(p: { title: string; kind: Project["kind"]; target_kes: number; notes: string; postJob: boolean; target_date: string | null; emoji: string; planned_monthly_kes: number | null }) {
     let jobId: string | null = null;
     if (p.postJob) {
       jobId = await postJob({ title: p.title, notes: p.notes || null, category: "maintenance_fix", strain: "medium", duration_min: 120, people_needed: 2, due_at: dueOnDay(dayPlus(14)), requires_funds: true, estimated_cost_kes: p.target_kes, planned_for: dayPlus(14) });
     }
-    await syncEngine().queue("projects", "insert", { id: crypto.randomUUID(), title: p.title, kind: p.kind, target_kes: p.target_kes, notes: p.notes || null, job_id: jobId, status: "saving", target_date: p.target_date });
+    await syncEngine().queue("projects", "insert", { id: crypto.randomUUID(), title: p.title, kind: p.kind, target_kes: p.target_kes, notes: p.notes || null, job_id: jobId, status: "saving", target_date: p.target_date, emoji: p.emoji, planned_monthly_kes: p.planned_monthly_kes });
     void syncNow();
     setUndo({ id: Date.now(), message: `Saving for ${p.title}${jobId ? " · posted on Jobs" : ""}` });
+  }
+
+  async function editGoal(p: Goal, changes: Partial<Goal>) {
+    await syncEngine().queue("projects", "update", { id: p.id, ...changes });
+    void syncNow();
+  }
+
+  async function goalPhoto(p: Goal, file: File): Promise<boolean> {
+    try {
+      const blob = await shrinkPhoto(file);
+      const { error } = await supabase().storage.from("family").upload(`goals/${p.id}.jpg`, blob, { contentType: "image/jpeg", upsert: true });
+      if (error) throw error;
+      await editGoal(p, { photo_at: new Date().toISOString() });
+      setUndo({ id: Date.now(), message: `Photo added to ${p.title}` });
+      return true;
+    } catch {
+      setUndo({ id: Date.now(), message: "That photo didn't upload. Check your signal and try again." });
+      return false;
+    }
+  }
+
+  async function payBack(member: string, amount: number) {
+    await save({ direction: "out", amount_kes: amount, occurred_on: today, payback_to: member, method: "mpesa", spent_by: me?.id ?? null, note: `Paid back to ${nameOf(member)}` });
   }
 
   async function saveBudget(k: Kind, plan: number, group: Group) {
@@ -283,6 +310,40 @@ export default function MoneyPage() {
           <button type="button" onClick={() => setView("budget")} className="mt-3 min-h-10 text-sm font-bold underline underline-offset-4 lg:hidden">
             See the budget
           </button>
+        </section>
+      )}
+
+      {show("settle") && owed.length > 0 && (
+        <section className={`${card} ${inView("overview")}`}>
+          <p className="eyebrow">Settle up</p>
+          <p className="text-sm text-muted">Paid for the house from their own money.</p>
+          <ul className="mt-2 divide-y divide-line">
+            {owed.map((o) => (
+              <li key={o.member} className="py-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="min-w-0">
+                    <span className="block">{nameOf(o.member) || "Someone"}</span>
+                    <span className="text-sm text-muted">
+                      {o.items.length === 1 ? `${o.items[0].note || o.items[0].counterparty || "1 payment"}, ${day(o.items[0].occurred_on)}` : `${o.items.length} payments`}
+                    </span>
+                  </span>
+                  <button type="button" onClick={() => void payBack(o.member, o.owed)} className="min-h-10 shrink-0 rounded-xl bg-brand px-4 text-sm font-bold text-brand-contrast tabular">
+                    Pay back {kes(o.owed)}
+                  </button>
+                </div>
+                <ul className="mt-1 hidden text-sm text-muted lg:block">
+                  {o.items.map((e) => (
+                    <li key={e.id} className="flex justify-between gap-2">
+                      <span>
+                        {day(e.occurred_on)} · {e.note || e.counterparty || catName(e.category_id ?? null)}
+                      </span>
+                      <span className="tabular">{kes(e.amount_kes)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
@@ -514,7 +575,21 @@ export default function MoneyPage() {
           bills={bills}
           entries={entries}
           today={today}
+          month={month}
           onPay={pay}
+          onRemind={async (b, on) => {
+            await syncEngine().queue("bills", "update", { id: b.id, remind: on });
+            void syncNow();
+            setUndo({ id: Date.now(), message: on ? `Reminders on for ${b.name}` : `No reminders for ${b.name}` });
+          }}
+          onMakeBill={async (r) => {
+            const name = r.name.replace(/\(.*?\)/g, "").trim().replace(/\b\w+/g, (w) => w[0] + w.slice(1).toLowerCase());
+            const billId = crypto.randomUUID();
+            await syncEngine().queue("bills", "insert", { id: billId, name, category_id: r.category_id, every_days: 30, usual_kes: r.usual, sort: bills.length + 1 });
+            await syncEngine().queue("money_rules", "insert", { id: crypto.randomUUID(), match: r.payee, category_id: r.category_id, bill_id: billId, shop_id: null, sort: rules.length + 1 });
+            void syncNow();
+            setUndo({ id: Date.now(), message: `${name} is a monthly bill now` });
+          }}
           onAdd={async (b) => {
             await syncEngine().queue("bills", "insert", { id: crypto.randomUUID(), category_id: categories.find((c) => c.name === "Utilities")?.id ?? null, sort: bills.length + 1, ...b });
             void syncNow();
@@ -536,7 +611,10 @@ export default function MoneyPage() {
           onNew={newProject}
           onGive={(p) => setForm({ direction: "in", project_id: p.id, note: `For ${p.title}` })}
           onSpend={(p) => setForm({ direction: "out", project_id: p.id, note: p.title })}
-          onDone={(p) => syncEngine().queue("projects", "update", { id: p.id, status: "done" }).then(() => void syncNow())}
+          onDone={(p) => syncEngine().queue("projects", "update", { id: p.id, status: "done", done_at: new Date().toISOString() }).then(() => void syncNow())}
+          onEdit={editGoal}
+          onPhoto={goalPhoto}
+          nameOf={nameOf}
           today={today}
         />
       </div>

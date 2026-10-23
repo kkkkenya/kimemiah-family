@@ -9,7 +9,7 @@ import { essentialsNeeded, nairobiToday, supperCount, type Diner } from "@/lib/h
 import { fromTemplate, joinJob, postJob, updateJob } from "@/lib/jobs/actions";
 import { billStats, billsDue, type Bill } from "@/lib/money/bills";
 import { flexSummary, type Kind } from "@/lib/money/flex";
-import { monthSummary, type Budget, type Entry } from "@/lib/money/money";
+import { chippedIn, monthSummary, type Budget, type Entry, type Project } from "@/lib/money/money";
 import { formatMinutes, jobStatus, shareChoices, sortBoard, workers, type Job, type Participant } from "@/lib/jobs/logic";
 import { TEMPLATES } from "@/lib/jobs/templates";
 import { sendAlertsNow } from "@/lib/push/client";
@@ -373,5 +373,31 @@ export function MoneyGlanceCard() {
         </p>
       )}
     </Link>
+  );
+}
+
+/** A goal finished in the last 3 days: a thank-you to everyone who chipped in, in the order they gave. */
+export function GoalThanksCard() {
+  const projects = (useRows<Project & { id: string; done_at?: string | null; emoji?: string | null }>("projects") ?? []) as (Project & { done_at?: string | null; emoji?: string | null })[];
+  const entries = (useRows<Entry & { id: string }>("money_entries") ?? []) as Entry[];
+  const people = useRows<{ id: string; name: string }>("members") ?? [];
+  const recent = projects.filter((p) => !p.deleted_at && p.status === "done" && p.done_at && Date.now() - Date.parse(p.done_at) < 3 * 86_400_000);
+  if (!recent.length) return null;
+  const nameOf = (id: string) => people.find((m) => m.id === id)?.name ?? "";
+  return (
+    <>
+      {recent.map((p) => {
+        const givers = chippedIn(p, entries, nameOf);
+        return (
+          <div key={p.id} className="rounded-2xl border border-line bg-raised p-5">
+            <p className="eyebrow eyebrow-accent">Goal reached</p>
+            <p className="font-display text-2xl">
+              {p.emoji || "🎉"} {p.title} is done
+            </p>
+            {givers.length > 0 && <p className="mt-1 text-sm">Asante to {givers.length === 1 ? givers[0] : `${givers.slice(0, -1).join(", ")} and ${givers.at(-1)}`} for chipping in.</p>}
+          </div>
+        );
+      })}
+    </>
   );
 }

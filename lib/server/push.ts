@@ -4,6 +4,7 @@ import { planMoneyAlerts, type Review } from "@/lib/push/money";
 import { groupByPerson, planAlerts, type Alert, type PushJob, type PushMember, type PushPart } from "@/lib/push/plan";
 import type { Kind } from "@/lib/money/flex";
 import type { Budget, Entry } from "@/lib/money/money";
+import type { Bill } from "@/lib/money/bills";
 import { ensureBillJobs } from "./bills";
 import { adminClient } from "./supabase-admin";
 
@@ -87,10 +88,11 @@ export async function runTick(now = new Date()) {
   const [{ data: kinds }, { data: budgets }, { data: entries }, { data: reviews }] = await Promise.all([
     db.from("budget_categories").select("id, name, sort, rollover, budget_group, deleted_at").is("deleted_at", null),
     db.from("budgets").select("category_id, month, amount_kes").is("deleted_at", null),
-    db.from("money_entries").select("id, direction, occurred_on, amount_kes, category_id, project_id, voids_entry_id, note, counterparty, deleted_at").gte("occurred_on", yearAgo),
+    db.from("money_entries").select("id, direction, occurred_on, amount_kes, category_id, project_id, voids_entry_id, note, counterparty, bill_id, usage_qty, payback_to, deleted_at").gte("occurred_on", yearAgo),
     db.from("entry_reviews").select("id, entry_id, ask_to, question, status, actor_id, deleted_at").eq("status", "open").is("deleted_at", null),
   ]);
-  for (const a of planMoneyAlerts((kinds ?? []) as Kind[], (budgets ?? []) as Budget[], (entries ?? []) as Entry[], (reviews ?? []) as Review[], (members ?? []) as PushMember[], now.getTime())) {
+  const { data: billRows } = await db.from("bills").select("*").is("deleted_at", null);
+  for (const a of planMoneyAlerts((kinds ?? []) as Kind[], (budgets ?? []) as Budget[], (entries ?? []) as Entry[], (reviews ?? []) as Review[], (members ?? []) as PushMember[], now.getTime(), (billRows ?? []) as Bill[])) {
     const { error } = await db.from("money_alerts").insert({ key: a.key, sent_at: iso });
     if (!error && a.to.length) claimed.push(a);
   }
