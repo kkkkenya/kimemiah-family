@@ -130,14 +130,14 @@ export function CatalogView({ products, stock, cart, cartLines, history, onAdd, 
           autoComplete="off"
           className="min-h-12 rounded-xl border border-line bg-raised px-3"
         />
-        <div role="group" aria-label="Aisles" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
+        <div role="group" aria-label="Aisles" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:px-0">
           {AISLES.map((a) => (
             <button
               key={a.id}
               type="button"
               aria-pressed={aisle === a.id}
               onClick={() => setAisle(aisle === a.id ? null : a.id)}
-              className={`min-h-10 shrink-0 rounded-full border px-3 text-sm font-bold ${aisle === a.id ? "border-brand bg-brand text-brand-contrast" : "border-line bg-raised"}`}
+              className={`min-h-10 shrink-0 rounded-md border px-3 text-sm font-bold ${aisle === a.id ? "border-brand bg-brand text-brand-contrast" : "border-line bg-raised"}`}
             >
               {a.label}
             </button>
@@ -177,7 +177,7 @@ export function CatalogView({ products, stock, cart, cartLines, history, onAdd, 
           Downloading the supermarket catalog. This happens once, the first time there&apos;s signal.
         </p>
       ) : aisle === "market" ? (
-        <section className="rounded-xl bg-raised p-4">
+        <section className="rounded-2xl bg-raised p-4">
           <p className="text-sm text-muted">Market and mama mboga prices aren&apos;t online. Add from the house list:</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {market.map((s) => {
@@ -188,7 +188,7 @@ export function CatalogView({ products, stock, cart, cartLines, history, onAdd, 
                   type="button"
                   disabled={added}
                   onClick={() => onAddHouse(s)}
-                  className="min-h-12 rounded-full border border-line px-4 disabled:border-transparent disabled:bg-ok-bg disabled:text-ok-fg"
+                  className="min-h-12 rounded-md border border-line px-4 disabled:border-transparent disabled:bg-ok-bg disabled:text-ok-fg"
                 >
                   {added ? `✓ ${s.name}` : `+ ${s.name}`}
                 </button>
@@ -202,7 +202,7 @@ export function CatalogView({ products, stock, cart, cartLines, history, onAdd, 
             {results.length === 1 ? "1 item" : `${results.length.toLocaleString("en-KE")} items`}
             {grouped && cards.length !== results.length ? ` in ${cards.length === 1 ? "1 group" : `${cards.length.toLocaleString("en-KE")} groups`}` : ""}
           </p>
-          <ul className="flex flex-col gap-3">
+          <ul className="flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:items-start">
             {cards.slice(0, shown).map((c) => (
               <ProductCard
                 key={c.key}
@@ -223,11 +223,11 @@ export function CatalogView({ products, stock, cart, cartLines, history, onAdd, 
       )}
 
       {cartCount > 0 && (
-        <div className="fixed inset-x-0 z-20 px-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))]">
+        <div className="fixed inset-x-0 z-20 px-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:bottom-6 lg:left-56">
           <button
             type="button"
             onClick={onViewCart}
-            className="mx-auto flex min-h-14 w-full max-w-xl items-center justify-between gap-2 rounded-xl bg-brand px-4 text-left text-brand-contrast shadow-lg"
+            className="mx-auto flex min-h-14 w-full max-w-xl items-center justify-between gap-2 rounded-xl bg-brand px-4 text-left text-brand-contrast"
           >
             <span className="min-w-0 text-sm tabular">
               <strong>🛒 {cartCount === 1 ? "1 item" : `${cartCount} items`}</strong>
@@ -260,12 +260,12 @@ function ProductCard(props: CardProps) {
   const row = inCart.get(product.id);
   const per = perUnit(product);
   return (
-    <li className="rounded-xl bg-raised shadow-[0_1px_3px_rgba(10,51,35,.10)]">
+    <li className="rounded-2xl bg-raised border border-line">
       <div className="flex items-center gap-3 p-4">
         <button type="button" onClick={() => setSheet(true)} className="min-w-0 flex-1 text-left">
           <span className="flex flex-wrap items-center gap-1.5">
             <span className="font-bold">{product.title}</span>
-            {product.is_on_sale && <span className="rounded-full bg-ok-bg px-2 py-0.5 text-xs font-bold text-ok-fg">−{Math.round(product.discount_pct)}%</span>}
+            {product.is_on_sale && <span className="rounded-md bg-ok-bg px-2 py-0.5 text-xs font-bold text-ok-fg">−{Math.round(product.discount_pct)}%</span>}
           </span>
           <span className="mt-0.5 block text-sm text-muted tabular">
             <strong className="text-ink">{kes(product.effective_price)}</strong> at {storeName(product.store)}
@@ -321,9 +321,9 @@ function ProductDetails({
   return (
     <div className="pt-1">
       <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold">
-        {product.brand && <span className="rounded-full bg-base px-2 py-0.5">{product.brand}</span>}
-        {product.pack_size_label && <span className="rounded-full border border-line px-2 py-0.5">{product.pack_size_label}</span>}
-        {product.is_on_sale && <span className="rounded-full bg-ok-bg px-2 py-0.5 text-ok-fg">−{Math.round(product.discount_pct)}% off</span>}
+        {product.brand && <span className="rounded-md bg-base px-2 py-0.5">{product.brand}</span>}
+        {product.pack_size_label && <span className="rounded-md border border-line px-2 py-0.5">{product.pack_size_label}</span>}
+        {product.is_on_sale && <span className="rounded-md bg-ok-bg px-2 py-0.5 text-ok-fg">−{Math.round(product.discount_pct)}% off</span>}
       </div>
       <h3 className="mt-1 font-bold">{product.title}</h3>
 

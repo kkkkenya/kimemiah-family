@@ -25,19 +25,20 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-raised pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]"
+      className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-raised pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] lg:inset-y-0 lg:right-auto lg:w-56 lg:border-0 lg:bg-[#1a1919]"
     >
-      <ul className="mx-auto grid max-w-xl grid-cols-5">
+      <p className="hidden px-6 pb-6 pt-7 font-display text-2xl leading-none text-white lg:block">Kimemiah</p>
+      <ul className="mx-auto grid max-w-xl grid-cols-5 lg:flex lg:flex-col lg:gap-1 lg:px-3">
         {TABS.map((t) => (
           <li key={t.href}>
             <Link
               href={t.href}
               aria-current={active(t.href) ? "page" : undefined}
-              className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-bold ${
-                active(t.href) ? "text-brand" : "text-muted"
+              className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-bold lg:min-h-12 lg:flex-row lg:justify-start lg:gap-3 lg:rounded-md lg:px-3 lg:text-base ${
+                active(t.href) ? "text-ink lg:bg-action lg:text-action-ink" : "text-muted lg:text-[#d3d3d3] lg:hover:bg-white/10"
               }`}
             >
-              {t.icon}
+              <span className={`flex h-7 w-12 items-center justify-center rounded-md lg:w-auto lg:bg-transparent ${active(t.href) ? "bg-action text-action-ink" : ""}`}>{t.icon}</span>
               <span>{t.label}</span>
             </Link>
           </li>

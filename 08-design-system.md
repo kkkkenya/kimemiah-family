@@ -1,5 +1,18 @@
 # Design system
 
+## Current look (2026-10-23): editorial monochrome, after Ramp
+
+This replaces the lotus-pond palette below; the token values in `app/globals.css` are the source of truth.
+
+- **Canvas** #f4f2f0, **cards** white on a 1px #e5e7eb hairline, no shadows. **Ink** #0c0a08, muted #6d6c6b.
+- **One accent:** highlighter yellow #e4f222 with ink text, only on main buttons, the selected chip and the active tab. Big panels that need weight use the dark #1a1919 instead.
+- **One typeface:** Inter at weight 400 (stand-in for Ramp's Lausanne), `ss01` on. Hierarchy comes from size, not bold.
+- **Radii:** 6px buttons, chips and inputs; 16px cards. No pill shapes on controls.
+- OK, Low and Out keep their green, amber and red so a status still reads at a glance.
+- **Laptop (1024px and wider):** the tab bar becomes a dark side rail; cards flow in two columns; chip rows wrap instead of scrolling sideways; details open as a centred dialog.
+
+## Earlier look (2026-10-21)
+
 A warm Nairobi home, not a generic app. Agreed by the council on 2026-10-21.
 
 ## Identity

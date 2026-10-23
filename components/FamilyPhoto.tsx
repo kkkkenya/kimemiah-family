@@ -19,7 +19,7 @@ export function FamilyPhoto() {
   const url = useFamilyImage(photo?.path ?? null, photo?.version);
   if (!url) return null;
   return (
-    <figure className="overflow-hidden rounded-xl bg-raised shadow-[0_1px_3px_rgba(10,51,35,.10)]">
+    <figure className="overflow-hidden rounded-2xl bg-raised border border-line">
       {/* eslint-disable-next-line @next/next/no-img-element -- local blob URL, not optimisable */}
       <img src={url} alt={me?.home_photo === "family" ? "The family together at home" : "Your Home photo"} className="aspect-[4/3] w-full object-cover" />
       <div className="kanga h-1" />

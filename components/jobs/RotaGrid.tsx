@@ -32,7 +32,7 @@ export function RotaGrid() {
   }
 
   return (
-    <section aria-labelledby="rota" className="rounded-xl bg-raised p-4 shadow-[0_1px_3px_rgba(10,51,35,.10)]">
+    <section aria-labelledby="rota" className="rounded-2xl bg-raised p-4 border border-line">
       <h2 id="rota" className="font-display text-xl">
         Weekly sign-up
       </h2>

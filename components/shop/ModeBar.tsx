@@ -22,7 +22,7 @@ export function ModeBar({
 }) {
   const over = moneyLeft != null && estimate > moneyLeft;
   const pill = (active: boolean) =>
-    `min-h-12 rounded-full border px-3 text-sm font-bold leading-tight ${
+    `min-h-12 rounded-md border px-3 text-sm font-bold leading-tight ${
       active ? "border-brand bg-brand text-brand-contrast" : "border-line bg-raised text-ink"
     }`;
 

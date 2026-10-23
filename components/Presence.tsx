@@ -50,7 +50,7 @@ export function PresenceCard() {
   }
 
   return (
-    <section aria-labelledby="where" className="rounded-xl bg-raised p-4 shadow-[0_1px_3px_rgba(10,51,35,.10)]">
+    <section aria-labelledby="where" className="rounded-2xl bg-raised p-4 border border-line">
       <h2 id="where" className="font-bold">
         Where are you?
       </h2>
@@ -92,7 +92,7 @@ export function PresenceCard() {
           .map((m) => {
             const p = PRESENCE[m.presence ?? "at_home"];
             return (
-              <li key={m.id} className="rounded-full border border-line px-3 py-1">
+              <li key={m.id} className="rounded-md border border-line px-3 py-1">
                 <span aria-hidden="true">{p.icon} </span>
                 {m.name}: {p.word.toLowerCase()}
               </li>

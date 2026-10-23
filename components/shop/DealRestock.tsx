@@ -10,7 +10,7 @@ export function DealRestock({ stock, matches, onList, onAdd }: { stock: StockLik
   if (deals.length === 0) return null;
 
   return (
-    <section className="rounded-xl bg-raised p-4 shadow-[0_1px_3px_rgba(10,51,35,.10)]">
+    <section className="rounded-2xl bg-raised p-4 border border-line">
       <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="flex min-h-12 w-full items-center justify-between font-bold">
         Tracked staples on offer this week ({deals.length})
         <span aria-hidden="true" className="text-muted">{open ? "−" : "+"}</span>

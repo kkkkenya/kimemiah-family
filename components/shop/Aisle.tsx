@@ -32,8 +32,8 @@ export function useWakeLock(on: boolean) {
 /** In the shop: what's in the trolley so far, what's left on the list, and money left this month. */
 export function AisleBar({ inTrolley, ticked, total, remaining, moneyLeft, onDone }: { inTrolley: number; ticked: number; total: number; remaining: number; moneyLeft: number | null; onDone: () => void }) {
   return (
-    <div className="fixed inset-x-0 z-20 px-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))]">
-      <div className="mx-auto flex max-w-xl items-center justify-between gap-2 rounded-xl bg-ink px-4 py-2 text-sm text-[color:var(--surface-base)] shadow-lg tabular">
+    <div className="fixed inset-x-0 z-20 px-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:bottom-6 lg:left-56">
+      <div className="mx-auto flex max-w-xl items-center justify-between gap-2 rounded-xl bg-ink px-4 py-2 text-sm text-[color:var(--surface-base)] tabular">
         <span>
           <strong>In trolley: {kes(inTrolley)}</strong> ({ticked}/{total})
           <span className="block">

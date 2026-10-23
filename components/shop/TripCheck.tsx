@@ -69,7 +69,7 @@ export function TripCheck({ supermarkets, trips, stock, onList, meId, nameOf, on
               <ul className="mt-1 flex flex-wrap gap-2">
                 {low.map((r) => (
                   <li key={r.item.id}>
-                    <button type="button" onClick={() => onAdd(r.item)} className="min-h-12 rounded-full border border-line px-4">
+                    <button type="button" onClick={() => onAdd(r.item)} className="min-h-12 rounded-md border border-line px-4">
                       + {r.item.name}
                       <span className="text-sm text-muted"> · {r.reason === "unchecked" ? "not checked lately" : r.reason}</span>
                     </button>

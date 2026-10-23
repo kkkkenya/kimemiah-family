@@ -141,7 +141,7 @@ export default function ContactsPage() {
           <h2 id="family" className="mb-1 font-bold">
             Family
           </h2>
-          <ul className="divide-y divide-line rounded-xl bg-raised px-4 shadow-[0_1px_3px_rgba(10,51,35,.10)]">
+          <ul className="divide-y divide-line rounded-2xl bg-raised px-4 border border-line">
             {family.map((c) => (
               <ContactRow key={c.id} contact={c} />
             ))}
@@ -151,7 +151,7 @@ export default function ContactsPage() {
       )}
 
       {shown.length ? (
-        <ul className="divide-y divide-line rounded-xl bg-raised px-4 shadow-[0_1px_3px_rgba(10,51,35,.10)]">
+        <ul className="divide-y divide-line rounded-2xl bg-raised px-4 border border-line">
           {shown.map((c) => (editing === c.id ? <li key={c.id} className="py-3">{editor(c)}</li> : <ContactRow key={c.id} contact={c} onEdit={() => open(c)} />))}
         </ul>
       ) : (

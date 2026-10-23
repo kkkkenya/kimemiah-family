@@ -16,7 +16,7 @@ import { upgradeDeals } from "@/lib/shopping/predict";
 import { localDB, syncEngine } from "@/lib/sync/client";
 import { useMe, useRows } from "@/lib/sync/hooks";
 
-const card = "rounded-xl bg-raised p-4 shadow-[0_1px_3px_rgba(10,51,35,.10)]";
+const card = "rounded-2xl bg-raised p-4 border border-line";
 const when = (iso: string) => new Date(iso).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Nairobi" });
 
 type Me = Diner & { no_heavy?: boolean };
@@ -41,10 +41,10 @@ export function SupperPill() {
   };
   return (
     <div className="flex flex-wrap items-center gap-2 text-sm">
-      <span className="rounded-full bg-raised px-3 py-1.5 font-bold">
+      <span className="rounded-md bg-raised px-3 py-1.5 font-bold">
         🏠 {c.eating}/{c.total} home for supper{c.out.length ? ` (${c.out.join(", ")} out)` : ""}
       </span>
-      <button type="button" aria-pressed={outTonight} onClick={toggle} className="min-h-10 rounded-full border border-line px-3 font-bold text-brand">
+      <button type="button" aria-pressed={outTonight} onClick={toggle} className="min-h-10 rounded-md border border-line px-3 font-bold text-brand">
         {outTonight ? "I'll be home after all" : "I'll be out tonight"}
       </button>
     </div>
@@ -68,7 +68,7 @@ export function LiveBanners() {
   return (
     <div className="flex flex-col gap-2">
       {urgent.map((j) => (
-        <section key={j.id} className="rounded-xl bg-brand p-4 text-brand-contrast">
+        <section key={j.id} className="rounded-2xl bg-[#1a1919] p-5 text-white">
           <p className="font-bold">{j.category === "water_tanks" ? "💧 " : "⚡ "}{j.title}</p>
           <button
             type="button"
@@ -79,7 +79,7 @@ export function LiveBanners() {
               setMsg(err ?? `You're on it. Asante!`);
               void syncNow();
             }}
-            className="mt-2 min-h-12 rounded-xl bg-raised px-4 font-bold text-brand disabled:opacity-60"
+            className="mt-3 min-h-12 rounded-xl bg-action px-5 text-action-ink disabled:opacity-60"
           >
             {online ? "I'm on it" : "Needs signal"}
           </button>
@@ -147,10 +147,10 @@ export function QuickStrip() {
     });
     setDone(`Posted: ${t.title}`);
   };
-  const chip = "flex min-h-12 shrink-0 items-center rounded-full border border-brand bg-raised px-4 text-sm font-bold text-brand";
+  const chip = "flex min-h-12 shrink-0 items-center rounded-md border border-brand bg-raised px-4 text-sm font-bold text-brand";
   return (
     <section aria-label="What's needed">
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:px-0">
         <button type="button" onClick={() => post("water")} className={chip}>💧 Water is back</button>
         <button type="button" onClick={() => post("arrange")} className={chip}>🍲 Arrange kitchen (light)</button>
         <button type="button" onClick={() => post("dishes")} className={chip}>🍽️ Wash dishes</button>

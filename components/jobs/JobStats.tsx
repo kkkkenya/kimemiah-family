@@ -35,7 +35,7 @@ export function JobStats({ showMine = true }: { showMine?: boolean }) {
   }
 
   return (
-    <section aria-labelledby="house-jobs" className="rounded-xl bg-raised p-4 shadow-[0_1px_3px_rgba(10,51,35,.10)]">
+    <section aria-labelledby="house-jobs" className="rounded-2xl bg-raised p-4 border border-line">
       <h2 id="house-jobs" className="font-display text-xl">
         Jobs: the last 2 weeks
       </h2>
@@ -52,7 +52,7 @@ export function JobStats({ showMine = true }: { showMine?: boolean }) {
               <span className="tabular">
                 {l.minutes ? formatMinutes(l.minutes) : "–"}
                 {l.cooked > 0 && ` · cooked ${l.cooked}×`}
-                <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-bold ${BAND[l.band].cls}`}>{BAND[l.band].word}</span>
+                <span className={`ml-2 rounded-md px-2 py-0.5 text-xs font-bold ${BAND[l.band].cls}`}>{BAND[l.band].word}</span>
               </span>
             </div>
             <div className="relative mt-1 h-2.5 overflow-hidden rounded-full bg-base" aria-hidden="true">

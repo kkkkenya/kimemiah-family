@@ -1,21 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Atkinson_Hyperlegible_Next, Young_Serif } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const atkinson = Atkinson_Hyperlegible_Next({
-  variable: "--font-atkinson",
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  display: "swap",
-  adjustFontFallback: false, // next/font has no metrics for this newer face yet
-});
-
-const youngSerif = Young_Serif({
-  variable: "--font-young-serif",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
   weight: "400",
   display: "swap",
-  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -32,14 +23,14 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F7F4D5" },
-    { media: "(prefers-color-scheme: dark)", color: "#072A1C" },
+    { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },
+    { media: "(prefers-color-scheme: dark)", color: "#1A1919" },
   ],
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en-KE" className={`${atkinson.variable} ${youngSerif.variable}`}>
+    <html lang="en-KE" className={inter.variable}>
       <body className="min-h-dvh antialiased">{children}</body>
     </html>
   );
