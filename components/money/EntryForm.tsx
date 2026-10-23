@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { parseMpesa } from "@/lib/money/mpesa";
+import type { Bill } from "@/lib/money/bills";
 import type { Project } from "@/lib/money/money";
 import type { NewEntry } from "@/lib/sync/workflows";
 import type { Row } from "@/lib/sync/tables";
@@ -18,6 +19,7 @@ export function EntryForm({
   start,
   categories,
   projects,
+  bills = [],
   meId,
   onSave,
   onCancel,
@@ -25,12 +27,16 @@ export function EntryForm({
   start: Draft;
   categories: Category[];
   projects: Project[];
+  bills?: Bill[];
   meId?: string;
   onSave: (e: NewEntry) => Promise<string | null>;
   onCancel: () => void;
 }) {
   const [d, setD] = useState<Draft>({ occurred_on: today(), method: "mpesa", spent_by: meId ?? null, ...start });
   const [amount, setAmount] = useState(start.amount_kes ? String(start.amount_kes) : "");
+  const [usage, setUsage] = useState("");
+  const bill = bills.find((b) => b.id === d.bill_id);
+  const used = Number(usage.replace(",", "."));
   const [sms, setSms] = useState("");
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -62,6 +68,8 @@ export function EntryForm({
       note: d.note?.trim() || null,
       counterparty: d.counterparty ?? null,
       mpesa_code: d.mpesa_code ?? null,
+      bill_id: d.bill_id ?? null,
+      usage_qty: bill?.usage_unit && used > 0 ? used : null,
     });
     setBusy(false);
     if (err) setNote(err);
@@ -101,6 +109,14 @@ export function EntryForm({
           <input type="date" value={d.occurred_on} onChange={(e) => set({ occurred_on: e.target.value })} className={field} />
         </label>
       </div>
+
+      {bill?.usage_unit && (
+        <label className="flex flex-col gap-1 text-sm font-bold">
+          How much did you get? ({bill.usage_unit})
+          <input inputMode="decimal" value={usage} onChange={(e) => setUsage(e.target.value)} placeholder={`e.g. ${bill.usage_unit === "kg" ? "13" : bill.usage_unit === "litres" ? "5000" : "10"}`} className={`${field} tabular`} />
+          <span className="font-normal text-muted">This is what shows how much the house uses.</span>
+        </label>
+      )}
 
       <label className="flex flex-col gap-1 text-sm font-bold">
         {d.direction === "in" ? "For" : "What for"}

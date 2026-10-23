@@ -1,21 +1,23 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, Screen } from "@/components/Screen";
 import { useSync } from "@/components/SyncProvider";
 import { UndoBar, type UndoState } from "@/components/UndoBar";
 import { EntryForm, type Draft } from "@/components/money/EntryForm";
+import { Bills } from "@/components/money/Bills";
 import { Projects } from "@/components/money/Projects";
+import type { Bill } from "@/lib/money/bills";
 import { dayPlus, dueOnDay, postJob } from "@/lib/jobs/actions";
-import { foodStats, liveEntries, monthSummary, projectProgress, summaryText, type Entry, type Project } from "@/lib/money/money";
+import { budgetAvailable, cashFlow, foodStats, liveEntries, monthSummary, projectProgress, summaryText, type Entry, type Project } from "@/lib/money/money";
 import { whatsappHref } from "@/lib/contacts";
 import { kes } from "@/lib/shopping/pricing";
 import { syncEngine } from "@/lib/sync/client";
 import { useMe, useRows } from "@/lib/sync/hooks";
 import type { Row } from "@/lib/sync/tables";
-import { correctEntry, logMoney, type NewEntry } from "@/lib/sync/workflows";
+import { correctEntry, flagForMeeting, logMoney, type NewEntry } from "@/lib/sync/workflows";
 
-type Category = Row & { name: string; sort: number };
+type Category = Row & { name: string; sort: number; rollover?: boolean };
 type Budget = Row & { month: string; category_id: string; amount_kes: number };
 type Shop = Row & { name: string };
 type Person = Row & { name: string; is_remote?: boolean; phone?: string | null };
@@ -40,6 +42,18 @@ export default function MoneyPage() {
   const budgets = useRows<Budget>("budgets") ?? [];
   const people = (useRows<Person>("members") ?? []) as Person[];
   const shops = useRows<Shop>("shops") ?? [];
+  const billRows = useRows<Bill & { id: string }>("bills");
+  const bills = useMemo(() => (billRows ?? []) as Bill[], [billRows]);
+  const todayDay = new Date(Date.now() + 3 * 3600_000).toISOString().slice(0, 10);
+  const [payId, setPayId] = useState<string | null>(null);
+  useEffect(() => setPayId(new URLSearchParams(window.location.search).get("pay")), []);
+  useEffect(() => {
+    const b = payId ? bills.find((x) => x.id === payId) : undefined;
+    if (!b) return;
+    setForm({ direction: "out", bill_id: b.id, category_id: b.category_id ?? null, note: b.name, amount_kes: b.usual_kes ?? undefined });
+    setPayId(null);
+    window.history.replaceState(null, "", "/money");
+  }, [payId, bills]);
   const [month, setMonth] = useState(thisMonth());
   const [form, setForm] = useState<Draft | null>(null);
   const [fixing, setFixing] = useState<string | null>(null);
@@ -47,6 +61,8 @@ export default function MoneyPage() {
   const closeUndo = useCallback(() => setUndo(null), []);
 
   const s = monthSummary(entries, month);
+  const flow = cashFlow(entries, month);
+  const flowTop = Math.max(1, ...flow.flatMap((f) => [f.moneyIn, f.moneyOut]));
   const food = foodStats(entries, month, new Date(Date.now() + 3 * 3600_000).toISOString().slice(0, 10));
   const foodTop = Math.max(1, ...food.trend.map((t) => t.total));
   const catName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? "Other";
@@ -70,7 +86,7 @@ export default function MoneyPage() {
     return null;
   }
 
-  async function newProject(p: { title: string; kind: Project["kind"]; target_kes: number; notes: string; postJob: boolean }) {
+  async function newProject(p: { title: string; kind: Project["kind"]; target_kes: number; notes: string; postJob: boolean; target_date: string | null }) {
     let jobId: string | null = null;
     if (p.postJob) {
       jobId = await postJob({
@@ -86,9 +102,23 @@ export default function MoneyPage() {
         planned_for: dayPlus(14),
       });
     }
-    await syncEngine().queue("projects", "insert", { id: crypto.randomUUID(), title: p.title, kind: p.kind, target_kes: p.target_kes, notes: p.notes || null, job_id: jobId, status: "saving" });
+    await syncEngine().queue("projects", "insert", { id: crypto.randomUUID(), title: p.title, kind: p.kind, target_kes: p.target_kes, notes: p.notes || null, job_id: jobId, status: "saving", target_date: p.target_date });
     void syncNow();
     setUndo({ id: Date.now(), message: `Saving for ${p.title}${jobId ? " · posted on Jobs" : ""}` });
+  }
+
+  async function ask(title: string) {
+    const day = await flagForMeeting(title);
+    void syncNow();
+    setUndo({ id: Date.now(), message: `On the agenda for ${new Date(`${day}T09:00:00Z`).toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "short" })}` });
+  }
+
+  async function addYearly(name: string, yearly: number) {
+    const id = crypto.randomUUID();
+    await syncEngine().queue("budget_categories", "insert", { id, name, sort: categories.length + 1, rollover: true });
+    await syncEngine().queue("budgets", "insert", { id: crypto.randomUUID(), month: `${month}-01`, category_id: id, amount_kes: Math.ceil(yearly / 12) });
+    void syncNow();
+    setUndo({ id: Date.now(), message: `${name}: putting aside ${kes(Math.ceil(yearly / 12))} a month` });
   }
 
   async function setBudget(categoryId: string, amount: number) {
@@ -145,7 +175,27 @@ export default function MoneyPage() {
         </a>
       </Card>
 
-      {form && <EntryForm start={form} categories={categories} projects={projects} meId={me?.id} onSave={save} onCancel={() => setForm(null)} />}
+      {form && <EntryForm start={form} categories={categories} projects={projects} bills={bills} meId={me?.id} onSave={save} onCancel={() => setForm(null)} />}
+
+      <Bills
+        bills={bills}
+        entries={entries}
+        today={todayDay}
+        onPay={(b) => {
+          setForm({ direction: "out", bill_id: b.id, category_id: b.category_id ?? null, note: b.name, amount_kes: b.usual_kes ?? undefined });
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        onAdd={async (b) => {
+          await syncEngine().queue("bills", "insert", { id: crypto.randomUUID(), category_id: categories.find((c) => c.name === "Utilities")?.id ?? null, sort: bills.length + 1, ...b });
+          void syncNow();
+          setUndo({ id: Date.now(), message: `${b.name} added to bills` });
+        }}
+        onRemove={async (b) => {
+          await syncEngine().queue("bills", "delete", { id: b.id });
+          void syncNow();
+          setUndo({ id: Date.now(), message: `${b.name} removed from bills. Its payments stay in Money.` });
+        }}
+      />
 
       <Card>
         <h2 className="font-display text-xl">Food</h2>
@@ -192,16 +242,42 @@ export default function MoneyPage() {
         onGive={(p) => setForm({ direction: "in", project_id: p.id, note: `For ${p.title}` })}
         onSpend={(p) => setForm({ direction: "out", project_id: p.id, note: p.title })}
         onDone={(p) => syncEngine().queue("projects", "update", { id: p.id, status: "done" }).then(() => void syncNow())}
+        today={todayDay}
       />
 
       <Card>
+        <h2 className="font-display text-xl">Cash flow</h2>
+        <p className="text-sm text-muted">Money in against money spent, month by month. Project money is left out.</p>
+        <div className="mt-3 flex h-32 items-end gap-2" role="img" aria-label={flow.map((f) => `${monthLabel(f.month)}: in ${kes(f.moneyIn)}, spent ${kes(f.moneyOut)}`).join("; ")}>
+          {flow.map((f) => (
+            <div key={f.month} className="flex flex-1 flex-col items-center gap-1">
+              <div className="flex h-28 w-full items-end justify-center gap-0.5">
+                <div className="w-1/2 rounded-t-md bg-ok-fg" style={{ height: `${Math.max(2, (f.moneyIn / flowTop) * 112)}px` }} />
+                <div className={`w-1/2 rounded-t-md ${f.month === month ? "bg-brand" : "bg-line"}`} style={{ height: `${Math.max(2, (f.moneyOut / flowTop) * 112)}px` }} />
+              </div>
+              <span className="text-xs text-muted">{new Date(`${f.month}-15T09:00:00Z`).toLocaleDateString("en-KE", { month: "short" })}</span>
+            </div>
+          ))}
+        </div>
+        <p className="mt-2 flex flex-wrap gap-x-4 text-xs text-muted">
+          <span><span className="mr-1 inline-block size-2.5 rounded-sm bg-ok-fg align-middle" />In</span>
+          <span><span className="mr-1 inline-block size-2.5 rounded-sm bg-brand align-middle" />Spent</span>
+        </p>
+        {flow.at(-1)!.moneyIn > 0 && (
+          <p className="mt-2 text-sm">
+            {flow.at(-1)!.kept >= 0 ? `Kept ${kes(flow.at(-1)!.kept)} of what came in (${flow.at(-1)!.keptPct}%)` : `Spent ${kes(-flow.at(-1)!.kept)} more than came in`} this month.
+          </p>
+        )}
+      </Card>
+
+      <Card>
         <h2 className="font-display text-xl">Budget</h2>
-        <p className="text-sm text-muted">Spending this month by kind, against what you planned. Tap a budget to change it.</p>
+        <p className="text-sm text-muted">Spending this month by kind, against what you planned. A plan repeats each month until you change it. Tap a budget to change it.</p>
         <ul className="mt-2 flex flex-col gap-3">
           {categories.map((c) => {
-            const spent = s.byCategory.get(c.id) ?? 0;
-            const plan = Number(budgets.find((b) => b.category_id === c.id && b.month === `${month}-01`)?.amount_kes ?? 0);
-            const over = plan > 0 && spent > plan;
+            const b = budgetAvailable(budgets, entries, c.id, month, !!c.rollover);
+            const { spent, plan } = b;
+            const over = b.available > 0 && spent > b.available;
             return (
               <li key={c.id}>
                 <div className="flex items-baseline justify-between gap-2 text-sm">
@@ -222,13 +298,35 @@ export default function MoneyPage() {
                   </span>
                 </div>
                 <div className="mt-1 h-2.5 overflow-hidden rounded-full bg-base" aria-hidden="true">
-                  <div className={`h-full ${over ? "bg-out-strong" : "bg-brand"}`} style={{ width: `${plan ? Math.min(100, (spent / plan) * 100) : spent ? 100 : 0}%` }} />
+                  <div className={`h-full ${over ? "bg-out-strong" : "bg-brand"}`} style={{ width: `${b.available > 0 ? Math.min(100, (spent / b.available) * 100) : spent ? 100 : 0}%` }} />
+                </div>
+                <div className="mt-1 flex flex-wrap items-center justify-between gap-x-3 text-xs text-muted">
+                  <span>{c.rollover && b.carry !== 0 ? `${b.carry > 0 ? "+" : "−"}${kes(Math.abs(b.carry))} carried in · ${kes(b.left)} left` : plan ? `${kes(b.left)} left` : ""}</span>
+                  <button
+                    type="button"
+                    onClick={() => syncEngine().queue("budget_categories", "update", { id: c.id, rollover: !c.rollover }).then(() => void syncNow())}
+                    className="min-h-10 font-bold underline underline-offset-4"
+                  >
+                    {c.rollover ? "↻ Leftovers carry over" : "Carry leftovers over"}
+                  </button>
                 </div>
               </li>
             );
           })}
         </ul>
         {s.byCategory.get(null) ? <p className="mt-2 text-sm text-muted">Not sorted into a kind: {kes(s.byCategory.get(null)!)}</p> : null}
+        <button
+          type="button"
+          onClick={() => {
+            const name = window.prompt("A cost that comes once or twice a year (e.g. School fees, Car insurance):")?.trim();
+            if (!name) return;
+            const v = Number((window.prompt(`How much is ${name} for the whole year? (KES)`) ?? "").replace(/[, ]/g, ""));
+            if (v > 0) void addYearly(name, v);
+          }}
+          className="mt-3 min-h-12 rounded-xl border border-line px-4 text-sm font-bold"
+        >
+          + Save up for a yearly cost
+        </button>
       </Card>
 
       <Card>
@@ -272,9 +370,14 @@ export default function MoneyPage() {
                       </button>
                     </div>
                   ) : (
-                    <button type="button" onClick={() => setFixing(e.id)} className="mt-1 min-h-10 text-sm font-bold text-muted underline underline-offset-4">
-                      Wrong? Correct it
-                    </button>
+                    <span className="mt-1 flex flex-wrap gap-x-4">
+                      <button type="button" onClick={() => setFixing(e.id)} className="min-h-10 text-sm font-bold text-muted underline underline-offset-4">
+                        Wrong? Correct it
+                      </button>
+                      <button type="button" onClick={() => void ask(`About ${e.note || e.counterparty || "a payment"}: ${kes(e.amount_kes)} on ${day(e.occurred_on)}`)} className="min-h-10 text-sm font-bold text-muted underline underline-offset-4">
+                        Ask at the meeting
+                      </button>
+                    </span>
                   )}
                 </li>
               );

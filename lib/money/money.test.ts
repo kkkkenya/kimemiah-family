@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { foodStats, liveEntries, monthSummary, projectProgress, runsToUnlock, summaryText, type Entry } from "./money";
+import { budgetAvailable, cashFlow, foodStats, liveEntries, monthSummary, planFor, projectPace, projectProgress, runsToUnlock, summaryText, type Entry } from "./money";
 import { parseMpesa } from "./mpesa";
 
 describe("M-Pesa SMS", () => {
@@ -109,5 +109,34 @@ describe("food spending", () => {
 
   it("averages a past month over all its days", () => {
     expect(foodStats(entries, "2026-09", "2026-10-21", food).perWeek).toBe(Math.round((7000 / 30) * 7));
+  });
+});
+
+describe("cash flow, goals and rollover", () => {
+  const e = (id: string, direction: "in" | "out", occurred_on: string, amount_kes: number, o: Partial<Entry> = {}): Entry => ({ id, direction, occurred_on, amount_kes, ...o });
+
+  it("shows six months of in, out and what was kept", () => {
+    const f = cashFlow([e("a", "in", "2026-10-01", 40000), e("b", "out", "2026-10-05", 30000), e("c", "out", "2026-09-05", 5000), e("p", "in", "2026-10-02", 9000, { project_id: "x" })], "2026-10");
+    expect(f.map((m) => m.month)).toEqual(["2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"]);
+    expect(f.at(-1)).toEqual({ month: "2026-10", moneyIn: 40000, moneyOut: 30000, kept: 10000, keptPct: 25 });
+    expect(f.at(-2)?.keptPct).toBeNull();
+  });
+
+  it("works out a goal's monthly amount and whether it's on pace", () => {
+    const p = { id: "g", title: "Gate", kind: "house_work" as const, target_kes: 12000, status: "saving", target_date: "2027-03-31", created_at: "2026-09-30T10:00:00Z" };
+    const pace = projectPace(p, [e("1", "in", "2026-10-10", 3000, { project_id: "g" })], "2026-10-23")!;
+    expect(pace.monthsLeft).toBe(6);
+    expect(pace.perMonth).toBe(1500);
+    expect(pace.ahead).toBeGreaterThan(0);
+    expect(projectPace({ ...p, target_date: null }, [], "2026-10-23")).toBeNull();
+  });
+
+  it("repeats last month's plan and carries leftovers when rollover is on", () => {
+    const budgets = [{ category_id: "fees", month: "2026-08-01", amount_kes: 5000 }];
+    const spend = [e("s", "out", "2026-09-10", 2000, { category_id: "fees" })];
+    expect(planFor(budgets, "fees", "2026-10")).toBe(5000);
+    expect(budgetAvailable(budgets, spend, "fees", "2026-10", false)).toMatchObject({ plan: 5000, carry: 0, available: 5000 });
+    // August left 5000, September left 3000.
+    expect(budgetAvailable(budgets, spend, "fees", "2026-10", true)).toMatchObject({ carry: 8000, available: 13000, left: 13000 });
   });
 });

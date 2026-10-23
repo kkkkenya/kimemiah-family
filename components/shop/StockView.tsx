@@ -249,7 +249,7 @@ function StockRow({
           <span className="block font-bold">{item.name}</span>
           <span className="flex flex-wrap items-center gap-x-2 text-sm text-muted">
             <StatusTag item={item} />
-            {!level && <span className="tabular">{`${have} ${item.unit} · min ${item.min_qty}`}</span>}
+            {!level && <span className="tabular">{`${have} ${item.unit} · low at ${item.min_qty}`}</span>}
           </span>
         </button>
         {level ? (
@@ -341,6 +341,34 @@ function ItemDetails({ item, movements, shops, members, onSaved }: { item: Item;
           .filter(Boolean)
           .join(" · ")}
       </div>
+      {item.track_mode !== "level" && (
+        <div className="flex items-center justify-between gap-2">
+          <span>
+            <span className="block font-bold">Low at</span>
+            <span className="text-sm text-muted">
+              {Number(item.min_qty ?? 0) > 0 ? `Goes on the list at ${item.min_qty} ${item.unit} or less` : "Never goes on the list by itself"}
+            </span>
+          </span>
+          <span className="flex shrink-0 items-center gap-1">
+            {[-1, 1].map((d) => (
+              <button
+                key={d}
+                type="button"
+                aria-label={d < 0 ? "Lower" : "Higher"}
+                disabled={d < 0 && Number(item.min_qty ?? 0) <= 0}
+                onClick={async () => {
+                  await syncEngine().queue("stock_items", "update", { id: item.id, min_qty: Math.max(0, Number(item.min_qty ?? 0) + d) });
+                  void syncNow();
+                }}
+                className={`flex size-12 items-center justify-center rounded-xl border border-line bg-raised text-xl disabled:opacity-40 ${d > 0 ? "order-last" : ""}`}
+              >
+                {d < 0 ? "−" : "+"}
+              </button>
+            ))}
+            <span className="w-10 text-center text-lg tabular">{item.min_qty ?? 0}</span>
+          </span>
+        </div>
+      )}
       <div>
         <h3 className="font-bold">Recent changes</h3>
         {history.length ? (
@@ -424,7 +452,7 @@ function EditItem({ item, shops, onDone }: { item: Item; shops: Shop[]; onDone: 
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-2">
         <label className="flex flex-col gap-1 text-sm font-bold">
-          Minimum
+          Low at (or below)
           <input inputMode="decimal" value={minQty} onChange={(e) => setMinQty(e.target.value)} className={field} />
         </label>
         <label className="flex flex-col gap-1 text-sm font-bold">

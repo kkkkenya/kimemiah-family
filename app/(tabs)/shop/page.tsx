@@ -350,6 +350,21 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
     if (bought_at) setUndo({ id: Date.now(), message: `${i.title} in the basket`, undo: () => change("update", { id: i.id, bought_at: null }) });
   }
 
+  async function clearCart() {
+    const added = needed.filter((i) => !i.auto);
+    if (!added.length) return;
+    for (const i of added) await syncEngine().queue("shopping_extras", "delete", { id: i.id });
+    void syncNow();
+    setUndo({
+      id: Date.now(),
+      message: `Cart cleared (${added.length})`,
+      undo: async () => {
+        for (const i of added) await syncEngine().queue("shopping_extras", "insert", { id: crypto.randomUUID(), title: i.title, qty: i.qty, quantity: i.quantity, shop_id: i.shop_id, item_id: i.item_id, bought_at: null, shopping_tier: i.shopping_tier, catalog_product_id: i.catalog_product_id, preferred_store: i.preferred_store });
+        void syncNow();
+      },
+    });
+  }
+
   async function remove(i: ShoppingItem) {
     await change("delete", { id: i.id });
     setUndo({
@@ -521,6 +536,11 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
           {upgradeLines.length > 0 && totals.upgrades > 0 && !savingForUpgrades && (
             <button type="button" onClick={saveForUpgrades} className="min-h-12 rounded-xl border border-line px-4 text-sm font-bold">
               💰 Save up for the upgrades ({kes(totals.upgrades)})
+            </button>
+          )}
+          {needed.some((i) => !i.auto) && (
+            <button type="button" onClick={clearCart} className="min-h-12 rounded-xl border border-line px-4 text-sm font-bold">
+              Clear cart
             </button>
           )}
           {run ? (

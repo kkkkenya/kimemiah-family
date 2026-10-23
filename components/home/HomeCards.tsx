@@ -7,6 +7,8 @@ import { useSync } from "@/components/SyncProvider";
 import { isActive, type Trip } from "@/components/shop/TripCheck";
 import { essentialsNeeded, nairobiToday, supperCount, type Diner } from "@/lib/home";
 import { fromTemplate, joinJob, postJob, updateJob } from "@/lib/jobs/actions";
+import { billStats, billsDue, type Bill } from "@/lib/money/bills";
+import type { Entry } from "@/lib/money/money";
 import { formatMinutes, jobStatus, shareChoices, sortBoard, workers, type Job, type Participant } from "@/lib/jobs/logic";
 import { TEMPLATES } from "@/lib/jobs/templates";
 import { sendAlertsNow } from "@/lib/push/client";
@@ -296,5 +298,53 @@ export function UpgradeDealsCard() {
     <Link href="/shop?view=list" className="block rounded-xl bg-ok-bg px-4 py-3 text-ok-fg">
       ✨ <strong>Upgrade on sale this week:</strong> {deals.map((d) => `${d.line.title} (−${Math.round(d.deal.discount_pct)}%)`).join(", ")} ›
     </Link>
+  );
+}
+
+const TIPS: Record<string, string> = {
+  water: "Shorter showers, a full load in the machine, and a look for dripping taps all help.",
+  gas: "Lids on pots, soaking beans first, and turning the flame down once it boils all help.",
+};
+
+/** Bills due in the next few days (or overdue), and any bill running well above a usual month. */
+export function BillsDueCard() {
+  const bills = (useRows<Bill & { id: string }>("bills") ?? []) as Bill[];
+  const entries = (useRows<Entry & { id: string }>("money_entries") ?? []) as Entry[];
+  const today = nairobiToday();
+  const due = billsDue(bills, entries, today);
+  // About the house, never a person: what's being used, and what helps.
+  const heavy = bills
+    .filter((b) => !b.deleted_at)
+    .map((bill) => ({ bill, stats: billStats(bill, entries, today) }))
+    .filter((x) => x.stats.change !== null && x.stats.change >= 25);
+  if (!due.length && !heavy.length) return null;
+  return (
+    <section className="rounded-2xl border border-line bg-raised p-5">
+      <h2 className="font-display text-xl">Bills</h2>
+      {due.length > 0 && (
+        <ul className="mt-2 flex flex-col divide-y divide-line">
+          {due.map(({ bill, stats }) => (
+            <li key={bill.id} className="flex items-center justify-between gap-2 py-2">
+              <span>
+                <span className="block font-bold">{bill.name}</span>
+                <span className={`text-sm ${stats.dueIn! < 0 ? "font-bold text-out-strong" : "text-muted"}`}>
+                  {stats.dueIn! < 0 ? `${-stats.dueIn!} days overdue` : stats.dueIn === 0 ? "Due today" : `Due in ${stats.dueIn} days`}
+                  {stats.last ? ` · last ${kes(stats.last.amount_kes)}` : ""}
+                </span>
+              </span>
+              <Link href={`/money?pay=${bill.id}`} className="flex min-h-12 shrink-0 items-center rounded-xl border border-line px-4 font-bold">
+                Paid it
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+      {heavy.map(({ bill, stats }) => (
+        <p key={bill.id} className="mt-2 rounded-xl bg-low-bg px-3 py-2 text-sm text-low-fg">
+          <strong>{bill.name} this month: {stats.change}% more than usual</strong> ({kes(stats.thisMonth)} against about {kes(stats.usualMonth!)}).{" "}
+          {TIPS[Object.keys(TIPS).find((k) => bill.name.toLowerCase().includes(k)) ?? ""] ?? "Worth a word at the next meeting."}
+        </p>
+      ))}
+    </section>
   );
 }

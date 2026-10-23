@@ -136,6 +136,11 @@ Usual jobs (one tap, all editable when posting):
 - **Projects**: savings goals for **house work** (e.g. "Repaint the gate, KES 6,000") and **upgrades** (from the cart: "Save up for the upgrades"). Anyone adds money toward one and logs what's spent on it; a progress bar shows how close it is. A house-work project can post its job on Jobs, which unlocks ("Money ready") once the project reaches its target.
 - **Entries can't be edited or deleted.** "Wrong? Correct it" adds a correcting entry; both then drop out of every total.
 - **Budget**: an amount per kind each month (Food, Market and fresh, Cleaning, Personal care, Utilities, Dog, House projects, Upgrades, Other) against what was spent, red when over.
+- **Budget rollover**: a plan repeats each month until changed. A kind can carry its leftovers (or overspend) into the next month. "Save up for a yearly cost" (school fees, insurance) makes a kind that puts aside a twelfth each month.
+- **Bills**: water, cooking gas, internet and any others the family adds. Each payment says how much was bought (litres, kg, GB), so Money shows cost per unit, how long one lasts, use per day, and when a month runs heavier than usual. A bill nearly due posts a job ("Buy cooking gas") that links back to logging the payment. Home shows bills coming up and a gentle note when one runs 25% above usual, about the house and never a person.
+- **Cash flow**: money in against money spent for six months, and what was kept this month.
+- **Goals with a pace**: a project can have a date; the app says how much to put aside each month and whether it's on track.
+- **Ask at the meeting**: any money entry or job can be put on the next family meeting's agenda as a question.
 - **Summary for Peter**: one tap opens WhatsApp to Peter with the month (in, spent by kind, left, projects).
 
 ## 5. Meeting (under More)

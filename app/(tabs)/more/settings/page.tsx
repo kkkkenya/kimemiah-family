@@ -75,6 +75,19 @@ export default function SettingsPage() {
       <MyJobSettings />
       <HouseSettingsCard />
       <Card>
+        <h2 className="font-bold">Get the app</h2>
+        <p className="mt-1 text-sm">
+          <strong>Android:</strong> download the app, open the file, and allow installing from your browser if the phone asks. It opens this same app, without the address bar.
+        </p>
+        <a href="/kimemiah.apk" download className="mt-2 inline-flex min-h-12 items-center rounded-xl bg-brand px-4 font-bold text-brand-contrast">
+          Download for Android
+        </a>
+        <p className="mt-3 text-sm">
+          <strong>iPhone:</strong> open this page in Safari, tap Share, then <em>Add to Home Screen</em>.
+        </p>
+      </Card>
+
+      <Card>
         <h2 className="font-bold">This phone</h2>
         <p className="text-muted">Used by {me?.name ?? "…"}</p>
         <button
