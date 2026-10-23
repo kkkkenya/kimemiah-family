@@ -148,14 +148,14 @@ export function StockView({ stock, movements, shops, members, meId }: { stock: I
         {out || low ? `${out} out · ${low} low. They're on the shopping list.` : "Tap − when you use something up, + when you add some."}
       </p>
 
-      <div role="group" aria-label="Show" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
+      <div role="group" aria-label="Show" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:px-0">
         {FILTERS.map((f) => (
           <button
             key={f.id}
             type="button"
             aria-pressed={filter === f.id}
             onClick={() => setFilter(f.id)}
-            className={`min-h-10 shrink-0 rounded-full border px-3 text-sm font-bold ${filter === f.id ? "border-brand bg-brand text-brand-contrast" : "border-line bg-raised"}`}
+            className={`min-h-10 shrink-0 rounded-md border px-3 text-sm font-bold ${filter === f.id ? "border-brand bg-brand text-brand-contrast" : "border-line bg-raised"}`}
           >
             {f.label}
           </button>
@@ -163,7 +163,7 @@ export function StockView({ stock, movements, shops, members, meId }: { stock: I
       </div>
 
       {groups.map(({ category, items }) => (
-        <section key={category} aria-labelledby={`cat-${category}`} className="overflow-hidden rounded-xl bg-raised shadow-[0_1px_3px_rgba(10,51,35,.10)]">
+        <section key={category} aria-labelledby={`cat-${category}`} className="overflow-hidden rounded-2xl bg-raised border border-line">
           <h2 id={`cat-${category}`} className="border-b border-line px-4 py-3 font-display text-xl">
             {categoryName(category)}
           </h2>
@@ -512,18 +512,18 @@ function ToolRow({ item, members, onTool, onRepair }: { item: Item; members: Mem
             role="radio"
             aria-checked={t.tool_location === l}
             onClick={() => onTool({ tool_location: l })}
-            className={`min-h-10 rounded-full border px-3 text-sm font-bold ${t.tool_location === l ? "border-brand bg-brand text-brand-contrast" : "border-line"}`}
+            className={`min-h-10 rounded-md border px-3 text-sm font-bold ${t.tool_location === l ? "border-brand bg-brand text-brand-contrast" : "border-line"}`}
           >
             {l}
           </button>
         ))}
       </div>
       <div className="mt-2 flex flex-wrap gap-2">
-        <button type="button" onClick={() => onTool({ tool_condition: broken ? "working" : "needs_fix" })} className="min-h-10 rounded-full border border-line px-3 text-sm font-bold">
+        <button type="button" onClick={() => onTool({ tool_condition: broken ? "working" : "needs_fix" })} className="min-h-10 rounded-md border border-line px-3 text-sm font-bold">
           {broken ? "It's fixed" : "Needs fixing or sharpening"}
         </button>
         {broken && (
-          <button type="button" onClick={onRepair} className="min-h-10 rounded-full bg-brand px-3 text-sm font-bold text-brand-contrast">
+          <button type="button" onClick={onRepair} className="min-h-10 rounded-md bg-brand px-3 text-sm font-bold text-brand-contrast">
             Post a repair job
           </button>
         )}

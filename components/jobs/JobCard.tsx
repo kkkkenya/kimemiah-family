@@ -133,21 +133,21 @@ function JobDetails({ job, parts, meId, nameOf, thanked, onMessage, homeNames = 
       )}
 
       <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold">
-        <span className={`rounded-full px-2 py-0.5 ${strain.cls}`}>
+        <span className={`rounded-md px-2 py-0.5 ${strain.cls}`}>
           <span aria-hidden="true">{strain.icon} </span>
           {strain.word}
         </span>
-        {job.urgent && !job.done_at && <span className="rounded-full bg-out-bg px-2 py-0.5 text-out-fg">Urgent</span>}
-        {job.people_needed > 1 && <span className="rounded-full border border-line px-2 py-0.5">💪 Team-up</span>}
-        {job.parent_job_id && <span className="rounded-full border border-line px-2 py-0.5">Step 2</span>}
-        {job.rota_date && <span className="rounded-full border border-line px-2 py-0.5">Weekly grid</span>}
+        {job.urgent && !job.done_at && <span className="rounded-md bg-out-bg px-2 py-0.5 text-out-fg">Urgent</span>}
+        {job.people_needed > 1 && <span className="rounded-md border border-line px-2 py-0.5">💪 Team-up</span>}
+        {job.parent_job_id && <span className="rounded-md border border-line px-2 py-0.5">Step 2</span>}
+        {job.rota_date && <span className="rounded-md border border-line px-2 py-0.5">Weekly grid</span>}
         {suggestedFor && !job.done_at && (
-          <span className={`rounded-full px-2 py-0.5 ${suggestedFor === meId ? "bg-brand text-brand-contrast" : "border border-brand text-brand"}`}>
+          <span className={`rounded-md px-2 py-0.5 ${suggestedFor === meId ? "bg-brand text-brand-contrast" : "border border-brand text-brand"}`}>
             {suggestedFor === meId ? "Suggested for you" : `Suggested: ${nameOf(suggestedFor)}`}
           </span>
         )}
         {waiting >= 1 && (
-          <span className={`rounded-full px-2 py-0.5 ${waiting >= agendaAfter ? "bg-low-bg text-low-fg" : "border border-line"}`}>
+          <span className={`rounded-md px-2 py-0.5 ${waiting >= agendaAfter ? "bg-low-bg text-low-fg" : "border border-line"}`}>
             Waiting {waiting === 1 ? "1 day" : `${waiting} days`}
             {waiting >= agendaAfter && " · on the meeting agenda"}
           </span>
@@ -170,7 +170,7 @@ function JobDetails({ job, parts, meId, nameOf, thanked, onMessage, homeNames = 
           <p className="font-bold">Where did the tools go back?</p>
           <div role="radiogroup" aria-label="Where the tools went" className="flex flex-wrap gap-2">
             {["Store room", "Back verandah", "Dog kennel", "Main house"].map((l) => (
-              <button key={l} type="button" role="radio" aria-checked={putBack === l} onClick={() => setPutBack(l)} className={`min-h-10 rounded-full border px-3 text-sm font-bold ${putBack === l ? "border-brand bg-brand text-brand-contrast" : "border-line"}`}>
+              <button key={l} type="button" role="radio" aria-checked={putBack === l} onClick={() => setPutBack(l)} className={`min-h-10 rounded-md border px-3 text-sm font-bold ${putBack === l ? "border-brand bg-brand text-brand-contrast" : "border-line"}`}>
                 {l}
               </button>
             ))}
@@ -248,7 +248,7 @@ function JobDetails({ job, parts, meId, nameOf, thanked, onMessage, homeNames = 
               .filter((m) => m !== meId)
               .map((m) =>
                 thanked(job.id, m) ? (
-                  <span key={m} className="rounded-full bg-ok-bg px-3 py-2 text-sm font-bold text-ok-fg">
+                  <span key={m} className="rounded-md bg-ok-bg px-3 py-2 text-sm font-bold text-ok-fg">
                     ✓ Asante sent to {nameOf(m)}
                   </span>
                 ) : (
@@ -256,7 +256,7 @@ function JobDetails({ job, parts, meId, nameOf, thanked, onMessage, homeNames = 
                     key={m}
                     type="button"
                     onClick={() => sendThanks(job.id, m).then(() => (void syncNow(), onMessage(`Asante sent to ${nameOf(m)}`)))}
-                    className="min-h-12 rounded-full border border-brand px-4 font-bold text-brand"
+                    className="min-h-12 rounded-md border border-brand px-4 font-bold text-brand"
                   >
                     🙏 Asante, {nameOf(m)}
                   </button>
@@ -286,7 +286,7 @@ function JobDetails({ job, parts, meId, nameOf, thanked, onMessage, homeNames = 
             <>
               <div className="flex flex-wrap gap-2">
                 {(PART_NOTES[job.category as Category] ?? []).map((n) => (
-                  <button key={n} type="button" aria-pressed={note === n} onClick={() => setNote(note === n ? "" : n)} className={`min-h-10 rounded-full border px-3 text-sm ${note === n ? "border-brand font-bold text-brand" : "border-line"}`}>
+                  <button key={n} type="button" aria-pressed={note === n} onClick={() => setNote(note === n ? "" : n)} className={`min-h-10 rounded-md border px-3 text-sm ${note === n ? "border-brand font-bold text-brand" : "border-line"}`}>
                     {n}
                   </button>
                 ))}
@@ -446,17 +446,17 @@ export function JobCard(props: Props) {
             : { label: "Details", run: () => setSheet({ start: null }) };
 
   return (
-    <li className={`rounded-xl bg-raised shadow-[0_1px_3px_rgba(10,51,35,.10)] ${status === "overdue" ? "border-2 border-out-strong" : ""}`}>
+    <li className={`rounded-2xl bg-raised border border-line ${status === "overdue" ? "border-2 border-out-strong" : ""}`}>
       <div className="flex items-center gap-3 p-4">
         <button type="button" onClick={() => setSheet({ start: null })} className="min-w-0 flex-1 text-left">
           <span className="flex flex-wrap items-center gap-1.5">
             <span className="font-bold">{job.title}</span>
-            <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${strain.cls}`}>
+            <span className={`rounded-md px-2 py-0.5 text-xs font-bold ${strain.cls}`}>
               <span aria-hidden="true">{strain.icon} </span>
               {strain.word}
             </span>
-            {job.urgent && !job.done_at && <span className="rounded-full bg-out-bg px-2 py-0.5 text-xs font-bold text-out-fg">Urgent</span>}
-            {suggestedFor === meId && !job.done_at && <span className="rounded-full bg-brand px-2 py-0.5 text-xs font-bold text-brand-contrast">For you</span>}
+            {job.urgent && !job.done_at && <span className="rounded-md bg-out-bg px-2 py-0.5 text-xs font-bold text-out-fg">Urgent</span>}
+            {suggestedFor === meId && !job.done_at && <span className="rounded-md bg-brand px-2 py-0.5 text-xs font-bold text-brand-contrast">For you</span>}
           </span>
           <span className="mt-0.5 block text-sm text-muted tabular">{line}</span>
         </button>

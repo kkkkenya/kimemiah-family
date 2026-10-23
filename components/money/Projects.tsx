@@ -43,7 +43,7 @@ export function Projects({
   }
 
   return (
-    <section aria-labelledby="projects" className="rounded-xl bg-raised p-4 shadow-[0_1px_3px_rgba(10,51,35,.10)]">
+    <section aria-labelledby="projects" className="rounded-2xl bg-raised p-4 border border-line">
       <div className="flex items-center justify-between gap-2">
         <h2 id="projects" className="font-display text-xl">
           Projects
@@ -110,7 +110,7 @@ export function Projects({
                     {p.kind === "upgrade" ? "✨ " : "🔨 "}
                     {p.title}
                   </span>
-                  <span className={`shrink-0 rounded-full px-2 text-xs font-bold ${p.status === "saving" ? "border border-line" : "bg-ok-bg text-ok-fg"}`}>
+                  <span className={`shrink-0 rounded-md px-2 text-xs font-bold ${p.status === "saving" ? "border border-line" : "bg-ok-bg text-ok-fg"}`}>
                     {p.status === "saving" ? "Saving" : p.status === "funded" ? "✓ Funded" : "✓ Done"}
                   </span>
                 </div>

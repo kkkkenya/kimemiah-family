@@ -22,7 +22,7 @@ export function ContactRow({ contact, onEdit }: { contact: Contact; onEdit?: () 
       <div className="flex items-baseline justify-between gap-2">
         <span className="min-w-0">
           <span className="font-bold">{contact.name}</span>
-          {contact.is_emergency && <span className="ml-2 rounded-full bg-out-bg px-2 text-xs font-bold text-out-fg">Emergency</span>}
+          {contact.is_emergency && <span className="ml-2 rounded-md bg-out-bg px-2 text-xs font-bold text-out-fg">Emergency</span>}
           <span className="block text-sm text-muted">{[contact.role, contact.area].filter(Boolean).join(" · ")}</span>
           {contact.note && <span className="mt-1 block whitespace-pre-line text-sm">{contact.note}</span>}
         </span>

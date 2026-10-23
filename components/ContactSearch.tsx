@@ -26,7 +26,7 @@ export function ContactSearch() {
         className="min-h-12 w-full rounded-xl border border-line bg-raised px-3"
       />
       {query.trim() && (
-        <div className="mt-2 rounded-xl bg-raised px-4 shadow-[0_1px_3px_rgba(10,51,35,.10)]">
+        <div className="mt-2 rounded-2xl bg-raised px-4 border border-line">
           {hits.length ? (
             <ul className="divide-y divide-line">
               {hits.map((c) => (

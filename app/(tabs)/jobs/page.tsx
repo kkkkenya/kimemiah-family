@@ -109,17 +109,17 @@ export default function JobsPage() {
     <Screen title="Jobs">
       <JobAlerts />
 
-      <section aria-labelledby="quick" className="flex flex-col gap-2">
+      <section aria-labelledby="quick" className="flex flex-col gap-2 lg:[column-span:all]">
         <h2 id="quick" className="font-bold">
           What needs doing right now?
         </h2>
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:px-0">
           {TEMPLATES.filter((t) => t.chip).map((t) => (
-            <button key={t.id} type="button" onClick={() => post(fromTemplate(t, Date.now(), learned(t.id)?.minutes))} className="min-h-12 shrink-0 rounded-full border border-brand bg-raised px-4 text-sm font-bold text-brand">
+            <button key={t.id} type="button" onClick={() => post(fromTemplate(t, Date.now(), learned(t.id)?.minutes))} className="min-h-12 shrink-0 rounded-md border border-brand bg-raised px-4 text-sm font-bold text-brand">
               {t.chip}
             </button>
           ))}
-          <button type="button" onClick={() => setAdding(true)} className="min-h-12 shrink-0 rounded-full bg-brand px-4 text-sm font-bold text-brand-contrast">
+          <button type="button" onClick={() => setAdding(true)} className="min-h-12 shrink-0 rounded-md bg-brand px-4 text-sm font-bold text-brand-contrast">
             + Add a job
           </button>
         </div>
@@ -133,7 +133,7 @@ export default function JobsPage() {
 
       {adding && <JobForm onPost={post} onCancel={() => setAdding(false)} learned={learned} />}
 
-      <div role="tablist" aria-label="Jobs" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
+      <div role="tablist" aria-label="Jobs" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:px-0">
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -141,7 +141,7 @@ export default function JobsPage() {
             role="tab"
             aria-selected={tab === t.id}
             onClick={() => setTab(t.id)}
-            className={`min-h-12 shrink-0 rounded-full border px-4 text-sm font-bold ${tab === t.id ? "border-brand bg-brand text-brand-contrast" : "border-line bg-raised"}`}
+            className={`min-h-12 shrink-0 rounded-md border px-4 text-sm font-bold ${tab === t.id ? "border-brand bg-brand text-brand-contrast" : "border-line bg-raised"}`}
           >
             {t.label} ({inTab[t.id].length})
           </button>
@@ -149,14 +149,14 @@ export default function JobsPage() {
       </div>
       <div role="group" aria-label="Effort" className="flex flex-wrap gap-2">
         {EFFORT.map((e) => (
-          <button key={e.id} type="button" aria-pressed={effort === e.id} onClick={() => setEffort(e.id)} className={`min-h-10 rounded-full border px-3 text-sm font-bold ${effort === e.id ? "border-brand text-brand" : "border-line"}`}>
+          <button key={e.id} type="button" aria-pressed={effort === e.id} onClick={() => setEffort(e.id)} className={`min-h-10 rounded-md border px-3 text-sm font-bold ${effort === e.id ? "border-brand text-brand" : "border-line"}`}>
             {e.label}
           </button>
         ))}
       </div>
 
       {shown.length ? (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:items-start">
           {shown.map((j) => (
             <JobCard key={j.id} job={j} parts={parts} meId={me?.id} nameOf={nameOf} thanked={thanked} onMessage={message} homeNames={home} agendaAfter={agendaAfter} suggestedFor={suggestion(j)} tools={tools} supper={supper} />
           ))}

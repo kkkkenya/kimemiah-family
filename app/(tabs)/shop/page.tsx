@@ -174,7 +174,7 @@ export default function ShopPage() {
           role="tab"
           aria-selected={view === v.id}
           onClick={() => setView(v.id)}
-          className={`min-h-12 rounded-full px-1 text-sm font-bold leading-tight ${view === v.id ? "bg-brand text-brand-contrast" : "text-ink"}`}
+          className={`min-h-12 rounded-md px-1 text-sm font-bold leading-tight ${view === v.id ? "bg-brand text-brand-contrast" : "text-ink"}`}
         >
           {v.label}
         </button>
@@ -548,7 +548,7 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
         onFinish={finishTrip}
       />
 
-      <form onSubmit={submit} className="flex flex-col gap-2 rounded-xl bg-raised p-4 shadow-[0_1px_3px_rgba(10,51,35,.10)]">
+      <form onSubmit={submit} className="flex flex-col gap-2 rounded-2xl bg-raised p-4 border border-line">
         <label htmlFor="item" className="font-bold">
           Add an item
         </label>
@@ -617,7 +617,7 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
       {groups.map(({ shop, rows }) => (
         <div key={shop.id} className="flex flex-col gap-4">
           {shop.id === firstSupermarket && <StoreCompare lines={supermarketLines} matches={matches} />}
-          <section aria-labelledby={`shop-${shop.id}`} className="overflow-hidden rounded-xl bg-raised shadow-[0_1px_3px_rgba(10,51,35,.10)]">
+          <section aria-labelledby={`shop-${shop.id}`} className="overflow-hidden rounded-2xl bg-raised border border-line">
             <header className="flex items-baseline justify-between gap-2 border-b border-line px-4 py-3">
               <h2 id={`shop-${shop.id}`} className="font-display text-xl">
                 {shop.name}
@@ -630,7 +630,7 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
       ))}
 
       {noShop.length > 0 && (
-        <section className="overflow-hidden rounded-xl bg-raised">
+        <section className="overflow-hidden rounded-2xl bg-raised">
           <h2 className="border-b border-line px-4 py-3 font-display text-xl">Anywhere</h2>
           <ul className="divide-y divide-line">{noShop.map((i) => row(i, whoAdded(i)))}</ul>
         </section>
@@ -671,7 +671,7 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
 
       <DealRestock stock={stock as StockLike[]} matches={matches} onList={onList} onAdd={(s, deal) => addItem(s.name, { itemId: s.id, catalog: deal })} />
 
-      <section className="rounded-xl bg-raised p-4 shadow-[0_1px_3px_rgba(10,51,35,.10)]">
+      <section className="rounded-2xl bg-raised p-4 border border-line">
         <button type="button" aria-expanded={showHouseList} onClick={() => setShowHouseList((v) => !v)} className="flex min-h-12 w-full items-center justify-between font-bold">
           Add from the house list
           <span aria-hidden="true" className="text-muted">
@@ -696,7 +696,7 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
                           type="button"
                           disabled={added}
                           onClick={() => addItem(s.name, { itemId: s.id })}
-                          className="min-h-12 rounded-full border border-line px-4 text-left disabled:border-transparent disabled:bg-ok-bg disabled:text-ok-fg"
+                          className="min-h-12 rounded-md border border-line px-4 text-left disabled:border-transparent disabled:bg-ok-bg disabled:text-ok-fg"
                         >
                           {added ? `✓ ${s.name}` : s.name}
                           {s.shopping_tier === "qol" && !added && <span className="text-sm text-muted"> · can wait</span>}

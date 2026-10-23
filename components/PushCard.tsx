@@ -29,7 +29,7 @@ export function PushCard({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <section aria-labelledby="alerts" className="rounded-xl bg-raised p-4 shadow-[0_1px_3px_rgba(10,51,35,.10)]">
+    <section aria-labelledby="alerts" className="rounded-2xl bg-raised p-4 border border-line">
       <h2 id="alerts" className="font-bold">
         Alerts on this phone
       </h2>

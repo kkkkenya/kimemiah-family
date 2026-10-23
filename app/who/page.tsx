@@ -86,7 +86,7 @@ export default function WhoPage() {
               type="button"
               disabled={picking !== null}
               onClick={() => pick(p)}
-              className="flex min-h-14 w-full items-center justify-between rounded-xl bg-raised px-4 text-left text-lg font-bold shadow-[0_1px_3px_rgba(10,51,35,.10)] disabled:opacity-60"
+              className="flex min-h-14 w-full items-center justify-between rounded-xl bg-raised px-4 text-left text-lg font-bold border border-line disabled:opacity-60"
             >
               <span className="flex items-center gap-3">
                 <Avatar avatar={p.avatar} name={p.name} size={40} />

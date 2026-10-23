@@ -21,7 +21,7 @@ export function BottomSheet({ title, onClose, children }: { title: string; onClo
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center">
+    <div className="fixed inset-0 z-40 flex items-end justify-center lg:items-center lg:p-6">
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-ink/40" />
       <div
         ref={panel}
@@ -29,7 +29,7 @@ export function BottomSheet({ title, onClose, children }: { title: string; onClo
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className="sheet-in relative max-h-[88dvh] w-full max-w-xl overflow-y-auto rounded-t-2xl bg-base px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2 shadow-2xl outline-none"
+        className="sheet-in relative max-h-[88dvh] w-full max-w-xl overflow-y-auto overscroll-contain rounded-t-2xl lg:max-h-[85dvh] lg:rounded-2xl border border-line bg-base px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2 outline-none"
       >
         <div className="sticky top-0 z-10 -mx-4 flex items-center justify-between gap-2 bg-base px-4 pb-2">
           <span aria-hidden="true" className="mx-auto mt-1 block h-1.5 w-12 rounded-full bg-line" />

@@ -16,9 +16,9 @@ export function UndoBar({ state, onClose }: { state: UndoState; onClose: () => v
   return (
     <div
       role="status"
-      className="fixed inset-x-0 z-30 px-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]"
+      className="fixed inset-x-0 z-30 px-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:bottom-6 lg:left-56 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]"
     >
-      <div className="mx-auto flex max-w-xl items-center justify-between gap-3 rounded-xl bg-ink px-4 py-2 text-base shadow-lg">
+      <div className="mx-auto flex max-w-xl items-center justify-between gap-3 rounded-xl bg-ink px-4 py-2 text-base">
         <span className="text-base text-[color:var(--surface-base)]">{state.message}</span>
         {state.undo && (
           <button

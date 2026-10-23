@@ -6,7 +6,7 @@ import { SyncStatus } from "@/components/SyncStatus";
 export default function TabsLayout({ children }: { children: ReactNode }) {
   return (
     <SyncProvider>
-      <div className="pb-[calc(4.5rem+env(safe-area-inset-bottom))]">
+      <div className="pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-56">
         <SyncStatus />
         {children}
       </div>
