@@ -141,6 +141,10 @@ Usual jobs (one tap, all editable when posting):
 - **Cash flow**: money in against money spent for six months, and what was kept this month.
 - **Goals with a pace**: a project can have a date; the app says how much to put aside each month and whether it's on track.
 - **Ask at the meeting**: any money entry or job can be put on the next family meeting's agenda as a question.
+- **Money, Monarch style** (Money, Jobs and Home's money cards; spec in docs/monarch-mvp.html): on a phone Money is five short views (Overview, Budget, Entries, Bills, Goals); on a laptop, for projecting at the family meeting, everything shows at once with full tables (budget with carried-in and month-end pace, every entry with who, how and M-Pesa code, cash flow numbers, money in by person).
+- **Flex budgeting**: each kind is Fixed (Internet), Flexible or Non-monthly; Overview shows flexible money left and about how much a day. From the 10th, flexible kinds show their month-end pace. A kind at 80% and at 100% sends one alert each month to the people at home.
+- **Questions on an entry**: "Ask someone" sends a question about a payment to one person (push), who marks it "Looks right". Entries can be searched by payee, note, M-Pesa code or amount, and filtered.
+- **M-Pesa rules**: after saving a new payee, the app offers to remember it ("NAIROBI WATER → Water bill"); next time a pasted message sorts itself.
 - **Summary for Peter**: one tap opens WhatsApp to Peter with the month (in, spent by kind, left, projects).
 
 ## 5. Meeting (under More)

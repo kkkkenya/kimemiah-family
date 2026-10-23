@@ -13,6 +13,7 @@
   --brand-contrast: #ffffff;
   --action: #e4f222;
   --action-ink: #0c0a08;
+  --action-text: #0c0a08;
   --chai: #e4f222;
   --moss: #1a1919;
   --ok-fg: #2f4a12;
@@ -36,6 +37,7 @@
     --brand-contrast: #0c0a08;
     --action: #e4f222;
     --action-ink: #0c0a08;
+    --action-text: #e4f222;
     --chai: #e4f222;
     --moss: #f4f2f0;
     --ok-fg: #d6eaa6;
@@ -59,6 +61,7 @@
   --brand-contrast: #0c0a08;
   --action: #e4f222;
   --action-ink: #0c0a08;
+  --action-text: #e4f222;
   --chai: #e4f222;
   --moss: #f4f2f0;
   --ok-fg: #d6eaa6;
@@ -90,14 +93,21 @@
   --color-out-strong: var(--out-strong);
   --color-action: var(--action);
   --color-action-ink: var(--action-ink);
+  --color-action-text: var(--action-text);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Not inline, so a section (.monarch) can change them for everything inside it. */
+@theme {
   /* One weight: hierarchy comes from size, not bold. */
   --font-weight-bold: 400;
   --font-weight-semibold: 400;
   /* Buttons, chips and inputs 6px; cards use rounded-2xl (16px). */
   --radius-xl: 6px;
   --radius-lg: 6px;
+  --radius-md: 6px;
+  --radius-2xl: 16px;
 }
 
 html {
@@ -164,4 +174,77 @@ button {
   .sheet-in {
     animation: none;
   }
+}
+
+/* Monarch look (Money, Jobs and Home's money cards; see docs/monarch-mvp.html): linen canvas,
+   paper cards with a hairline and a 5% shadow, ember for the main action, pill controls, serif
+   headings with tight tracking. Everything inside .monarch takes these instead. */
+.monarch {
+  --surface-base: #efecea;
+  --surface-raised: #ffffff;
+  --text-primary: #22201d;
+  --text-muted: #5f5d5a;
+  --line: #dcd9d6;
+  --brand: #22201d;
+  --brand-contrast: #ffffff;
+  --action: #ff692d;
+  --action-ink: #22201d;
+  --action-text: #b93d0c;
+  --radius-xl: 9999px;
+  --radius-md: 9999px;
+  --radius-lg: 8px;
+  --radius-2xl: 12px;
+  --font-weight-bold: 500;
+  --font-weight-semibold: 500;
+  color: var(--text-primary);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .monarch {
+    --surface-base: #1b1a18;
+    --surface-raised: #262421;
+    --text-primary: #efecea;
+    --text-muted: #b3afaa;
+    --line: #3a3734;
+    --brand: #efecea;
+    --brand-contrast: #1b1a18;
+    --action: #ff7a45;
+    --action-ink: #1b1a18;
+    --action-text: #ff9a6b;
+  }
+}
+:root[data-theme="dark"] .monarch {
+  --surface-base: #1b1a18;
+  --surface-raised: #262421;
+  --text-primary: #efecea;
+  --text-muted: #b3afaa;
+  --line: #3a3734;
+  --brand: #efecea;
+  --brand-contrast: #1b1a18;
+  --action: #ff7a45;
+  --action-ink: #1b1a18;
+  --action-text: #ff9a6b;
+}
+.monarch .font-display {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 350;
+  letter-spacing: -0.035em;
+}
+.monarch input:not([type="checkbox"]),
+.monarch textarea,
+.monarch select {
+  border-radius: 8px;
+}
+.monarch .border.bg-raised {
+  box-shadow: 0 1px 2px rgba(34, 32, 29, 0.05);
+}
+/* Small uppercase labels above a figure. */
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.monarch .eyebrow-accent {
+  color: var(--action-text);
 }

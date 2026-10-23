@@ -106,7 +106,7 @@ export default function JobsPage() {
   const home = members.filter((m) => m.presence === "at_home" && m.id !== me?.id).map((m) => m.name);
 
   return (
-    <Screen title="Jobs">
+    <Screen title="Jobs" tone="monarch">
       <JobAlerts />
 
       <section aria-labelledby="quick" className="flex flex-col gap-2 lg:[column-span:all]">

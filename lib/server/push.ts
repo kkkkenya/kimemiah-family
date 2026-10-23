@@ -1,6 +1,9 @@
 import "server-only";
 import webpush from "web-push";
+import { planMoneyAlerts, type Review } from "@/lib/push/money";
 import { groupByPerson, planAlerts, type Alert, type PushJob, type PushMember, type PushPart } from "@/lib/push/plan";
+import type { Kind } from "@/lib/money/flex";
+import type { Budget, Entry } from "@/lib/money/money";
 import { ensureBillJobs } from "./bills";
 import { adminClient } from "./supabase-admin";
 
@@ -78,6 +81,19 @@ export async function runTick(now = new Date()) {
   const alerts = planAlerts((jobs ?? []) as PushJob[], (parts ?? []) as PushPart[], (members ?? []) as PushMember[], now.getTime(), (history ?? []) as PushJob[]);
   const claimed: Alert[] = [];
   for (const a of alerts) if (await claim(db, a, iso)) claimed.push(a);
+
+  // Money: budgets at 80% / 100% and questions about an entry, each recorded once by its key.
+  const yearAgo = new Date(now.getTime() - 400 * 86400_000).toISOString().slice(0, 10);
+  const [{ data: kinds }, { data: budgets }, { data: entries }, { data: reviews }] = await Promise.all([
+    db.from("budget_categories").select("id, name, sort, rollover, budget_group, deleted_at").is("deleted_at", null),
+    db.from("budgets").select("category_id, month, amount_kes").is("deleted_at", null),
+    db.from("money_entries").select("id, direction, occurred_on, amount_kes, category_id, project_id, voids_entry_id, note, counterparty, deleted_at").gte("occurred_on", yearAgo),
+    db.from("entry_reviews").select("id, entry_id, ask_to, question, status, actor_id, deleted_at").eq("status", "open").is("deleted_at", null),
+  ]);
+  for (const a of planMoneyAlerts((kinds ?? []) as Kind[], (budgets ?? []) as Budget[], (entries ?? []) as Entry[], (reviews ?? []) as Review[], (members ?? []) as PushMember[], now.getTime())) {
+    const { error } = await db.from("money_alerts").insert({ key: a.key, sent_at: iso });
+    if (!error && a.to.length) claimed.push(a);
+  }
 
   const perPerson = groupByPerson(claimed);
   if (!perPerson.size) return { alerts: claimed.length, sent: 0 };

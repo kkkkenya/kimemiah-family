@@ -8,7 +8,8 @@ import { isActive, type Trip } from "@/components/shop/TripCheck";
 import { essentialsNeeded, nairobiToday, supperCount, type Diner } from "@/lib/home";
 import { fromTemplate, joinJob, postJob, updateJob } from "@/lib/jobs/actions";
 import { billStats, billsDue, type Bill } from "@/lib/money/bills";
-import type { Entry } from "@/lib/money/money";
+import { flexSummary, type Kind } from "@/lib/money/flex";
+import { monthSummary, type Budget, type Entry } from "@/lib/money/money";
 import { formatMinutes, jobStatus, shareChoices, sortBoard, workers, type Job, type Participant } from "@/lib/jobs/logic";
 import { TEMPLATES } from "@/lib/jobs/templates";
 import { sendAlertsNow } from "@/lib/push/client";
@@ -346,5 +347,31 @@ export function BillsDueCard() {
         </p>
       ))}
     </section>
+  );
+}
+
+/** The month at a glance (Monarch look, like Money): what's left, and flexible money a day. */
+export function MoneyGlanceCard() {
+  const entries = (useRows<Entry & { id: string }>("money_entries") ?? []) as Entry[];
+  const kinds = (useRows<Kind & { id: string }>("budget_categories") ?? []) as Kind[];
+  const budgets = (useRows<Budget & { id: string }>("budgets") ?? []) as Budget[];
+  const today = nairobiToday();
+  const s = monthSummary(entries, today.slice(0, 7));
+  const flex = flexSummary(kinds, budgets, entries, today.slice(0, 7), today);
+  if (!s.moneyIn && !s.moneyOut) return null;
+  return (
+    <Link href="/money" className="block rounded-2xl border border-line bg-raised p-5">
+      <p className="eyebrow eyebrow-accent">Money this month</p>
+      <p className={`font-display text-4xl tabular ${s.left < 0 ? "text-out-strong" : ""}`}>{kes(s.left)}</p>
+      <p className="text-sm text-muted tabular">
+        left · {kes(s.moneyOut)} spent of {kes(s.moneyIn)}
+      </p>
+      {flex.flexPlan > 0 && (
+        <p className="mt-2 text-sm">
+          Flexible: <strong>{kes(flex.flexLeft)}</strong>
+          {flex.perDay > 0 ? `, about ${kes(flex.perDay)} a day` : ""}
+        </p>
+      )}
+    </Link>
   );
 }

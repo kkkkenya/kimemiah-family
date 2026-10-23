@@ -1,0 +1,32 @@
+import { describe, expect, it } from "vitest";
+import { planMoneyAlerts } from "./money";
+
+const people = [
+  { id: "greg", name: "Greg" },
+  { id: "wanini", name: "Wanini" },
+  { id: "peter", name: "Peter", is_remote: true },
+];
+const noon = Date.parse("2026-10-20T09:00:00Z"); // 12:00 Nairobi
+const kinds = [{ id: "food", name: "Food" }];
+const budgets = [{ category_id: "food", month: "2026-10-01", amount_kes: 10000 }];
+
+describe("money alerts", () => {
+  it("warns at 80% and at 100%, to the people at home", () => {
+    const at = (spent: number) => planMoneyAlerts(kinds, budgets, [{ id: "a", direction: "out", occurred_on: "2026-10-05", amount_kes: spent, category_id: "food" }], [], people, noon);
+    expect(at(7000)).toEqual([]);
+    expect(at(8500).map((a) => a.key)).toEqual(["budget:food:2026-10:80"]);
+    expect(at(8500)[0].to).toEqual(["greg", "wanini"]);
+    expect(at(10200)[0].title).toBe("Food: this month's budget is used up");
+  });
+
+  it("sends a question to the person asked, never back to the asker", () => {
+    const a = planMoneyAlerts([], [], [{ id: "e", direction: "out", occurred_on: "2026-10-19", amount_kes: 3300, note: "Gas" }], [{ id: "r", entry_id: "e", ask_to: "wanini", question: "Was this 13 kg?", status: "open", actor_id: "greg" }], people, noon);
+    expect(a).toHaveLength(1);
+    expect(a[0]).toMatchObject({ key: "review:r", to: ["wanini"], title: "Greg has a question about a payment" });
+    expect(a[0].body).toContain("Was this 13 kg?");
+  });
+
+  it("holds everything in quiet hours", () => {
+    expect(planMoneyAlerts(kinds, budgets, [{ id: "a", direction: "out", occurred_on: "2026-10-05", amount_kes: 9999, category_id: "food" }], [], people, Date.parse("2026-10-20T19:30:00Z"))).toEqual([]);
+  });
+});
