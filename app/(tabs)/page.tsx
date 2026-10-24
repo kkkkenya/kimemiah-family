@@ -3,7 +3,7 @@
 import { Avatar } from "@/components/Avatar";
 import { ContactSearch } from "@/components/ContactSearch";
 import { FamilyPhoto } from "@/components/FamilyPhoto";
-import { BillsDueCard, EssentialsCard, GoalThanksCard, MoneyGlanceCard, ReviewReadyCard, LiveBanners, MyJobs, OpenJobsCard, PeterCard, QuickStrip, SupperPill, UpgradeDealsCard } from "@/components/home/HomeCards";
+import { BillsDueCard, EssentialsCard, GoalThanksCard, MoneyGlanceCard, NextMeetingCard, ReviewReadyCard, LiveBanners, MyJobs, OpenJobsCard, PeterCard, QuickStrip, SupperPill, UpgradeDealsCard } from "@/components/home/HomeCards";
 import { PresenceCard } from "@/components/Presence";
 import { PushCard } from "@/components/PushCard";
 import { Screen } from "@/components/Screen";
@@ -36,6 +36,9 @@ export default function HomePage() {
       </section>
       <UpgradeDealsCard />
       <OpenJobsCard />
+      <section aria-label="Family meeting" className="monarch">
+        <NextMeetingCard />
+      </section>
       <JobStats />
       <PresenceCard />
       <ContactSearch />

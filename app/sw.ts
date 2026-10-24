@@ -31,7 +31,7 @@ serwist.addEventListeners();
 type Action = { action: string; title: string; url: string };
 type Alert = { title?: string; body?: string; tag?: string; url?: string; type?: string; actions?: Action[]; badge?: number };
 const STICKY = new Set(["urgent", "swap"]);
-const BUZZ: Record<string, number[]> = { urgent: [300, 120, 300, 120, 300], due: [180, 100, 180], swap: [200, 100, 200], money: [150, 80, 150], bill: [150, 80, 150], question: [120, 80, 120], shop: [100, 60, 100] };
+const BUZZ: Record<string, number[]> = { urgent: [300, 120, 300, 120, 300], due: [180, 100, 180], swap: [200, 100, 200], money: [150, 80, 150], bill: [150, 80, 150], question: [120, 80, 120], shop: [100, 60, 100], meeting: [150, 80, 150] };
 
 self.addEventListener("push", (event) => {
   let data: Alert = {};

@@ -18,6 +18,7 @@ import { kes, linePrice, moneyLeftThisMonth, stockStatus, type CatalogMatch, typ
 import type { Shop, StockItem } from "@/lib/shopping/shops";
 import { upgradeDeals } from "@/lib/shopping/predict";
 import { localDB, syncEngine } from "@/lib/sync/client";
+import { flagForMeeting } from "@/lib/sync/workflows";
 import { useMe, useRows } from "@/lib/sync/hooks";
 
 const card = "rounded-2xl bg-raised p-4 border border-line";
@@ -419,5 +420,49 @@ export function ReviewReadyCard() {
       <p className="font-display text-2xl">{name}&apos;s money review is ready</p>
       <p className="text-sm text-muted">A few cards to go through at the meeting, and send to Peter.</p>
     </Link>
+  );
+}
+
+/** The next family meeting, and a box anyone can use during the week to put a topic on it. */
+export function NextMeetingCard() {
+  const { syncNow } = useSync();
+  const meetings = (useRows<{ id: string; held_on: string | null; host_id: string | null; status: string; start_time?: string | null; deleted_at?: string | null }>("meetings") ?? []).filter((m) => !m.deleted_at && m.status === "planned");
+  const agenda = (useRows<{ id: string; meeting_id: string; deleted_at?: string | null }>("agenda_items") ?? []).filter((a) => !a.deleted_at);
+  const people = useRows<{ id: string; name: string }>("members") ?? [];
+  const [topic, setTopic] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+  const next = meetings.sort((a, b) => (a.held_on ?? "").localeCompare(b.held_on ?? ""))[0];
+  const count = next ? agenda.filter((a) => a.meeting_id === next.id).length : 0;
+  const when = next?.held_on ? new Date(`${next.held_on}T09:00:00Z`).toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "short" }) : "Sunday";
+  return (
+    <section className="rounded-2xl border border-line bg-raised p-5">
+      <p className="eyebrow eyebrow-accent">Family meeting</p>
+      <Link href="/more/meeting" className="block">
+        <p className="font-display text-2xl">{next ? `${when}, ${next.start_time ?? "17:00"}` : "Not planned yet"}</p>
+        <p className="text-sm text-muted">
+          {next ? `${people.find((p) => p.id === next.host_id)?.name ?? "No host yet"} hosting · ${count === 1 ? "1 topic" : `${count} topics`} so far` : "Add a topic and it gets planned for Sunday."}
+        </p>
+      </Link>
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (!topic.trim()) return;
+          const day = await flagForMeeting(topic.trim(), null, "manual");
+          void syncNow();
+          setTopic("");
+          setMsg(`Added for ${new Date(`${day}T09:00:00Z`).toLocaleDateString("en-KE", { weekday: "long" })}.`);
+        }}
+        className="mt-3 flex gap-2"
+      >
+        <label htmlFor="topic-new" className="sr-only">
+          Add a topic for the meeting
+        </label>
+        <input id="topic-new" value={topic} maxLength={120} onChange={(e) => setTopic(e.target.value)} placeholder="Something to raise at the meeting" className="min-h-12 min-w-0 flex-1 rounded-xl border border-line bg-base px-3" />
+        <button type="submit" disabled={!topic.trim()} className="min-h-12 shrink-0 rounded-xl bg-brand px-4 font-bold text-brand-contrast disabled:opacity-50">
+          Add
+        </button>
+      </form>
+      {msg && <p className="mt-1 text-sm text-muted">{msg}</p>}
+    </section>
   );
 }

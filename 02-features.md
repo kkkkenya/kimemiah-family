@@ -158,6 +158,12 @@ Usual jobs (one tap, all editable when posting):
 - **Swaps**: "⇄ Swap" on your job asks someone to take it, optionally taking one of theirs in return. They get a push and accept in one tap; you stay on it until they do.
 - **Week ahead** (laptop): Monday to Sunday of open jobs, who's on each, "Nobody yet", and the hours each day, for sharing jobs out at the meeting.
 - **Shop and money**: the cart shows the Food budget left and whether the run fits; starting a trip tells everyone else at home ("Greg is at Naivas"); put-away asks who paid (own money goes to Settle up) and logs the spend under Food; the list can be sent on WhatsApp grouped by shop; after put-away, what didn't come home can be kept or dropped.
+- **Meeting mode**: "Start the meeting" runs the agenda full screen, one item at a time in large type, with a meeting clock and a timer per item against its planned minutes (arrow keys move on). Each item brings its own content: who's here and the ground rules, last time's decisions, the money review, the week of jobs and what's waiting, an appreciation round that sends Asante, and the decision form. Wrap up saves the meeting, plans the next one two weeks on with the next host, and sends Peter the summary.
+- **Meeting follow-ups**: each decision has an owner and a due date; "Last time we decided" opens the next meeting with what's done, still to do, or late. A decision made into a job counts as done when the job is.
+- **Who's here**: tap who came (Peter counts on a call); it's in the summary and the past meetings list.
+- **Topics during the week**: Home's Family meeting card lets anyone add a topic; the next meeting is planned for Sunday if there isn't one.
+- **Meeting reminders**: the host the evening before (from 18:00), everyone (Peter too) in the hour before the start time.
+- **Summary to Peter**: after the meeting, one WhatsApp message with who came, what was decided and who owns it, what's left from last time, and the notes.
 - **Summary for Peter**: one tap opens WhatsApp to Peter with the month (in, spent by kind, left, projects).
 
 ## 5. Meeting (under More)

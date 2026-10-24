@@ -1,5 +1,6 @@
-// House alerts beyond jobs and money: someone asks you to swap a job (once, to you), and someone
-// has just started a shopping trip (once, to everyone else at home, so they can add to the list).
+// House alerts beyond jobs and money: someone asks you to swap a job (once, to you), someone has
+// just started a shopping trip (once, to everyone else at home, so they can add to the list), and
+// the family meeting (the host the evening before; everyone, Peter too, in the hour before).
 import { isQuiet } from "./plan";
 import type { MoneyAlert } from "./money";
 
@@ -7,10 +8,11 @@ export type Swap = { id: string; job_id: string; to_member: string; offer_job_id
 export type Trip = { id: string; shop_id?: string | null; member_id?: string | null; started_at?: string | null; finished_at?: string | null; deleted_at?: string | null };
 type Person = { id: string; name: string; active?: boolean; is_remote?: boolean; presence?: string | null };
 type JobLite = { id: string; title: string; done_at?: string | null; deleted_at?: string | null };
+export type MeetingLite = { id: string; held_on: string | null; host_id: string | null; status: string; start_time?: string | null; deleted_at?: string | null };
 
 const RECENT_TRIP = 15 * 60_000;
 
-export function planHouseAlerts(swaps: Swap[], trips: Trip[], jobs: JobLite[], shops: { id: string; name: string }[], people: Person[], now: number): MoneyAlert[] {
+export function planHouseAlerts(swaps: Swap[], trips: Trip[], jobs: JobLite[], shops: { id: string; name: string }[], people: Person[], now: number, meetings: MeetingLite[] = [], agendaCount: (meetingId: string) => number = () => 0): MoneyAlert[] {
   if (isQuiet(now)) return [];
   const out: MoneyAlert[] = [];
   const nameOf = (id?: string | null) => people.find((p) => p.id === id)?.name ?? "Someone";
@@ -44,6 +46,35 @@ export function planHouseAlerts(swaps: Swap[], trips: Trip[], jobs: JobLite[], s
       title: `${nameOf(t.member_id)} is at ${shop}`,
       body: "Need anything? Add it to the list now and it shows up in their aisle.",
     });
+  }
+  const nairobi = new Date(now + 3 * 3600_000);
+  const today = nairobi.toISOString().slice(0, 10);
+  const tomorrow = new Date(now + 27 * 3600_000).toISOString().slice(0, 10);
+  const everyone = people.filter((p) => p.active !== false).map((p) => p.id);
+  for (const m of meetings) {
+    if (m.deleted_at || m.status !== "planned" || !m.held_on) continue;
+    const items = agendaCount(m.id);
+    if (m.held_on === tomorrow && nairobi.getUTCHours() >= 18 && m.host_id) {
+      out.push({
+        key: `meet-host:${m.id}`,
+        kind: "funds",
+        to: [m.host_id],
+        url: "/more/meeting",
+        title: "You're hosting the family meeting tomorrow",
+        body: `${m.start_time ?? "17:00"}, ${items ? `${items} on the agenda` : "the agenda is still empty"}. Have a look tonight.`,
+      });
+    }
+    const start = Date.parse(`${m.held_on}T${m.start_time ?? "17:00"}:00+03:00`);
+    if (m.held_on === today && start - now <= 60 * 60_000 && start - now > 0) {
+      out.push({
+        key: `meet-soon:${m.id}`,
+        kind: "funds",
+        to: everyone,
+        url: "/more/meeting",
+        title: `Family meeting at ${m.start_time ?? "17:00"}`,
+        body: `${items ? `${items} on the agenda. ` : ""}Bring anything you want to raise.`,
+      });
+    }
   }
   return out;
 }

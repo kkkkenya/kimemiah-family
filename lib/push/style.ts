@@ -3,7 +3,7 @@
 // sends), the service worker (the phone's banner) and the app (in-app banners and the inbox).
 import type { Alert } from "./plan";
 
-export type NoticeType = "urgent" | "due" | "suggest" | "team" | "thanks" | "money" | "bill" | "question" | "swap" | "shop" | "group" | "test";
+export type NoticeType = "urgent" | "due" | "suggest" | "team" | "thanks" | "money" | "bill" | "question" | "swap" | "shop" | "meeting" | "group" | "test";
 export type NoticeAction = { action: string; title: string; url: string };
 
 export const NOTICE: Record<NoticeType, { label: string; emoji: string; color: string; vibrate: number[]; sticky: boolean; hint: string }> = {
@@ -17,6 +17,7 @@ export const NOTICE: Record<NoticeType, { label: string; emoji: string; color: s
   question: { label: "Question", emoji: "❓", color: "#B45309", vibrate: [120, 80, 120], sticky: false, hint: "Someone has a question about a payment" },
   swap: { label: "Swap", emoji: "⇄", color: "#4338CA", vibrate: [200, 100, 200], sticky: true, hint: "Someone asks you to swap a job" },
   shop: { label: "Shopping", emoji: "🛒", color: "#15803D", vibrate: [100, 60, 100], sticky: false, hint: "Someone is at the shop: add what you need" },
+  meeting: { label: "Meeting", emoji: "🗓️", color: "#0E7490", vibrate: [150, 80, 150], sticky: false, hint: "The family meeting is tomorrow, or starting soon" },
   group: { label: "Updates", emoji: "🏠", color: "#22201D", vibrate: [150], sticky: false, hint: "Several at once" },
   test: { label: "Test", emoji: "✅", color: "#2F6B2A", vibrate: [100], sticky: false, hint: "A test to check it works" },
 };
@@ -29,6 +30,7 @@ export function typeOf(a: Pick<Alert, "kind" | "key">): NoticeType {
   if (k.startsWith("billdue:")) return "bill";
   if (k.startsWith("swap:")) return "swap";
   if (k.startsWith("trip:")) return "shop";
+  if (k.startsWith("meet-")) return "meeting";
   switch (a.kind) {
     case "urgent":
       return "urgent";
@@ -59,5 +61,6 @@ export function actionsOf(a: Pick<Alert, "kind" | "key" | "jobId" | "url">): Not
   if (type === "bill") return [{ action: "paid", title: "Paid it", url: a.url ?? "/money" }];
   if (type === "shop") return [{ action: "add", title: "Add to the list", url: "/shop" }];
   if (type === "question") return [{ action: "open", title: "Answer", url: "/money#entries" }];
+  if (type === "meeting") return [{ action: "open", title: "See the agenda", url: "/more/meeting" }];
   return [];
 }

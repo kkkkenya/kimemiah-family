@@ -15,12 +15,13 @@ const GLYPH = {
   question: '<path d="M9 9a3 3 0 1 1 4.2 2.8c-.8.4-1.2 1-1.2 1.9V14.5"/><circle cx="12" cy="18.5" r="1.2" fill="#fff"/>',
   swap: '<path d="M5 9h13l-3.5-3.5M19 15H6l3.5 3.5"/>',
   shop: '<path d="M4 5h2l1.8 9.5h9.4L19 8H7.2"/><circle cx="9.5" cy="18.5" r="1.3"/><circle cx="16" cy="18.5" r="1.3"/>',
+  meeting: '<rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
   group: '<path d="M4 11.5 12 5l8 6.5M6.5 10v9h11v-9"/>',
   test: '<path d="m5.5 12.5 4 4 9-9"/>',
 };
 const COLOR = {
   urgent: "#B42318", due: "#E8590C", suggest: "#0C4A59", team: "#2F6B2A", thanks: "#B8577A", money: "#A16207",
-  bill: "#6D28D9", question: "#B45309", swap: "#4338CA", shop: "#15803D", group: "#22201D", test: "#2F6B2A",
+  bill: "#6D28D9", question: "#B45309", swap: "#4338CA", shop: "#15803D", meeting: "#0E7490", group: "#22201D", test: "#2F6B2A",
 };
 
 const icon = (type, size) => `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24">

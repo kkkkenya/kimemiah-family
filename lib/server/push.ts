@@ -1,6 +1,6 @@
 import "server-only";
 import webpush from "web-push";
-import { planHouseAlerts, type Swap, type Trip } from "@/lib/push/house";
+import { planHouseAlerts, type MeetingLite, type Swap, type Trip } from "@/lib/push/house";
 import { planMoneyAlerts, type Review } from "@/lib/push/money";
 import { groupByPerson, planAlerts, type Alert, type PushJob, type PushMember, type PushPart } from "@/lib/push/plan";
 import type { Kind } from "@/lib/money/flex";
@@ -101,12 +101,15 @@ export async function runTick(now = new Date()) {
 
   // Swap requests and "someone is at the shop", each sent once by its key.
   const tripSince = new Date(now.getTime() - 20 * 60_000).toISOString();
-  const [{ data: swaps }, { data: trips }, { data: shops }] = await Promise.all([
+  const [{ data: swaps }, { data: trips }, { data: shops }, { data: meetings }, { data: agenda }] = await Promise.all([
     db.from("job_swaps").select("*").eq("status", "open").is("deleted_at", null),
     db.from("shopping_trips").select("id, shop_id, member_id, started_at, finished_at, deleted_at").gte("started_at", tripSince),
     db.from("shops").select("id, name"),
+    db.from("meetings").select("id, held_on, host_id, status, start_time, deleted_at").eq("status", "planned").is("deleted_at", null),
+    db.from("agenda_items").select("meeting_id").is("deleted_at", null),
   ]);
-  for (const a of planHouseAlerts((swaps ?? []) as Swap[], (trips ?? []) as Trip[], (jobs ?? []) as { id: string; title: string }[], shops ?? [], (members ?? []) as PushMember[], now.getTime())) {
+  const agendaCount = (id: string) => (agenda ?? []).filter((a) => a.meeting_id === id).length;
+  for (const a of planHouseAlerts((swaps ?? []) as Swap[], (trips ?? []) as Trip[], (jobs ?? []) as { id: string; title: string }[], shops ?? [], (members ?? []) as PushMember[], now.getTime(), (meetings ?? []) as MeetingLite[], agendaCount)) {
     const { error } = await db.from("money_alerts").insert({ key: a.key, sent_at: iso });
     if (!error && a.to.length) claimed.push(a);
   }
