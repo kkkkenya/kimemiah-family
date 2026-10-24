@@ -38,15 +38,77 @@ async function save(sub: PushSubscription, enabled: boolean): Promise<string | n
   return error ? "Couldn't save. Check your connection and try again." : null;
 }
 
-/** Ask permission, subscribe and save this phone's push address. Returns an error message or null. */
-export async function turnOn(): Promise<string | null> {
-  if ((await Notification.requestPermission()) !== "granted") return "Alerts are blocked. Allow notifications for this app in the phone's settings.";
-  const res = await fetch("/api/push/key");
-  if (!res.ok) return "Alerts aren't set up on the server yet.";
-  const { key } = (await res.json()) as { key: string };
-  const reg = await navigator.serviceWorker.ready;
-  const sub = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(key) }));
-  return save(sub, true);
+/** Waits for a step, but never forever: a phone that doesn't answer gets a clear message instead. */
+function inTime<T>(p: Promise<T>, ms: number): Promise<T | "timeout"> {
+  return Promise.race([p, new Promise<"timeout">((resolve) => setTimeout(() => resolve("timeout"), ms))]);
+}
+
+/** The app's service worker, starting it if the phone hasn't yet. */
+async function worker(): Promise<ServiceWorkerRegistration | null> {
+  const ready = await inTime(navigator.serviceWorker.ready, 8000);
+  if (ready !== "timeout") return ready;
+  try {
+    await navigator.serviceWorker.register("/sw.js");
+  } catch {
+    return null;
+  }
+  const again = await inTime(navigator.serviceWorker.ready, 15000);
+  return again === "timeout" ? null : again;
+}
+
+export type Step = "asking" | "starting" | "connecting" | "saving";
+
+/**
+ * Ask permission, subscribe and save this phone's push address, saying which step it's on.
+ * Every step has a time limit, so the button never sticks on "One moment".
+ * Returns an error message, or null when it worked.
+ */
+export async function turnOn(onStep: (s: Step) => void = () => {}): Promise<string | null> {
+  onStep("asking");
+  const answer = Notification.permission === "granted" ? "granted" : await inTime(Notification.requestPermission(), 25000);
+  if (answer === "timeout")
+    return "Your phone didn't show the question. On Android, look for a small bell in the address bar and tap it, or allow notifications in the phone's settings (see step 2), then tap Turn on again.";
+  if (answer !== "granted") return "Notifications are blocked for this app. Allow them in the phone's settings (see step 2), then tap Turn on again.";
+
+  onStep("starting");
+  const reg = await worker();
+  if (!reg) return "The app couldn't start its background helper. Close the app fully, open it again, and tap Turn on again.";
+
+  onStep("connecting");
+  let key: string;
+  try {
+    const res = await inTime(fetch("/api/push/key"), 15000);
+    if (res === "timeout" || !res.ok) return "Couldn't reach the server. Check your signal and try again.";
+    key = ((await res.json()) as { key: string }).key;
+  } catch {
+    return "Couldn't reach the server. Check your signal and try again.";
+  }
+  let sub: PushSubscription | null;
+  try {
+    const existing = await reg.pushManager.getSubscription();
+    const made = existing ?? (await inTime(reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(key) }), 25000));
+    if (made === "timeout") return "The phone's notification service didn't answer. Check the phone has signal (and on Android, that Google Play services is up to date), then try again. Reset below can help.";
+    sub = made;
+  } catch {
+    return "The phone refused to set up notifications. Tap Reset below, then Turn on again.";
+  }
+
+  onStep("saving");
+  const saved = await inTime(save(sub, true), 15000);
+  return saved === "timeout" ? "Couldn't save. Check your signal and try again." : saved;
+}
+
+/** Start over on this phone: forget its push address and restart the background helper. */
+export async function resetPush(): Promise<void> {
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sub = await reg?.pushManager.getSubscription();
+    if (sub) {
+      await inTime(save(sub, false), 8000);
+      await sub.unsubscribe();
+    }
+    await reg?.unregister();
+  } catch {}
 }
 
 export async function turnOff(): Promise<string | null> {
