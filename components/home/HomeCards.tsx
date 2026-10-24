@@ -209,7 +209,7 @@ export function EssentialsCard() {
       {moneyLeft != null && <p className={`text-sm tabular ${moneyLeft < total ? "text-low-fg" : "text-muted"}`}>Money left this month: {kes(moneyLeft)}</p>}
       <div className="mt-3 flex flex-wrap gap-2">
         <Link href="/shop?view=list" className="flex min-h-12 items-center rounded-xl bg-brand px-4 font-bold text-brand-contrast">
-          🛒 Open the cart
+          🛒 Open the list
         </Link>
         <Link href="/shop?view=list" className="flex min-h-12 items-center rounded-xl border border-brand px-4 font-bold text-brand">
           🏃 Quick supermarket top-up
