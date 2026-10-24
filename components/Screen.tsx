@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { SyncDot } from "./SyncDot";
+import { BellLink } from "./notices/BellLink";
 
 const HEADER_LINKS = [
   { href: "/more/contacts", label: "Contacts", icon: <path d="M6.6 3.5h2.8l1.4 4-2 1.3a11 11 0 0 0 5.4 5.4l1.3-2 4 1.4v2.8a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2Z" /> },
@@ -25,8 +26,9 @@ export function Screen({ title, back, tone, children }: { title: string; back?: 
           <h1 className="min-w-0 flex-1 font-display text-[1.75rem] leading-[1.14] text-balance lg:text-[2.5rem] lg:leading-[1.05]">{title}</h1>
           <SyncDot />
           <nav aria-label="More" className="-mr-2 flex shrink-0">
+            <BellLink />
             {HEADER_LINKS.map((l) => (
-              <Link key={l.href} href={l.href} aria-label={l.label} title={l.label} className="flex size-12 items-center justify-center rounded-md text-brand hover:bg-base">
+              <Link key={l.href} href={l.href} aria-label={l.label} title={l.label} className="flex size-10 items-center justify-center rounded-md text-brand hover:bg-base lg:size-12">
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   {l.icon}
                 </svg>

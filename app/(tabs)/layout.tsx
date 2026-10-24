@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { BottomNav } from "@/components/BottomNav";
 import { SyncProvider } from "@/components/SyncProvider";
 import { SyncStatus } from "@/components/SyncStatus";
+import { NoticeBanner } from "@/components/notices/NoticeBanner";
 
 export default function TabsLayout({ children }: { children: ReactNode }) {
   return (
@@ -11,6 +12,7 @@ export default function TabsLayout({ children }: { children: ReactNode }) {
         {children}
       </div>
       <BottomNav />
+      <NoticeBanner />
     </SyncProvider>
   );
 }

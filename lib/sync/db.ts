@@ -20,7 +20,7 @@ export type MetaEntry = { key: string; value: unknown };
 // Tables the first version had that the app no longer syncs (removed in version 6).
 const REMOVED = ["meals", "meal_ingredients", "meal_slots"];
 
-const LATER: ReadonlySet<SyncTable> = new Set<SyncTable>(["job_participants", "job_rota", "projects", "bills", "entry_reviews", "money_rules", "job_swaps"]);
+const LATER: ReadonlySet<SyncTable> = new Set<SyncTable>(["job_participants", "job_rota", "projects", "bills", "entry_reviews", "money_rules", "job_swaps", "notifications"]);
 
 export class LocalDB extends Dexie {
   outbox!: Table<OutboxEntry, number>;
@@ -55,6 +55,8 @@ export class LocalDB extends Dexie {
     this.version(9).stores({ entry_reviews: "id, updated_at", money_rules: "id, updated_at" });
     // Asking someone to swap a job.
     this.version(10).stores({ job_swaps: "id, updated_at" });
+    // My notifications (the inbox and the bell).
+    this.version(11).stores({ notifications: "id, updated_at" });
   }
 
   get catalog(): Table<Row, string> {

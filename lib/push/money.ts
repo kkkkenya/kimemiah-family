@@ -31,6 +31,7 @@ export function planMoneyAlerts(kinds: Kind[], budgets: Budget[], entries: Entry
       url: "/money",
       title: level === 100 ? `${r.kind.name}: this month's budget is used up` : `${r.kind.name}: 80% of this month's budget used`,
       body: `${kes(r.spent)} of ${kes(r.available)}${level === 100 ? "" : `, ${kes(r.left)} left`}.`,
+      plainBody: "Open Money to see where it stands.",
     });
   }
 
@@ -46,6 +47,7 @@ export function planMoneyAlerts(kinds: Kind[], budgets: Budget[], entries: Entry
       url: "/money#entries",
       title: `${nameOf(v.actor_id)} has a question about a payment`,
       body: `${v.question || "Can you check this?"}${e ? ` (${e.note || e.counterparty || "payment"}, ${kes(Number(e.amount_kes))})` : ""}`,
+      plainBody: `${v.question || "Can you check this?"}${e ? ` (${e.note || e.counterparty || "a payment"})` : ""}`,
     });
   }
   // Bills due tomorrow, in the evening so it's fresh for the morning.
@@ -62,6 +64,7 @@ export function planMoneyAlerts(kinds: Kind[], budgets: Budget[], entries: Entry
         url: `/money?pay=${b.id}`,
         title: `${b.name} is due tomorrow`,
         body: st.last ? `Last time ${kes(Number(st.last.amount_kes))}. Log it in Money once it's paid.` : "Log it in Money once it's paid.",
+        plainBody: "Log it in Money once it's paid.",
       });
     }
   }

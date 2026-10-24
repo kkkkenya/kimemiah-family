@@ -96,8 +96,16 @@ describe("grouping", () => {
       { kind: "urgent", jobId: "a", to: ["greg", "vinnie"], title: "Water is back!", body: "x" },
       { kind: "reminder", jobId: "b", to: ["greg"], title: "Still yours: Dishes", body: "y" },
     ]);
-    expect(g.get("vinnie")).toEqual({ title: "Water is back!", body: "x", tag: "urgent-a", url: "/jobs" });
-    expect(g.get("greg")).toEqual({ title: "2 job updates", body: "Water is back! · Still yours: Dishes", tag: "jobs", url: "/jobs" });
+    expect(g.get("vinnie")).toEqual({ title: "Water is back!", body: "x", tag: "urgent-a", url: "/jobs", type: "urgent", actions: [{ action: "join", title: "I'm on it", url: "/jobs?join=a" }] });
+    expect(g.get("greg")).toEqual({ title: "2 job updates", body: "Water is back! · Still yours: Dishes", tag: "jobs", url: "/jobs", type: "group", actions: [] });
+  });
+
+  it("keeps money amounts off the lock screen unless the person shows them", () => {
+    const a = [{ kind: "funds" as const, key: "budget:food:2026-10:80", to: ["greg", "vinnie"], title: "Food: 80% used", body: "KES 8,000 of KES 10,000", plainBody: "Open Money to see where it stands." }];
+    const g = groupByPerson(a, (m) => m === "greg");
+    expect(g.get("greg")!.body).toBe("KES 8,000 of KES 10,000");
+    expect(g.get("vinnie")!.body).toBe("Open Money to see where it stands.");
+    expect(g.get("vinnie")!.type).toBe("money");
   });
 });
 
