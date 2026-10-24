@@ -117,6 +117,16 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* Fields never go under 16px: iPhones zoom the page in when you tap a smaller one. Fields take
+   their label's size otherwise, and most labels are small. Bigger sizes (amounts) still apply. */
+@layer base {
+  input:not([type="checkbox"], [type="radio"], [type="range"]),
+  select,
+  textarea {
+    font-size: 1rem;
+  }
+}
+
 html,
 body {
   background: var(--surface-base);
