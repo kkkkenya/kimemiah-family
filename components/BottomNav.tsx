@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { ThemeSwitch } from "./ThemeToggle";
 
 const icon = (d: ReactNode) => (
   <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -46,6 +47,9 @@ export function BottomNav() {
           </li>
         ))}
       </ul>
+      <div className="absolute inset-x-3 bottom-4 hidden lg:block">
+        <ThemeSwitch />
+      </div>
     </nav>
   );
 }
