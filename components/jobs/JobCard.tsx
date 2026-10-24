@@ -49,12 +49,13 @@ type Props = {
   suggestedFor?: string | null; // member suggested for this job (has given least lately); never assigned
   tools?: StockItem[]; // Stock tools, to show where this job's tools are and check them back in
   supper?: string | null; // "Cooking for 4 tonight (Vinnie is out)" on cooking jobs
+  onSwap?: (job: Job) => void; // ask someone else to take my part
 };
 
 type Start = "join" | "help" | "done" | null;
 
 // Everything about one job, shown in its detail sheet.
-function JobDetails({ job, parts, meId, nameOf, thanked, onMessage, homeNames = [], agendaAfter = 3, suggestedFor = null, tools = [], supper = null, start = null }: Props & { start?: Start }) {
+function JobDetails({ job, parts, meId, nameOf, thanked, onMessage, homeNames = [], agendaAfter = 3, suggestedFor = null, tools = [], supper = null, start = null, onSwap }: Props & { start?: Start }) {
   const { online, syncNow } = useSync();
   const [joining, setJoining] = useState<"join" | "help" | null>(null);
   const [pct, setPct] = useState(0);
@@ -378,6 +379,11 @@ function JobDetails({ job, parts, meId, nameOf, thanked, onMessage, homeNames = 
               <button type="button" disabled={!online} onClick={() => openJoin("join")} className="min-h-12 rounded-xl border border-line px-3 font-bold disabled:opacity-50">
                 Change share
               </button>
+              {onSwap && (
+                <button type="button" onClick={() => onSwap(job)} className="min-h-12 rounded-xl border border-line px-4 font-bold">
+                  ⇄ Swap
+                </button>
+              )}
               <button type="button" disabled={!online} onClick={() => setLeaving(true)} className="min-h-12 rounded-xl px-3 font-bold text-muted disabled:opacity-50">
                 Leave
               </button>

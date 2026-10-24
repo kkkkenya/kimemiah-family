@@ -103,6 +103,7 @@ export function planAlerts(jobs: PushJob[], parts: PushPart[], members: PushMemb
         kind: "overdue",
         jobId: job.id,
         to: ids,
+        url: `/jobs?done=${job.id}`,
         title: `${job.title} is past its time`,
         body: "Tap Done if it's finished, or ask someone to help.",
       });
@@ -119,6 +120,7 @@ export function planAlerts(jobs: PushJob[], parts: PushPart[], members: PushMemb
             jobId: job.id,
             partId: p.id,
             to: [p.member_id],
+            url: `/jobs?done=${job.id}`,
             title: `Still yours: ${job.title}`,
             body: `Your ${p.effort_pct}% share. Tap Done if it's finished, or ask someone to team up.`,
           });

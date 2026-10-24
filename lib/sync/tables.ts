@@ -11,6 +11,7 @@ export const SYNC_TABLES = [
   "trip_lines",
   "jobs",
   "job_participants",
+  "job_swaps",
   "job_rota",
   "projects",
   "bills",

@@ -22,7 +22,7 @@ type Props = {
   matches: CatalogMatch[];
   toLine: (i: ShoppingItem) => ListLine;
   onFixPrice: (itemId: string, price: number) => void;
-  onDone: (lines: PutAwayLine[], logSpend: boolean, track: string[]) => void;
+  onDone: (lines: PutAwayLine[], logSpend: boolean, track: string[], paidFrom: "house" | "own") => void;
   onCancel: () => void;
 };
 
@@ -30,6 +30,7 @@ type Props = {
 // spend entry filled in from the shop prices. One tap on a price fixes it to the receipt.
 // Catalog items not on the house list can be tracked at home from here.
 export function PutAway({ bought, stockById, shops, matches, toLine, onFixPrice, onDone, onCancel }: Props) {
+  const [paidFrom, setPaidFrom] = useState<"house" | "own">("house");
   const [lines, setLines] = useState<PutAwayLine[]>(() =>
     bought.map((i) => {
       const item = i.item_id ? stockById.get(i.item_id) : undefined;
@@ -183,11 +184,28 @@ export function PutAway({ bought, stockById, shops, matches, toLine, onFixPrice,
         </ul>
       )}
 
-      <button type="button" onClick={() => onDone(bought2, true, [...track])} disabled={total <= 0} className="min-h-12 rounded-xl bg-brand font-bold text-brand-contrast disabled:opacity-50">
+      <div role="radiogroup" aria-label="Who paid" className="flex flex-col gap-1">
+        <span className="text-sm font-bold">Who paid?</span>
+        <div className="grid grid-cols-2 gap-2">
+          {(
+            [
+              ["house", "House money"],
+              ["own", "My own money"],
+            ] as const
+          ).map(([id, label]) => (
+            <button key={id} type="button" role="radio" aria-checked={paidFrom === id} onClick={() => setPaidFrom(id)} className={`min-h-12 rounded-xl border ${paidFrom === id ? "border-ink bg-ink text-raised" : "border-line"}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+        {paidFrom === "own" && <span className="text-sm text-muted">The house will owe you this, under Money → Settle up.</span>}
+      </div>
+
+      <button type="button" onClick={() => onDone(bought2, true, [...track], paidFrom)} disabled={total <= 0} className="min-h-12 rounded-xl bg-brand font-bold text-brand-contrast disabled:opacity-50">
         Add to stock · log {kes(total)} spent
       </button>
       <div className="flex justify-between gap-2">
-        <button type="button" onClick={() => onDone(bought2, false, [...track])} className="min-h-12 rounded-xl px-2 font-bold text-brand">
+        <button type="button" onClick={() => onDone(bought2, false, [...track], "house")} className="min-h-12 rounded-xl px-2 font-bold text-brand">
           Add to stock, no spend
         </button>
         <button type="button" onClick={onCancel} className="min-h-12 rounded-xl px-2 font-bold text-muted">

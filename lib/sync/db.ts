@@ -20,7 +20,7 @@ export type MetaEntry = { key: string; value: unknown };
 // Tables the first version had that the app no longer syncs (removed in version 6).
 const REMOVED = ["meals", "meal_ingredients", "meal_slots"];
 
-const LATER: ReadonlySet<SyncTable> = new Set<SyncTable>(["job_participants", "job_rota", "projects", "bills", "entry_reviews", "money_rules"]);
+const LATER: ReadonlySet<SyncTable> = new Set<SyncTable>(["job_participants", "job_rota", "projects", "bills", "entry_reviews", "money_rules", "job_swaps"]);
 
 export class LocalDB extends Dexie {
   outbox!: Table<OutboxEntry, number>;
@@ -53,6 +53,8 @@ export class LocalDB extends Dexie {
     this.version(8).stores({ bills: "id, updated_at" });
     // Questions about an entry, and M-Pesa rules that sort pasted messages.
     this.version(9).stores({ entry_reviews: "id, updated_at", money_rules: "id, updated_at" });
+    // Asking someone to swap a job.
+    this.version(10).stores({ job_swaps: "id, updated_at" });
   }
 
   get catalog(): Table<Row, string> {
