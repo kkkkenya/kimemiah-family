@@ -22,6 +22,8 @@ export type RestockOptions = {
   extraIds?: string[];
   /** Whose money paid: the house's, or the shopper's own (the house then owes them). */
   paidFrom?: "house" | "own";
+  /** A shop from an earlier day: the spend goes on that day, and today's shopping run isn't marked done. */
+  occurredOn?: string;
 };
 
 /** The Food kind (seeded): supermarket and kiosk shopping counts here. */
@@ -49,7 +51,7 @@ export async function restockHouse(lines: PutAwayLine[], o: RestockOptions): Pro
       await engine.queue("money_entries", "insert", {
         id: crypto.randomUUID(),
         direction: "out",
-        occurred_on: nairobiToday(),
+        occurred_on: o.occurredOn ?? nairobiToday(),
         amount_kes: Math.round(g.total),
         method: null,
         spent_by: o.meId ?? null,
@@ -69,7 +71,7 @@ export async function restockHouse(lines: PutAwayLine[], o: RestockOptions): Pro
 
   // The shopping run on the Jobs board (due today or earlier) is done.
   const jobs = (await localDB().rows("jobs").toArray()) as unknown as Job[];
-  const runs = jobs.filter((j) => !j.done_at && !j.deleted_at && j.category === "shopping_errand" && j.requires_funds && (!j.planned_for || j.planned_for <= nairobiToday()));
+  const runs = o.occurredOn && o.occurredOn < nairobiToday() ? [] : jobs.filter((j) => !j.done_at && !j.deleted_at && j.category === "shopping_errand" && j.requires_funds && (!j.planned_for || j.planned_for <= nairobiToday()));
   for (const j of runs) await engine.queue("jobs", "update", { id: j.id, done_at: new Date().toISOString(), done_by: o.meId ?? null });
 
   return { spent, runsDone: runs.length };
@@ -186,13 +188,13 @@ export async function finishShop(
   trip: { id: string; shop_id: string | null },
   lines: ShopLine[],
   pay: ShopPayment,
-  o: { meId?: string | null; kindId: string | null; shopName: string; discount: number },
+  o: { meId?: string | null; kindId: string | null; shopName: string; discount: number; occurredOn?: string },
 ): Promise<{ error?: string; runsDone: number }> {
   const engine = syncEngine();
   const money = await logMoney({
     direction: "out",
     amount_kes: pay.paid,
-    occurred_on: nairobiToday(),
+    occurred_on: o.occurredOn ?? nairobiToday(),
     category_id: o.kindId,
     shop_id: trip.shop_id,
     method: pay.method,
@@ -227,6 +229,7 @@ export async function finishShop(
     tripId: trip.id,
     savePrices: true,
     extraIds: lines.map((l) => l.extra_id).filter((x): x is string => !!x),
+    occurredOn: o.occurredOn,
   });
   await engine.queue("shopping_trips", "update", {
     id: trip.id,

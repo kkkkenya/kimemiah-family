@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { BottomSheet } from "@/components/BottomSheet";
 import { ItemIcon } from "@/components/shop/ItemIcon";
-import { iconFor, shopAgain, unitLabel, type IconId, type Trip, type TripLine } from "@/lib/shopping/market";
+import { ReceiptReader } from "@/components/stock/ReceiptReader";
+import { iconFor, isActive, shopAgain, unitLabel, type IconId, type Trip, type TripLine } from "@/lib/shopping/market";
 import { kes } from "@/lib/shopping/pricing";
-import type { Shop, ShoppingItem } from "@/lib/shopping/shops";
+import { sortShops, type Shop, type ShoppingItem, type StockItem } from "@/lib/shopping/shops";
+import { syncEngine } from "@/lib/sync/client";
 import type { Member } from "@/lib/sync/hooks";
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-KE", { weekday: "short", day: "numeric", month: "short", timeZone: "Africa/Nairobi" });
@@ -106,5 +108,66 @@ export function PastShops({ trips, lines, shops, members, onList, onAgain }: { t
         </BottomSheet>
       )}
     </section>
+  );
+}
+
+/** Past shops' buttons: type in a shop from another day (it opens in the basket), or read a receipt. */
+export function AddEarlier({ trips, lines, shops, stock, meId }: { trips: Trip[]; lines: TripLine[]; shops: Shop[]; stock: StockItem[]; meId?: string }) {
+  const today = new Date(Date.now() + 3 * 3600_000).toISOString().slice(0, 10);
+  const [picking, setPicking] = useState(false);
+  const [reading, setReading] = useState(false);
+  const [date, setDate] = useState(today);
+  // An earlier shop someone started filling but didn't pay for yet.
+  const unfinished = trips.filter((t) => !t.finished_at && !t.deleted_at && t.member_id === meId && !isActive(t) && lines.some((l) => l.trip_id === t.id && !l.deleted_at));
+
+  async function start(shop: Shop) {
+    const id = crypto.randomUUID();
+    const at = date === today ? new Date().toISOString() : new Date(`${date}T12:00:00+03:00`).toISOString();
+    await syncEngine().queue("shopping_trips", "insert", { id, shop_id: shop.id, member_id: meId ?? null, started_at: at, finished_at: null });
+    window.location.href = `/shop/basket?trip=${id}`;
+  }
+
+  return (
+    <div className="flex flex-col gap-2 lg:[column-span:all]">
+      {unfinished.map((t) => (
+        <a key={t.id} href={`/shop/basket?trip=${t.id}`} className="flex min-h-12 items-center justify-between rounded-xl bg-low-bg px-4 text-sm text-low-fg">
+          <span>
+            {shops.find((s) => s.id === t.shop_id)?.name ?? "A shop"} on {day(t.started_at)} isn&apos;t paid yet
+          </span>
+          <strong>Finish ›</strong>
+        </a>
+      ))}
+      <div className="grid grid-cols-2 gap-2">
+        <button type="button" onClick={() => setPicking(true)} className="min-h-12 rounded-xl bg-brand px-3 font-bold text-brand-contrast">
+          + A shop from another day
+        </button>
+        <button type="button" onClick={() => setReading((v) => !v)} className="min-h-12 rounded-xl border border-ink px-3 font-bold">
+          🧾 Read a receipt
+        </button>
+      </div>
+      {reading && <ReceiptReader stock={stock} shops={shops} meId={meId} onClose={() => setReading(false)} />}
+      {picking && (
+        <BottomSheet title="A shop from another day" onClose={() => setPicking(false)}>
+          <div className="flex flex-col gap-3 pb-2">
+            <h2 className="font-display text-2xl">A shop from another day</h2>
+            <p className="text-sm text-muted">For things already bought, like the market on Saturday. You add what you bought and how you paid; Money, Stock and the list update for that day.</p>
+            <label className="flex flex-col gap-1 text-sm font-bold">
+              When
+              <input type="date" value={date} max={today} onChange={(e) => setDate(e.target.value || today)} className="min-h-12 rounded-xl border border-line bg-raised px-3 font-normal" />
+            </label>
+            <p className="text-sm font-bold">Where</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {sortShops(shops)
+                .filter((s) => !["M-Pesa", "Supermarket (either)"].includes(s.name))
+                .map((s) => (
+                  <button key={s.id} type="button" onClick={() => void start(s)} className="min-h-14 rounded-xl border border-line bg-raised px-3 text-left font-bold hover:border-ink">
+                    {s.name}
+                  </button>
+                ))}
+            </div>
+          </div>
+        </BottomSheet>
+      )}
+    </div>
   );
 }

@@ -27,13 +27,14 @@ Top to bottom (cards appear only when there's something to show):
 ## 2. Stock and Shop (two tabs)
 
 **Stock tab**: everything in the house by category, + / − and OK / Low / Out (details below under Stock), plus:
-- **Read a receipt**: a photo of a Naivas or Quickmart till receipt (read on the phone; the reader loads only when used) or pasted text. Each line is matched to a house item (you can change or skip it), packs are converted (3 L oil = 3 litres), then one tap adds it all to stock, saves the prices paid as usual prices and logs the receipt total as spending.
+- **Read a receipt**: a photo of a Naivas or Quickmart till receipt (read on the phone; the reader loads only when used) or pasted text. Each line is matched to a house item (you can change or skip it), packs are converted (3 L oil = 3 litres), then one tap adds it all to stock, saves the prices paid as usual prices and logs the receipt total as spending. Set the date on the receipt for one from an earlier day; every line is kept as a past shop on that day. Also on Shop → Past shops.
 - **Tools & equipment**: panga, slasher, hedge shears, jembe, rake, hosepipe, dog brush, extension cable, ladder. Where each one is (Store room, Back verandah, Dog kennel, Main house), working or needs fixing (with "Post a repair job"), and who used it last.
 - **Likely running low?** when an item still marked OK has used 80% of its usual time between restocks: Still OK (asks again in 3 days) or Mark Low / Add to the list.
 
 **Shop tab**: three views, **List** (opens first), **Catalog** and **Past shops**. The basket you fill while out shopping is its own page.
 
 **Catalog**
+- A switch at the top picks the place: **Supermarket** (below), **Market & mama mboga**, **Vet & Kenchic**, **Other places**. For places without online prices it shows the house things bought there and anything bought there before, with the last price paid, plus a box to add anything. Anyone can add for whoever goes.
 - Every Naivas and Quickmart product the scraper finds (about 7,000 today, Quickmart only while Naivas blocks us), kept on the phone and searchable with no signal.
 - Search by name, brand or size. Aisles: On sale, House usuals, Unga rice and oil, Dairy bread and eggs, Liquor, Tea coffee and drinks, Cleaning, Toiletries, Home and upgrades, Market and mama mboga (house items, since market prices aren't online).
 - Sort by house usuals, best value per kg / litre / piece, biggest discount, lowest price, or A to Z. Filter by store deals, where it's cheaper, or tier.
@@ -53,7 +54,7 @@ Top to bottom (cards appear only when there's something to show):
 - What the house needs, grouped by **where it's bought**: Supermarket, Market & mama mboga, Kiosk, Vet & Kenchic, Other places, Anywhere. Each thing has its own icon (vegetables, meat, dairy, bread, flour, oil, cleaning, toiletries, dog, gas…).
 - Low and Out stock items join by themselves. Anyone can add a thing in one box; tapping a thing sets how much, where it's bought, **⚡ Needed soon** (goes to the top) or **Wishlist**.
 - The old Essential / Full shop / Can wait tiers are gone. Nice-to-haves live in the **Wishlist** at the bottom, with "Save up for these" (a goal on Money).
-- **⋯** has Send the list on WhatsApp, Plan a supermarket run on Jobs, and Clear the list.
+- **⋯** has Send the list on WhatsApp, Plan a supermarket run on Jobs, and Clear the list. Clearing removes what people added and skips low-stock things for a week (they come back if still low); Undo puts it all back.
 - **I'm going shopping** asks where (Market, Mama mboga, Naivas, Quickmart, Vet, Kenchic, Gas dealer, Wholesaler, Other), tells everyone at home ("Greg is at the market"), and opens the basket.
 
 **Basket** (while shopping; the screen stays on)
@@ -68,6 +69,8 @@ Top to bottom (cards appear only when there's something to show):
 **Past shops**
 - Every paid shop: when, where, what, who, how it was paid and the total (a table on a laptop). Tap one for the items with quantities and unit prices.
 - **Shop this again** puts its things back on the list (skipping what's already there), where they can be changed or removed like anything else.
+- **+ A shop from another day**: pick the day and the place, then add what was bought and pay as usual in the basket. The spend goes on that day; today's shopping run isn't touched.
+- **🧾 Read a receipt**: the receipt reader, with the date on the receipt.
 
 **Supermarket prices** (updated every Friday, all usable offline)
 - Tap a supermarket item on the list to see the **best brand and store**: "Best: Fresh Fri 2l · KES 545 at Naivas (sale · save KES 85)", with the other store's price underneath.
@@ -149,6 +152,7 @@ Usual jobs (one tap, all editable when posting):
 - **Job library**: 80 usual jobs across every kind (a new Laundry & ironing kind included), searchable and filtered by kind, under "📚 Job library" in Jobs and "Start from a usual job" in Add a job. Picking one fills in the form.
 - **No duplicate jobs**: posting a job that's already open (same usual job or same words) offers "Show me that one" or "Post another one anyway"; Home's quick buttons say it's already on the board.
 - **Repeating jobs**: a finished weekly or monthly job comes back on its day, keeping its usual-job id (learned times and tools follow), and a late finish doesn't make the next one overdue.
+- **Log a job already done**: for work nobody posted first ("Vinnie and I cleared the drive"). What, the day and time it finished, how long, how hard, and who did how much (shares add up to 100%). It lands on the board as done and counts toward each person's time given. Jobs from the last 60 days.
 - **One-tap done**: job reminders open "Finished …? ✓ Done"; on Android the alert itself has a ✓ Done button.
 - **Swaps**: "⇄ Swap" on your job asks someone to take it, optionally taking one of theirs in return. They get a push and accept in one tap; you stay on it until they do.
 - **Week ahead** (laptop): Monday to Sunday of open jobs, who's on each, "Nobody yet", and the hours each day, for sharing jobs out at the meeting.

@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useSync } from "@/components/SyncProvider";
 import { matchItem, parseReceipt, receiptPerPack, type HouseItem, type Receipt } from "@/lib/receipt/parser";
+import { iconFor, unitPrice } from "@/lib/shopping/market";
 import { kes } from "@/lib/shopping/pricing";
 import type { Shop, StockItem } from "@/lib/shopping/shops";
 import type { PutAwayLine } from "@/lib/shopping/stock";
+import { syncEngine } from "@/lib/sync/client";
 import { restockHouse } from "@/lib/sync/workflows";
 
 type Row = { key: string; name: string; qty: number; total: number; itemId: string | ""; include: boolean };
@@ -25,7 +27,8 @@ async function readPhoto(file: File, onProgress: (p: number) => void): Promise<s
 }
 
 // Read a Naivas or Quickmart receipt (photo or pasted text), match each line to a house item,
-// then add it all to stock, save the prices paid and log the spend, in one tap.
+// then add it all to stock, save the prices paid and log the spend, in one tap. It's kept as a
+// past shop (every line, with prices) on the day of the receipt, which can be an earlier day.
 export function ReceiptReader({ stock, shops, meId, onClose }: { stock: StockItem[]; shops: Shop[]; meId?: string; onClose: () => void }) {
   const { online, syncNow } = useSync();
   const [text, setText] = useState("");
@@ -34,6 +37,8 @@ export function ReceiptReader({ stock, shops, meId, onClose }: { stock: StockIte
   const [rows, setRows] = useState<Row[]>([]);
   const [logSpend, setLogSpend] = useState(true);
   const [done, setDone] = useState<string | null>(null);
+  const today = new Date(Date.now() + 3 * 3600_000).toISOString().slice(0, 10);
+  const [day, setDay] = useState(today);
 
   const items = (stock.filter((s) => !s.deleted_at && s.track_mode !== "tool") as unknown as HouseItem[]).sort((a, b) => a.name.localeCompare(b.name));
   const itemById = new Map(items.map((i) => [i.id, i]));
@@ -79,14 +84,36 @@ export function ReceiptReader({ stock, shops, meId, onClose }: { stock: StockIte
       };
     });
     const storeName = receipt?.store === "naivas" ? "Naivas" : receipt?.store === "quickmart" ? "Quickmart" : "the shop";
+    // The receipt as a past shop: when, where, and every line with its price.
+    const tripId = crypto.randomUUID();
+    const at = day === today ? new Date().toISOString() : new Date(`${day}T12:00:00+03:00`).toISOString();
+    const engine = syncEngine();
+    await engine.queue("shopping_trips", "insert", { id: tripId, shop_id: shopId, member_id: meId ?? null, started_at: at, finished_at: at, paid_kes: logSpend ? Math.round(total) : null });
+    for (const r of rows) {
+      const weighed = r.qty % 1 !== 0;
+      await engine.queue("trip_lines", "insert", {
+        id: crypto.randomUUID(),
+        trip_id: tripId,
+        item_id: r.include && r.itemId ? r.itemId : null,
+        title: r.name,
+        qty_bought: r.qty,
+        unit: weighed ? "kg" : "piece",
+        unit_price_kes: unitPrice(r.total, r.qty),
+        total_kes: Math.round(r.total),
+        icon: iconFor(r.name, stock.find((s) => s.id === r.itemId)?.category),
+        ticked_at: at,
+      });
+    }
     const { spent } = await restockHouse(lines, {
       meId,
       logSpend,
       savePrices: true,
+      tripId,
+      occurredOn: day,
       receipt: { shopId, total, note: `Receipt from ${storeName}: ${rows.length} lines` },
     });
     void syncNow();
-    setDone(`${lines.length === 1 ? "1 item" : `${lines.length} items`} added to stock${spent ? ` · ${kes(spent)} logged` : ""}. Prices saved.`);
+    setDone(`${lines.length === 1 ? "1 item" : `${lines.length} items`} added to stock${spent ? ` · ${kes(spent)} logged` : ""}. Prices saved; it's in Shop → Past shops.`);
     setReceipt(null);
     setRows([]);
     setText("");
@@ -171,6 +198,10 @@ export function ReceiptReader({ stock, shops, meId, onClose }: { stock: StockIte
               </li>
             ))}
           </ul>
+          <label className="flex flex-col gap-1 text-sm font-bold">
+            Date on the receipt
+            <input type="date" value={day} max={today} onChange={(e) => setDay(e.target.value || today)} className="min-h-12 rounded-xl border border-line bg-base px-3 font-normal" />
+          </label>
           <label className="flex min-h-12 items-center gap-3">
             <input type="checkbox" checked={logSpend} onChange={(e) => setLogSpend(e.target.checked)} className="size-6" />
             Log {kes(total)} spent{receipt.store ? ` at ${receipt.store === "naivas" ? "Naivas" : "Quickmart"}` : ""}

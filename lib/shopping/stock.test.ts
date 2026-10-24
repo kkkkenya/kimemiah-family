@@ -64,6 +64,12 @@ describe("autoListItems", () => {
     expect(autoListItems([oil, tomatoes], list)).toEqual([]);
   });
 
+  it("keeps a cleared low item off the list for a week", () => {
+    const skip = { item_id: "oil", title: "Cooking oil", qty: "skip", bought_at: "2026-10-24T10:00:00Z" };
+    expect(autoListItems([oil], [skip], Date.parse("2026-10-30T10:00:00Z"))).toEqual([]);
+    expect(autoListItems([oil], [skip], Date.parse("2026-11-01T11:00:00Z")).map((s) => s.id)).toEqual(["oil"]);
+  });
+
   it("brings an item back once its list row is removed", () => {
     expect(autoListItems([oil], [{ item_id: "oil", title: "oil", deleted_at: "x" }]).map((s) => s.id)).toEqual(["oil"]);
   });

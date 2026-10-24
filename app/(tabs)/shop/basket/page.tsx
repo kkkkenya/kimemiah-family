@@ -58,10 +58,15 @@ export default function BasketPage() {
   const trips = (useRows<Trip & { id: string }>("shopping_trips") ?? []) as Trip[];
   const allLines = (useRows<TripLine>("trip_lines") ?? NONE) as TripLine[];
   const items = (useRows<Item>("shopping_extras") ?? []) as Item[];
-  const trip = trips.find((t) => isActive(t) && t.member_id === me?.id);
+  // /shop/basket?trip=<id> opens a shop from an earlier day (from Past shops); otherwise my shop now.
+  const [tripParam, setTripParam] = useState<string | null>(null);
+  useEffect(() => setTripParam(new URLSearchParams(window.location.search).get("trip")), []);
+  const trip = tripParam ? trips.find((t) => t.id === tripParam && !t.finished_at && !t.deleted_at) : trips.find((t) => isActive(t) && t.member_id === me?.id);
   const shop = shops.find((s) => s.id === trip?.shop_id);
   const place = placeOf(shop);
-  useWakeLock(!!trip);
+  const day = trip ? new Date(Date.parse(trip.started_at) + 3 * 3600_000).toISOString().slice(0, 10) : "";
+  const earlier = !!trip && day < new Date(Date.now() + 3 * 3600_000).toISOString().slice(0, 10);
+  useWakeLock(!!trip && !earlier);
 
   const [buying, setBuying] = useState<Draft | null>(null);
   const [paying, setPaying] = useState(false);
@@ -150,7 +155,7 @@ export default function BasketPage() {
     <Screen title="Basket" back="/shop">
       <div className="flex items-center justify-between gap-3 rounded-2xl bg-ink p-4 text-raised">
         <span>
-          <span className="block text-xs uppercase tracking-wider opacity-80">Shopping at</span>
+          <span className="block text-xs uppercase tracking-wider opacity-80">{earlier ? `Shop on ${new Date(trip.started_at).toLocaleDateString("en-KE", { weekday: "short", day: "numeric", month: "short", timeZone: "Africa/Nairobi" })} at` : "Shopping at"}</span>
           <span className="text-xl font-bold">{shop?.name ?? "the shops"}</span>
         </span>
         <button type="button" onClick={() => void cancelShop()} className="min-h-11 rounded-xl border border-raised/40 px-3 text-sm font-bold">
@@ -231,11 +236,11 @@ export default function BasketPage() {
           lines={lines}
           shopName={shop?.name ?? "Shop"}
           onClose={() => setPaying(false)}
-          onPay={async (pay, final, discount) => {
+          onPay={async (pay, final, discount, smsDay) => {
             const kinds = (await localDB().rows("budget_categories").toArray()) as unknown as { id: string; name: string; deleted_at?: string | null }[];
             const kindId = kinds.find((k) => !k.deleted_at && k.name === kindNameFor(place))?.id ?? FOOD_KIND;
             const shopLines: ShopLine[] = final.map((l) => ({ id: l.id, extra_id: l.extra_id, item_id: l.item_id, title: l.title ?? "", qty: Number(l.qty_bought ?? 1), unit: l.unit ?? "piece", unit_price_kes: Number(l.unit_price_kes ?? 0), total_kes: Number(l.total_kes ?? 0) }));
-            const r = await finishShop({ id: trip.id, shop_id: trip.shop_id }, shopLines, pay, { meId: me?.id, kindId, shopName: shop?.name ?? "Shop", discount });
+            const r = await finishShop({ id: trip.id, shop_id: trip.shop_id }, shopLines, pay, { meId: me?.id, kindId, shopName: shop?.name ?? "Shop", discount, occurredOn: smsDay ?? (earlier ? day : undefined) });
             if (r.error) return r.error;
             void syncNow();
             setPaying(false);
@@ -399,7 +404,7 @@ function BuySheet({ draft, note, onClose, onSave, onRemove }: { draft: Draft; no
 type Pay = { paid: number; method: "mpesa" | "cash"; mpesa_code?: string | null; counterparty?: string | null; paid_from: "house" | "own" };
 
 /** Paying: paste the M-Pesa message (the amount fills itself) or type the cash. Checked against the basket. */
-function PaySheet({ lines, shopName, onClose, onPay }: { lines: TripLine[]; shopName: string; onClose: () => void; onPay: (p: Pay, final: TripLine[], discount: number) => Promise<string | null> }) {
+function PaySheet({ lines, shopName, onClose, onPay }: { lines: TripLine[]; shopName: string; onClose: () => void; onPay: (p: Pay, final: TripLine[], discount: number, smsDay: string | null) => Promise<string | null> }) {
   const basket = lines.map((l) => ({ ...l, qty: Number(l.qty_bought ?? 1), unit: l.unit ?? "piece", title: l.title ?? "", unit_price_kes: Number(l.unit_price_kes ?? 0), total_kes: Number(l.total_kes ?? 0) }));
   const [method, setMethod] = useState<"mpesa" | "cash">("mpesa");
   const [sms, setSms] = useState("");
@@ -432,6 +437,7 @@ function PaySheet({ lines, shopName, onClose, onPay }: { lines: TripLine[]; shop
       { paid, method, mpesa_code: parsed?.code ?? null, counterparty: parsed?.counterparty ?? (method === "cash" ? shopName : null), paid_from: from },
       final.map((l) => ({ ...l, qty_bought: l.qty })),
       check.state === "less" ? check.diff : 0,
+      parsed?.date ?? null,
     );
     setBusy(false);
     if (err) setError(err);
