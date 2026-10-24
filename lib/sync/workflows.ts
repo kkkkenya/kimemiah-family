@@ -153,7 +153,7 @@ export async function correctEntry(e: Entry) {
  * "Ask at the meeting": puts a question on the next family meeting's agenda, planning that
  * meeting for Sunday if none is planned yet. Returns the meeting day.
  */
-export async function flagForMeeting(title: string, jobId: string | null = null, source: "flag" | "money_review" = "flag"): Promise<string> {
+export async function flagForMeeting(title: string, jobId: string | null = null, source: "flag" | "money_review" | "manual" = "flag"): Promise<string> {
   const db = localDB();
   const engine = syncEngine();
   type Meeting = { id: string; held_on: string; status: string; deleted_at?: string | null };
