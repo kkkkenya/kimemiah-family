@@ -10,12 +10,12 @@ import { JobAlerts } from "@/components/jobs/JobAlerts";
 import { JobCard } from "@/components/jobs/JobCard";
 import { JobForm } from "@/components/jobs/JobForm";
 import { JobLibrary } from "@/components/jobs/JobLibrary";
-import { fromTemplate, postJob, updateJob, type NewJob } from "@/lib/jobs/actions";
+import { fromTemplate, joinJob, postJob, updateJob, type NewJob } from "@/lib/jobs/actions";
 import { findDuplicate, weekAhead } from "@/lib/jobs/board";
 import type { Swap } from "@/lib/push/house";
 import { supabase } from "@/lib/supabase/client";
 import { sendAlertsNow } from "@/lib/push/client";
-import { formatMinutes, jobStatus, learnedDuration, sortBoard, workers, type Job, type Participant } from "@/lib/jobs/logic";
+import { formatMinutes, jobStatus, learnedDuration, shareChoices, sortBoard, workers, type Job, type Participant } from "@/lib/jobs/logic";
 import { contribution, suggestFor, type Person } from "@/lib/jobs/stats";
 import { supperCount, type Diner } from "@/lib/home";
 import type { StockItem } from "@/lib/shopping/shops";
@@ -90,6 +90,40 @@ export default function JobsPage() {
     } else setDoneAsk(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on arrival from the alert
   }, []);
+
+  // From a notification's buttons: "I'm on it" joins the job; "Accept" takes the swap.
+  const [pending, setPending] = useState<{ join?: string; swap?: string } | null>(null);
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const join = q.get("join") ?? undefined;
+    const swap = q.get("accept") === "1" ? (q.get("swap") ?? undefined) : undefined;
+    if (join || swap) {
+      setPending({ join, swap });
+      window.history.replaceState(null, "", "/jobs");
+    }
+  }, []);
+  useEffect(() => {
+    if (!pending || !me) return;
+    if (pending.join) {
+      const j = jobs.find((x) => x.id === pending.join);
+      if (!j) return; // wait for the job to sync
+      setPending(null);
+      const pct = shareChoices(j, parts, me.id).suggested;
+      void (pct ? joinJob(j.id, pct) : Promise.resolve("It's already covered.")).then((err) => {
+        void syncNow();
+        message(err ?? `You're on it: ${j.title}. Asante!`);
+      });
+    } else if (pending.swap) {
+      setPending(null);
+      void supabase()
+        .rpc("accept_swap", { p_swap: pending.swap })
+        .then(({ error }) => {
+          void syncNow();
+          message(error ? (error.message.includes("fetch") ? "Accepting a swap needs signal." : error.message) : "Swapped. Asante!");
+        });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs when the job or me arrives
+  }, [pending, me, jobs]);
 
   const nameOf = (id: string | null | undefined) => members.find((m) => m.id === id)?.name ?? "Someone";
   const thanked = (jobId: string, to: string) => thanks.some((t) => t.target_id === jobId && t.to_member === to && (t.actor_id === me?.id || (t._local && !t.actor_id)));

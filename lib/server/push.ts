@@ -6,6 +6,7 @@ import { groupByPerson, planAlerts, type Alert, type PushJob, type PushMember, t
 import type { Kind } from "@/lib/money/flex";
 import type { Budget, Entry } from "@/lib/money/money";
 import type { Bill } from "@/lib/money/bills";
+import { actionsOf, typeOf } from "@/lib/push/style";
 import { ensureBillJobs } from "./bills";
 import { adminClient } from "./supabase-admin";
 
@@ -77,7 +78,7 @@ export async function runTick(now = new Date()) {
   const { data: parts } = ids.length ? await db.from("job_participants").select("*").in("job_id", ids) : { data: [] };
   const { data: members } = await db
     .from("members")
-    .select("id, name, sort, active, presence, is_remote, no_heavy, ease_until, ease_offered_at, nudged_at")
+    .select("id, name, sort, active, presence, is_remote, no_heavy, ease_until, ease_offered_at, nudged_at, alert_amounts")
     .eq("active", true);
 
   const alerts = planAlerts((jobs ?? []) as PushJob[], (parts ?? []) as PushPart[], (members ?? []) as PushMember[], now.getTime(), (history ?? []) as PushJob[]);
@@ -110,8 +111,14 @@ export async function runTick(now = new Date()) {
     if (!error && a.to.length) claimed.push(a);
   }
 
-  const perPerson = groupByPerson(claimed);
+  // Every alert is kept in the person's inbox (even on phones without push).
+  const rows = claimed.flatMap((a) => a.to.map((m) => ({ member_id: m, type: typeOf(a), title: a.title, body: a.body, url: a.url ?? "/jobs", actions: actionsOf(a) })));
+  if (rows.length) await db.from("notifications").insert(rows);
+
+  const amounts = new Set((members ?? []).filter((m) => (m as { alert_amounts?: boolean }).alert_amounts).map((m) => m.id));
+  const perPerson = groupByPerson(claimed, (m) => amounts.has(m));
   if (!perPerson.size) return { alerts: claimed.length, sent: 0 };
+  const unread = await unreadCounts(db, [...perPerson.keys()]);
 
   const { data: devices } = await db.from("devices").select("id, member_id").in("member_id", [...perPerson.keys()]).is("revoked_at", null);
   const memberOf = new Map((devices ?? []).map((d) => [d.id, d.member_id as string]));
@@ -127,8 +134,8 @@ export async function runTick(now = new Date()) {
       try {
         await webpush.sendNotification(
           { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-          JSON.stringify(msg),
-          { TTL: 3600, urgency: msg.tag.startsWith("urgent") ? "high" : "normal" },
+          JSON.stringify({ ...msg, badge: unread.get(memberOf.get(s.device_id)!) ?? 0 }),
+          { TTL: 3600, urgency: msg.type === "urgent" || msg.type === "swap" ? "high" : "normal" },
         );
         sent++;
       } catch (err) {
@@ -139,4 +146,30 @@ export async function runTick(now = new Date()) {
     }),
   );
   return { alerts: claimed.length, sent };
+}
+
+/** How many unread notifications each person has (for the number on the app icon). */
+async function unreadCounts(db: Db, members: string[]): Promise<Map<string, number>> {
+  const { data } = await db.from("notifications").select("member_id").in("member_id", members).is("read_at", null).is("deleted_at", null);
+  const out = new Map<string, number>();
+  for (const r of data ?? []) out.set(r.member_id as string, (out.get(r.member_id as string) ?? 0) + 1);
+  return out;
+}
+
+/** "Send me a test": one notification to this phone only, so setting up can be checked. */
+export async function sendTest(deviceId: string, memberId: string): Promise<{ sent: number }> {
+  vapid();
+  const db = adminClient();
+  const msg = { title: "Notifications work on this phone", body: "This is what an alert from Kimemiah Home looks like.", tag: "test", url: "/more/notifications", type: "test", actions: [] };
+  await db.from("notifications").insert({ member_id: memberId, type: "test", title: msg.title, body: msg.body, url: msg.url, actions: [] });
+  const badge = (await unreadCounts(db, [memberId])).get(memberId) ?? 0;
+  const { data: subs } = await db.from("push_subscriptions").select("id, endpoint, p256dh, auth").eq("device_id", deviceId).eq("enabled", true).is("deleted_at", null);
+  let sent = 0;
+  for (const s of subs ?? []) {
+    try {
+      await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, JSON.stringify({ ...msg, badge }), { TTL: 600, urgency: "high" });
+      sent++;
+    } catch {}
+  }
+  return { sent };
 }

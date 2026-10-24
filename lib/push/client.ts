@@ -66,3 +66,18 @@ export async function sendAlertsNow(): Promise<void> {
     if (token) await fetch("/api/push/tick", { method: "POST", headers: { authorization: `Bearer ${token}` } });
   } catch {}
 }
+
+/** "Send me a test": one notification to this phone. Returns what happened, in plain words. */
+export async function sendTest(): Promise<string> {
+  try {
+    const { data } = await supabase().auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return "This phone isn't unlocked. Reopen the app and try again.";
+    const res = await fetch("/api/push/test", { method: "POST", headers: { authorization: `Bearer ${token}` } });
+    if (!res.ok) return "The test couldn't be sent. Check your signal and try again.";
+    const { sent } = (await res.json()) as { sent: number };
+    return sent ? "Sent. It should pop up in a few seconds." : "Saved in the bell, but this phone has no alert address yet. Turn notifications on first.";
+  } catch {
+    return "The test needs signal. Try again when you're online.";
+  }
+}

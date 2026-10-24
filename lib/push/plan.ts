@@ -1,6 +1,7 @@
 // Which push alerts to send right now. Pure, so the rules are tested without a phone:
 // quiet hours 21:00-07:00 Nairobi, nothing older than an hour, never the person who did it,
 // people who are out or away don't get reminders, and alerts never mention money.
+import { actionsOf, typeOf, type NoticeAction, type NoticeType } from "./style";
 
 import { formatMinutes, jobStatus, workers, type Job, type Participant } from "@/lib/jobs/logic";
 import { contribution, easing, suggestFor, suitableFor, type Person } from "@/lib/jobs/stats";
@@ -22,6 +23,7 @@ export type Alert = {
   partId?: string; // for reminders and handovers: the participant row it's about
   memberId?: string; // for nudge and ease: the person it's about (marked once a week)
   key?: string; // money alerts: recorded once in money_alerts
+  plainBody?: string; // the body without money amounts, for lock screens of people who keep them off
   url?: string;
   to: string[]; // member ids (empty: just mark it handled, e.g. too old to send)
   title: string;
@@ -178,17 +180,37 @@ export function planAlerts(jobs: PushJob[], parts: PushPart[], members: PushMemb
   return alerts;
 }
 
-/** One notification per person: several alerts at once become one summary. */
-export function groupByPerson(alerts: Alert[]): Map<string, { title: string; body: string; tag: string; url: string }> {
+export type Push = { title: string; body: string; tag: string; url: string; type: NoticeType; actions: NoticeAction[] };
+
+/**
+ * One notification per person: several alerts at once become one summary. Money amounts stay off
+ * the lock screen unless that person chose to show them.
+ */
+export function groupByPerson(alerts: Alert[], showAmounts: (memberId: string) => boolean = () => false): Map<string, Push> {
   const per = new Map<string, Alert[]>();
   for (const a of alerts) for (const m of a.to) per.set(m, [...(per.get(m) ?? []), a]);
-  const out = new Map<string, { title: string; body: string; tag: string; url: string }>();
+  const out = new Map<string, Push>();
   for (const [m, list] of per) {
+    const one = list[0];
     out.set(
       m,
       list.length === 1
-        ? { title: list[0].title, body: list[0].body, tag: `${list[0].kind}-${list[0].key ?? list[0].jobId ?? list[0].memberId}`, url: list[0].url ?? "/jobs" }
-        : { title: list.some((a) => a.key) ? `${list.length} updates from the house` : `${list.length} job updates`, body: list.map((a) => a.title).join(" · "), tag: "jobs", url: list.every((a) => a.key) ? "/money" : "/jobs" },
+        ? {
+            title: one.title,
+            body: showAmounts(m) || !one.plainBody ? one.body : one.plainBody,
+            tag: `${one.kind}-${one.key ?? one.jobId ?? one.memberId}`,
+            url: one.url ?? "/jobs",
+            type: typeOf(one),
+            actions: actionsOf(one),
+          }
+        : {
+            title: list.some((a) => a.key) ? `${list.length} updates from the house` : `${list.length} job updates`,
+            body: list.map((a) => a.title).join(" · "),
+            tag: "jobs",
+            url: list.every((a) => a.key) ? "/money" : "/jobs",
+            type: "group",
+            actions: [],
+          },
     );
   }
   return out;
