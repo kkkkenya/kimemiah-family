@@ -10,6 +10,7 @@ import { JobAlerts } from "@/components/jobs/JobAlerts";
 import { JobCard } from "@/components/jobs/JobCard";
 import { JobForm } from "@/components/jobs/JobForm";
 import { JobLibrary } from "@/components/jobs/JobLibrary";
+import { LogDone } from "@/components/jobs/LogDone";
 import { fromTemplate, joinJob, postJob, updateJob, type NewJob } from "@/lib/jobs/actions";
 import { findDuplicate, weekAhead } from "@/lib/jobs/board";
 import type { Swap } from "@/lib/push/house";
@@ -68,6 +69,7 @@ export default function JobsPage() {
   const [effort, setEffort] = useState<Effort>("all");
   const [adding, setAdding] = useState(false);
   const [library, setLibrary] = useState(false);
+  const [logging, setLogging] = useState(false);
   const [start, setStart] = useState<string | undefined>(undefined);
   const [undo, setUndo] = useState<UndoState>(null);
   const closeUndo = useCallback(() => setUndo(null), []);
@@ -271,6 +273,9 @@ export default function JobsPage() {
           >
             + Add a job
           </button>
+          <button type="button" onClick={() => setLogging(true)} className="min-h-12 shrink-0 rounded-md border border-ink bg-raised px-4 text-sm font-bold">
+            ✓ Log a job already done
+          </button>
         </div>
         {home.length > 0 && (
           <p className="text-sm text-muted">
@@ -280,6 +285,18 @@ export default function JobsPage() {
         )}
       </section>
 
+      {logging && (
+        <LogDone
+          meId={me?.id}
+          people={members.filter((m) => m.active !== false && !m.is_remote)}
+          onClose={() => setLogging(false)}
+          onDone={(msg) => {
+            setLogging(false);
+            void syncNow();
+            message(msg);
+          }}
+        />
+      )}
       {adding && <JobForm key={start ?? "new"} start={start} onPost={post} onCancel={() => setAdding(false)} learned={learned} />}
       {library && (
         <JobLibrary

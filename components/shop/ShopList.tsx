@@ -11,6 +11,7 @@ import { ItemPrice } from "@/components/shop/ItemPrice";
 import { fromTemplate, postJob } from "@/lib/jobs/actions";
 import { TEMPLATES } from "@/lib/jobs/templates";
 import { iconFor, isActive, PLACES, placeOf, type Trip } from "@/lib/shopping/market";
+import { SKIP } from "@/lib/shopping/stock";
 import { estimate, isCounted, kes, stockStatus, type CatalogMatch, type ListLine, type StockLike } from "@/lib/shopping/pricing";
 import { sortShops, type Shop, type ShoppingItem, type StockItem } from "@/lib/shopping/shops";
 import { sendAlertsNow } from "@/lib/push/client";
@@ -106,16 +107,22 @@ export function ShopList({
     router.push("/shop/basket");
   }
 
+  // Clear: what people added goes; low-stock items are skipped for a week (they come back if still low).
   async function clearList() {
     const added = list.filter((i) => !i.auto);
-    if (!added.length) return;
+    const low = list.filter((i) => i.auto);
+    if (!list.length) return;
+    const now = new Date().toISOString();
     for (const i of added) await syncEngine().queue("shopping_extras", "delete", { id: i.id });
+    const skips = low.map((i) => ({ id: crypto.randomUUID(), title: i.title, qty: SKIP, quantity: 1, shop_id: i.shop_id, item_id: i.item_id, bought_at: now, shopping_tier: "standard" as const, urgent: false }));
+    for (const s of skips) await syncEngine().queue("shopping_extras", "insert", s);
     void syncNow();
     setMore(false);
     setUndo({
       id: Date.now(),
-      message: `List cleared (${added.length})`,
+      message: `List cleared (${list.length})`,
       undo: async () => {
+        for (const s of skips) await syncEngine().queue("shopping_extras", "delete", { id: s.id });
         for (const i of added) await syncEngine().queue("shopping_extras", "insert", { id: crypto.randomUUID(), title: i.title, qty: i.qty, quantity: i.quantity, shop_id: i.shop_id, item_id: i.item_id, bought_at: null, shopping_tier: i.shopping_tier, catalog_product_id: i.catalog_product_id, preferred_store: i.preferred_store, urgent: i.urgent ?? false });
         void syncNow();
       },
@@ -289,8 +296,9 @@ export function ShopList({
             >
               Plan a supermarket run on Jobs
             </button>
-            <button type="button" onClick={() => void clearList()} className="flex min-h-12 items-center rounded-xl border border-line px-4 text-left font-bold">
-              Clear the list
+            <button type="button" disabled={!list.length} onClick={() => void clearList()} className="flex min-h-12 flex-col items-start justify-center rounded-xl border border-line px-4 py-2 text-left font-bold disabled:opacity-40">
+              Clear the list{list.length ? ` (${list.length})` : ""}
+              {list.some((i) => i.auto) && <span className="text-xs font-normal text-muted">Low-stock things come back in a week if they&apos;re still low.</span>}
             </button>
           </div>
         </BottomSheet>

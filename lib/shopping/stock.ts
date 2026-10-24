@@ -44,7 +44,12 @@ export function withLocalCounts<T extends StockLike>(stock: T[], movements: Move
 /** Low or Out, and someone has actually checked it (starter rows nobody counted don't count). */
 export const needsRestock = (s: StockLike) => !s.deleted_at && isCounted(s) && stockStatus(s) !== "ok";
 
-export type ListEntry = { item_id?: string | null; title: string; deleted_at?: string | null };
+export type ListEntry = { item_id?: string | null; title: string; qty?: string | null; bought_at?: string | null; deleted_at?: string | null };
+
+/** "Clear the list" leaves a skip row for a low item: it stays off the list this long. */
+export const SKIP = "skip";
+const SKIP_MS = 7 * 24 * 3600_000;
+export const isSkip = (e: ListEntry) => e.qty === SKIP && !!e.bought_at;
 
 const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
@@ -52,8 +57,9 @@ const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLow
  * Low / Out items that join the shopping list on their own: any not already there
  * (to buy or in the basket), linked by item_id or, for hand-typed rows, by name.
  */
-export function autoListItems<T extends StockLike>(stock: T[], list: ListEntry[]): T[] {
-  const live = list.filter((e) => !e.deleted_at);
+export function autoListItems<T extends StockLike>(stock: T[], list: ListEntry[], now = Date.now()): T[] {
+  // Skipped low items come back after a week if they're still low.
+  const live = list.filter((e) => !e.deleted_at && !(isSkip(e) && now - Date.parse(e.bought_at!) > SKIP_MS));
   return stock.filter((s) => needsRestock(s) && !live.some((e) => e.item_id === s.id || same(e.title, s.name)));
 }
 

@@ -7,10 +7,11 @@ import { useSync } from "@/components/SyncProvider";
 import { UndoBar, type UndoState } from "@/components/UndoBar";
 import { CatalogView } from "@/components/shop/CatalogView";
 import { DealRestock } from "@/components/shop/DealRestock";
-import { PastShops } from "@/components/shop/PastShops";
+import { AddEarlier, PastShops } from "@/components/shop/PastShops";
+import { PlaceCatalog } from "@/components/shop/PlaceCatalog";
 import { ShopList } from "@/components/shop/ShopList";
 import { StoreCompare } from "@/components/shop/StoreCompare";
-import { placeOf, type Trip, type TripLine } from "@/lib/shopping/market";
+import { PLACES, placeOf, type PlaceId, type Trip, type TripLine } from "@/lib/shopping/market";
 import { type CatalogMatch, type MoneyEntry, type StockLike, type Tier } from "@/lib/shopping/pricing";
 import { type ShoppingItem, type StockItem } from "@/lib/shopping/shops";
 import type { Product } from "@/lib/shopping/catalog";
@@ -39,6 +40,7 @@ export default function ShopPage() {
   const { syncNow } = useSync();
   const [view, setViewState] = useState<View>("list");
   const [undo, setUndo] = useState<UndoState>(null);
+  const [place, setPlace] = useState<PlaceId>("supermarket");
   const closeUndo = useCallback(() => setUndo(null), []);
   useEffect(() => {
     try {
@@ -55,7 +57,7 @@ export default function ShopPage() {
     } catch {}
   };
 
-  const { shops, stock, members } = useStock();
+  const { me, shops, stock, members } = useStock();
   const items = (useRows<Item>("shopping_extras") ?? NONE) as Item[];
   const trips = (useRows<Trip & { id: string }>("shopping_trips") ?? []) as Trip[];
   const tripLines = (useRows<TripLine>("trip_lines") ?? []) as TripLine[];
@@ -108,6 +110,14 @@ export default function ShopPage() {
     const id = crypto.randomUUID();
     await change("insert", { id, title: s.name, qty: null, quantity: 1, shop_id: s.shop_id, item_id: s.id, bought_at: null, shopping_tier: listTier(s.shopping_tier ?? "standard"), catalog_product_id: deal?.id ?? null, preferred_store: deal?.store ?? null });
     setUndo({ id: Date.now(), message: `${s.name} added`, undo: () => change("delete", { id }) });
+  }
+
+  // Anything, for any place: whoever goes buys it.
+  async function addAnything(title: string, shopId: string | null, itemId: string | null) {
+    if (onList(title, itemId ?? undefined)) return;
+    const id = crypto.randomUUID();
+    await change("insert", { id, title, qty: null, quantity: 1, shop_id: shopId, item_id: itemId, bought_at: null, shopping_tier: "standard", urgent: false });
+    setUndo({ id: Date.now(), message: `${title} added`, undo: () => change("delete", { id }) });
   }
 
   async function setQuantity(row: ShoppingItem, quantity: number) {
@@ -167,6 +177,16 @@ export default function ShopPage() {
       {switcher}
       {view === "list" && <ShopList stock={stock} shops={shops} members={members} items={items} auto={auto} matches={matches} trips={trips} foodLeft={foodLeft} />}
       {view === "catalog" && (
+        <div role="radiogroup" aria-label="Where" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:px-0">
+          {PLACES.filter((p) => p.id !== "anywhere" && shops.some((s) => placeOf(s) === p.id)).map((p) => (
+            <button key={p.id} type="button" role="radio" aria-checked={place === p.id} onClick={() => setPlace(p.id)} className={`min-h-11 shrink-0 rounded-full border px-4 text-sm font-bold ${place === p.id ? "border-ink bg-ink text-raised" : "border-line bg-raised"}`}>
+              {p.label}
+            </button>
+          ))}
+        </div>
+      )}
+      {view === "catalog" && place !== "supermarket" && <PlaceCatalog place={place} stock={stock} shops={shops} trips={trips} lines={tripLines} cart={cart} onAddHouse={(s) => addHouseItem(s)} onAdd={addAnything} />}
+      {view === "catalog" && place === "supermarket" && (
         <>
           <DealRestock stock={stock as StockLike[]} matches={matches} onList={onList} onAdd={(s, deal) => addHouseItem(s as StockItem, deal)} />
           {supermarketLines.length > 0 && <StoreCompare lines={supermarketLines} matches={matches} />}
@@ -175,7 +195,7 @@ export default function ShopPage() {
             stock={stock}
             cart={cart}
             cartLines={cartLines}
-            history={history ?? []}
+            history={(history ?? []).filter((h) => h.qty !== "skip")}
             onAdd={addProduct}
             onAddHouse={(s) => addHouseItem(s)}
             onQty={setQuantity}
@@ -184,6 +204,7 @@ export default function ShopPage() {
           />
         </>
       )}
+      {view === "past" && <AddEarlier trips={trips} lines={tripLines} shops={shops} stock={stock} meId={me?.id} />}
       {view === "past" && <PastShops trips={trips} lines={tripLines} shops={shops} members={members} onList={cart} onAgain={shopAgain} />}
       <UndoBar state={undo} onClose={closeUndo} />
     </Screen>
