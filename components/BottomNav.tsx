@@ -38,7 +38,7 @@ export function BottomNav() {
               href={t.href}
               aria-current={active(t.href) ? "page" : undefined}
               className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-bold lg:min-h-12 lg:flex-row lg:justify-start lg:gap-3 lg:rounded-md lg:px-3 lg:text-base ${
-                !active(t.href) ? "text-muted lg:text-[#d3d3d3] lg:hover:bg-white/10" : t.href === "/money" || t.href === "/jobs" ? "text-ink lg:bg-[#ff692d] lg:text-[#22201d]" : "text-ink lg:bg-action lg:text-action-ink"
+                !active(t.href) ? "text-[color:var(--nav-idle)] lg:text-[#d3d3d3] lg:hover:bg-white/10" : t.href === "/money" || t.href === "/jobs" ? "text-ink lg:bg-[#ff692d] lg:text-[#22201d]" : "text-ink lg:bg-action lg:text-action-ink"
               }`}
             >
               <span className={`flex h-7 w-12 items-center justify-center rounded-md lg:w-auto lg:bg-transparent ${active(t.href) ? tint(t.href) : ""}`}>{t.icon}</span>

@@ -23,6 +23,7 @@
   --out-fg: #ffffff;
   --out-bg: #9c2b1e;
   --out-strong: #9c2b1e;
+  --nav-idle: #6d6c6b;
   color-scheme: light;
 }
 
@@ -47,6 +48,7 @@
     --out-fg: #0c0a08;
     --out-bg: #f4ada3;
     --out-strong: #f4ada3;
+    --nav-idle: #d3d1cf;
     color-scheme: dark;
   }
 }
@@ -71,6 +73,7 @@
   --out-fg: #0c0a08;
   --out-bg: #f4ada3;
   --out-strong: #f4ada3;
+  --nav-idle: #d3d1cf;
   color-scheme: dark;
 }
 
@@ -151,6 +154,12 @@ body {
 a,
 button {
   transition: background-color 0.3s ease-out, border-color 0.3s ease-out, color 0.3s ease-out;
+}
+/* While the theme changes (lib/theme.ts), colours switch at once. */
+.theme-switch *,
+.theme-switch *::before,
+.theme-switch *::after {
+  transition: none !important;
 }
 
 :focus-visible {
