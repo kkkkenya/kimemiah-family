@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
 import { ProfileCard } from "@/components/ProfileCard";
 import { PushCard } from "@/components/PushCard";
+import { ThemeCard } from "@/components/ThemeToggle";
 import { HouseSettingsCard, MyJobSettings } from "@/components/SettingsCards";
 import { Card, Screen } from "@/components/Screen";
 import { useSync } from "@/components/SyncProvider";
@@ -72,6 +73,7 @@ export default function SettingsPage() {
     <Screen title="Settings" back="/">
       <ProfileCard />
       <PushCard />
+      <ThemeCard />
       <MyJobSettings />
       <HouseSettingsCard />
       <Card>

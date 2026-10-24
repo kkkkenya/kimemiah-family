@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useState } from "react";
 import { useSync } from "@/components/SyncProvider";
-import { isActive, type Trip } from "@/components/shop/TripCheck";
+import { isActive, type Trip } from "@/lib/shopping/market";
 import { essentialsNeeded, nairobiToday, supperCount, type Diner } from "@/lib/home";
 import { fromTemplate, joinJob, postJob, updateJob } from "@/lib/jobs/actions";
 import { billStats, billsDue, type Bill } from "@/lib/money/bills";

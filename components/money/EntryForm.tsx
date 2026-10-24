@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { parseMpesa } from "@/lib/money/mpesa";
 import { ruleFor, type Rule } from "@/lib/money/rules";
 import type { Bill } from "@/lib/money/bills";
@@ -23,6 +23,7 @@ export function EntryForm({
   bills = [],
   rules = [],
   meId,
+  initialSms,
   onSave,
   onCancel,
 }: {
@@ -32,6 +33,8 @@ export function EntryForm({
   bills?: Bill[];
   rules?: Rule[];
   meId?: string;
+  /** An M-Pesa message shared into the app: read it straight away. */
+  initialSms?: string;
   onSave: (e: NewEntry) => Promise<string | null>;
   onCancel: () => void;
 }) {
@@ -66,6 +69,12 @@ export function EntryForm({
     });
     setNote(r ? `Filled in from ${m.code} and sorted by your rule for ${r.match}. Check it and save.` : `Filled in from ${m.code}. Check it and save.`);
   }
+
+  useEffect(() => {
+    if (initialSms) readSms(initialSms);
+    // Once, when the form opens with a shared message.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function submit(e: FormEvent) {
     e.preventDefault();

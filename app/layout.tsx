@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
+import { THEME_BOOT } from "@/lib/theme";
 
 // Headings in the Money, Jobs and Home money cards (Monarch look).
 const fraunces = Fraunces({
@@ -38,7 +39,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en-KE" className={`${inter.variable} ${fraunces.variable}`}>
+    <html lang="en-KE" className={`${inter.variable} ${fraunces.variable}`} suppressHydrationWarning>
+      <head>
+        {/* Light or dark as chosen on this phone, before anything draws. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
+      </head>
       <body className="min-h-dvh antialiased">{children}</body>
     </html>
   );

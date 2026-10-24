@@ -25,15 +25,14 @@ import type { ShoppingItem, StockItem } from "@/lib/shopping/shops";
 const BATCH = 40;
 
 const TIERS: { value: Tier; label: string }[] = [
-  { value: "essential", label: "⚡ Essential" },
-  { value: "standard", label: "🛒 Full shop" },
-  { value: "qol", label: "✨ Upgrade" },
+  { value: "standard", label: "On the list" },
+  { value: "qol", label: "✨ Wishlist" },
 ];
 const TIER_FILTERS: { value: Tier | "all"; label: string }[] = [
-  { value: "all", label: "All tiers" },
-  { value: "essential", label: "Essentials" },
-  { value: "standard", label: "Full shop" },
-  { value: "qol", label: "Upgrades" },
+  { value: "all", label: "Everything" },
+  { value: "essential", label: "House basics" },
+  { value: "standard", label: "Regular buys" },
+  { value: "qol", label: "Nice to have" },
 ];
 
 const perUnit = (p: Product) =>
@@ -234,7 +233,7 @@ export function CatalogView({ products, stock, cart, cartLines, history, onAdd, 
               {priced.map((t) => ` · ${storeName(t.store)} ${kes(t.total)}`).join("")}
               {priced.length === 2 && ` (save ${kes(priced[1].total - priced[0].total)})`}
             </span>
-            <span className="shrink-0 font-bold">View cart →</span>
+            <span className="shrink-0 font-bold">View the list →</span>
           </button>
         </div>
       )}
@@ -275,7 +274,7 @@ function ProductCard(props: CardProps) {
         </button>
         {row ? (
           <button type="button" onClick={() => setSheet(true)} className="min-h-12 shrink-0 rounded-xl border border-ok-fg px-3 font-bold text-ok-fg">
-            ✓ In cart{Number(row.quantity ?? 1) > 1 ? ` ×${row.quantity}` : ""}
+            ✓ On the list{Number(row.quantity ?? 1) > 1 ? ` ×${row.quantity}` : ""}
           </button>
         ) : (
           <button type="button" aria-label={`Add ${product.title}`} onClick={() => onAdd(product, tierFor(product))} className="min-h-12 shrink-0 rounded-xl bg-brand px-4 font-bold text-brand-contrast">
@@ -347,22 +346,22 @@ function ProductDetails({
 
       {row ? (
         <div className="mt-3 flex flex-col gap-2">
-          <div role="radiogroup" aria-label={`Tier for ${product.title}`} className="grid grid-cols-3 gap-1">
+          <div role="radiogroup" aria-label={`List or wishlist for ${product.title}`} className="grid grid-cols-2 gap-1">
             {TIERS.map((t) => (
               <button
                 key={t.value}
                 type="button"
                 role="radio"
-                aria-checked={(row.shopping_tier ?? "standard") === t.value}
+                aria-checked={(row.shopping_tier === "qol" ? "qol" : "standard") === t.value}
                 onClick={() => onTier(row, t.value)}
-                className={`min-h-12 rounded-xl border text-xs font-bold ${(row.shopping_tier ?? "standard") === t.value ? "border-brand bg-brand text-brand-contrast" : "border-line"}`}
+                className={`min-h-12 rounded-xl border text-xs font-bold ${(row.shopping_tier === "qol" ? "qol" : "standard") === t.value ? "border-brand bg-brand text-brand-contrast" : "border-line"}`}
               >
                 {t.label}
               </button>
             ))}
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-bold text-ok-fg">✓ In the cart</span>
+            <span className="text-sm font-bold text-ok-fg">✓ On the list</span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -413,7 +412,7 @@ function ProductDetails({
                     <button
                       type="button"
                       disabled={added}
-                      aria-label={added ? `${o.title} is in the cart` : `Add ${o.title}`}
+                      aria-label={added ? `${o.title} is on the list` : `Add ${o.title}`}
                       onClick={() => onAdd(o, tierFor(o))}
                       className="min-h-12 shrink-0 rounded-xl border border-line px-3 font-bold text-brand disabled:text-ok-fg"
                     >
