@@ -8,6 +8,7 @@ import { isActive, type Trip } from "@/components/shop/TripCheck";
 import { essentialsNeeded, nairobiToday, supperCount, type Diner } from "@/lib/home";
 import { fromTemplate, joinJob, postJob, updateJob } from "@/lib/jobs/actions";
 import { billStats, billsDue, type Bill } from "@/lib/money/bills";
+import { findDuplicate } from "@/lib/jobs/board";
 import { flexSummary, type Kind } from "@/lib/money/flex";
 import { chippedIn, monthSummary, type Budget, type Entry, type Project } from "@/lib/money/money";
 import { formatMinutes, jobStatus, shareChoices, sortBoard, workers, type Job, type Participant } from "@/lib/jobs/logic";
@@ -144,6 +145,8 @@ export function QuickStrip() {
   const post = async (id: string) => {
     const t = TEMPLATES.find((x) => x.id === id);
     if (!t) return;
+    const open = (await localDB().rows("jobs").toArray()) as unknown as Job[];
+    if (findDuplicate({ title: t.title, template_key: t.id }, open)) return setDone(`Already on the board: ${t.title}. Join it in Jobs.`);
     await postJob(fromTemplate(t));
     void syncNow().then((r) => {
       if (r?.ok && t.urgent) void sendAlertsNow();

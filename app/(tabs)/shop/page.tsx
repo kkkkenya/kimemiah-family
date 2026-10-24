@@ -31,6 +31,10 @@ import { SHOP_HINT, SUPERMARKETS, type Shop, type ShoppingItem, type StockItem }
 import type { Product } from "@/lib/shopping/catalog";
 import { autoListItems, type PutAwayLine } from "@/lib/shopping/stock";
 import { restockHouse } from "@/lib/sync/workflows";
+import { flexSummary, type Kind } from "@/lib/money/flex";
+import type { Budget, Entry } from "@/lib/money/money";
+import { sendAlertsNow } from "@/lib/push/client";
+import { BottomSheet } from "@/components/BottomSheet";
 import { fromTemplate, postJob, updateJob } from "@/lib/jobs/actions";
 import type { Job } from "@/lib/jobs/logic";
 import { TEMPLATES } from "@/lib/jobs/templates";
@@ -284,6 +288,13 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
   };
   const current = estimate(visibleLines, matches);
   const moneyLeft = moneyLeftThisMonth(money);
+  // Food and market budget left this month (flex budgeting), when one is set.
+  const kinds = (useRows<Kind & { id: string }>("budget_categories") ?? []) as Kind[];
+  const budgets = (useRows<Budget & { id: string }>("budgets") ?? []) as Budget[];
+  const today = new Date(Date.now() + 3 * 3600_000).toISOString().slice(0, 10);
+  const foodRows = flexSummary(kinds, budgets, money as unknown as Entry[], today.slice(0, 7), today).rows.filter((r) => ["Food", "Market and fresh"].includes(r.kind.name) && r.available > 0);
+  const foodLeft = foodRows.length ? foodRows.reduce((s, r) => s + r.left, 0) : null;
+  const [leftover, setLeftover] = useState<ShoppingItem[] | null>(null);
 
   const onList = (name: string, itemId?: string) => needed.some((i) => (itemId && i.item_id === itemId) || same(i.title, name));
   const whoAdded = (i: ShoppingItem) => (i._local && !i.actor_id ? "you" : (members.find((m) => m.id === i.actor_id)?.name ?? ""));
@@ -391,7 +402,7 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
 
   // Shopping done: bought amounts into stock, the spend logged, the basket cleared, the run
   // job marked done (lib/sync/workflows.ts). Catalog items ticked "keep track" join Stock first.
-  async function putAway(lines: PutAwayLine[], logSpend: boolean, track: string[]) {
+  async function putAway(lines: PutAwayLine[], logSpend: boolean, track: string[], paidFrom: "house" | "own" = "house") {
     const trip = trips.find((t) => isActive(t) && t.member_id === me?.id);
     for (const l of lines.filter((x) => track.includes(x.extraId))) {
       const row = (items ?? []).find((i) => i.id === l.extraId);
@@ -420,7 +431,12 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
       logSpend,
       tripId: trip?.id ?? null,
       extraIds: lines.map((l) => l.extraId).filter((id) => !id.startsWith("auto:")),
+      paidFrom,
     });
+    // After the shop: what was on the list but didn't come home. Keep it or drop it.
+    const done = new Set(lines.map((l) => l.extraId));
+    const still = needed.filter((i) => !i.auto && !done.has(i.id));
+    if (still.length) setLeftover(still);
     void syncNow();
     setPuttingAway(false);
     setUndo({
@@ -439,7 +455,11 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
       finished_at: null,
     });
     void syncNow();
-    setUndo({ id: Date.now(), message: keep.length ? `Going to ${shop.name} · ${keep.length} added` : `Going to ${shop.name}` });
+    // Everyone at home gets "Greg is at Naivas" so they can add to the list in time.
+    void syncNow().then((r) => {
+      if (r?.ok) void sendAlertsNow();
+    });
+    setUndo({ id: Date.now(), message: keep.length ? `Going to ${shop.name} · ${keep.length} added · the house is told` : `Going to ${shop.name} · the house is told` });
   }
 
   async function finishTrip(trip: Trip) {
@@ -525,7 +545,7 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
   return (
     <Screen title="Cart / List">
       {switcher}
-      <ModeBar mode={mode} onChange={setMode} totals={totals} estimate={current.total} unpriced={current.unpriced} moneyLeft={moneyLeft} />
+      <ModeBar mode={mode} onChange={setMode} totals={totals} estimate={current.total} unpriced={current.unpriced} moneyLeft={moneyLeft} foodLeft={foodLeft} />
       {needed.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {!aisle && (
@@ -538,6 +558,14 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
               💰 Save up for the upgrades ({kes(totals.upgrades)})
             </button>
           )}
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(listText(needed, (id) => shops.find((s) => s.id === id)?.name ?? null))}`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex min-h-12 items-center rounded-xl border border-line px-4 text-sm font-bold"
+          >
+            Send the list on WhatsApp
+          </a>
           {needed.some((i) => !i.auto) && (
             <button type="button" onClick={clearCart} className="min-h-12 rounded-xl border border-line px-4 text-sm font-bold">
               Clear cart
@@ -744,6 +772,36 @@ function ShoppingList({ switcher, stock, shops, members, items, auto, products, 
           onDone={() => setAisle(false)}
         />
       )}
+
+      {leftover && (
+        <BottomSheet title="Didn't come home" onClose={() => setLeftover(null)}>
+          <div className="flex flex-col gap-3 pb-2">
+            <h2 className="font-display text-2xl">Still on the list</h2>
+            <p className="text-sm text-muted">These weren&apos;t bought. Keep them for next time, or drop the ones you don&apos;t need.</p>
+            <ul className="flex flex-col divide-y divide-line">
+              {leftover.map((i) => (
+                <li key={i.id} className="flex items-center justify-between gap-3 py-2">
+                  <span>{i.title}</span>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await change("delete", { id: i.id });
+                      const rest = leftover.filter((x) => x.id !== i.id);
+                      setLeftover(rest.length ? rest : null);
+                    }}
+                    className="min-h-10 shrink-0 rounded-xl border border-line px-4 text-sm font-bold"
+                  >
+                    Drop
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <button type="button" onClick={() => setLeftover(null)} className="min-h-12 rounded-xl bg-brand font-bold text-brand-contrast">
+              Keep the rest
+            </button>
+          </div>
+        </BottomSheet>
+      )}
       {aisle && <div className="h-20" aria-hidden="true" />}
       <UndoBar state={undo} onClose={closeUndo} />
     </Screen>
@@ -803,4 +861,15 @@ function ItemRow({
       )}
     </li>
   );
+}
+
+/** The list as plain text for WhatsApp, grouped by shop, with quantities. */
+function listText(items: ShoppingItem[], shopName: (id: string | null) => string | null): string {
+  const groups = new Map<string, string[]>();
+  for (const i of items) {
+    const shop = shopName(i.shop_id ?? null) ?? "Anywhere";
+    const qty = (i.quantity ?? 1) > 1 ? ` x${i.quantity}` : i.qty ? ` (${i.qty})` : "";
+    groups.set(shop, [...(groups.get(shop) ?? []), `- ${i.title}${qty}`]);
+  }
+  return ["Kimemiah shopping list", ...[...groups].flatMap(([shop, lines]) => ["", `${shop}:`, ...lines])].join("\n");
 }

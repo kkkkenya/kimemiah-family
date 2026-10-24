@@ -20,7 +20,12 @@ export type RestockOptions = {
   savePrices?: boolean;
   /** Basket rows to clear once they're put away. */
   extraIds?: string[];
+  /** Whose money paid: the house's, or the shopper's own (the house then owes them). */
+  paidFrom?: "house" | "own";
 };
+
+/** The Food kind (seeded): supermarket and kiosk shopping counts here. */
+export const FOOD_KIND = "00000000-0000-0000-0003-000000000001";
 
 /**
  * Shopping done (or a receipt read): bought amounts go into stock, OK / Low / Out items go back
@@ -49,7 +54,8 @@ export async function restockHouse(lines: PutAwayLine[], o: RestockOptions): Pro
         method: null,
         spent_by: o.meId ?? null,
         shop_id: g.shopId,
-        category_id: null,
+        category_id: FOOD_KIND,
+        paid_from: o.paidFrom ?? "house",
         trip_id: o.tripId ?? null,
         note: g.note,
         voids_entry_id: null,

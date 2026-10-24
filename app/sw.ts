@@ -44,14 +44,17 @@ self.addEventListener("push", (event) => {
       icon: "/icons/icon-192.png",
       badge: "/icons/icon-192.png",
       data: { url: data.url ?? "/" },
-    }),
+      // Job reminders get a Done button right on the alert (Android; iPhone opens the job).
+      ...(data.url?.includes("done=") ? { actions: [{ action: "done", title: "✓ Done" }] } : {}),
+    } as NotificationOptions),
   );
 });
 
 // Tapping an alert opens the app on the right tab (reusing an open window if there is one).
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = (event.notification.data as { url?: string } | undefined)?.url ?? "/";
+  const base = (event.notification.data as { url?: string } | undefined)?.url ?? "/";
+  const url = event.action === "done" ? `${base}&now=1` : base;
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(async (windows) => {
       const open = windows[0];

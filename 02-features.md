@@ -151,6 +151,13 @@ Usual jobs (one tap, all editable when posting):
 - **Settle up**: money out says whether it came from house money or the person's own money. Own-money spends add to what the house owes that person; "Pay back" logs the payback, which isn't counted as new spending.
 - **Reports** (Money → Reports): a Sankey of where the money went for a month, 3 or 6 months (who put money in → Fixed / Flexible / Non-monthly / Kept → each kind; spending beyond what came in shows as "Earlier months"); each kind over six months (bars on a phone, a table of numbers on a laptop); spending by shop; and what the bills bought (litres, kg) month by month.
 - **Monthly review** (Money → Reports, or Home from the 1st to the 7th): up to six cards about a month (in and spent with who put money in, kept, biggest spending against plan, bills and usage against usual, goals that moved, open questions and paybacks). A phone swipes them one at a time; a laptop shows them all for the meeting. "Put on the meeting agenda" adds a 15-minute "Money review" item that links back to it. "Send to Peter" sends the same figures on WhatsApp, and Money's summary button now uses the review too.
+- **Job library**: 80 usual jobs across every kind (a new Laundry & ironing kind included), searchable and filtered by kind, under "📚 Job library" in Jobs and "Start from a usual job" in Add a job. Picking one fills in the form.
+- **No duplicate jobs**: posting a job that's already open (same usual job or same words) offers "Show me that one" or "Post another one anyway"; Home's quick buttons say it's already on the board.
+- **Repeating jobs**: a finished weekly or monthly job comes back on its day, keeping its usual-job id (learned times and tools follow), and a late finish doesn't make the next one overdue.
+- **One-tap done**: job reminders open "Finished …? ✓ Done"; on Android the alert itself has a ✓ Done button.
+- **Swaps**: "⇄ Swap" on your job asks someone to take it, optionally taking one of theirs in return. They get a push and accept in one tap; you stay on it until they do.
+- **Week ahead** (laptop): Monday to Sunday of open jobs, who's on each, "Nobody yet", and the hours each day, for sharing jobs out at the meeting.
+- **Shop and money**: the cart shows the Food budget left and whether the run fits; starting a trip tells everyone else at home ("Greg is at Naivas"); put-away asks who paid (own money goes to Settle up) and logs the spend under Food; the list can be sent on WhatsApp grouped by shop; after put-away, what didn't come home can be kept or dropped.
 - **Summary for Peter**: one tap opens WhatsApp to Peter with the month (in, spent by kind, left, projects).
 
 ## 5. Meeting (under More)

@@ -12,6 +12,7 @@ export function ModeBar({
   estimate,
   unpriced,
   moneyLeft,
+  foodLeft = null,
 }: {
   mode: Mode;
   onChange: (m: Mode) => void;
@@ -19,6 +20,8 @@ export function ModeBar({
   estimate: number;
   unpriced: number;
   moneyLeft: number | null;
+  /** Food and market budget left this month (flex budgeting), when one is set. */
+  foodLeft?: number | null;
 }) {
   const over = moneyLeft != null && estimate > moneyLeft;
   const pill = (active: boolean) =>
@@ -54,6 +57,12 @@ export function ModeBar({
           " · Money left shows once Dad's transfer is logged"
         )}
       </p>
+      {foodLeft != null && (
+        <p className={`-mt-1 rounded-xl px-3 py-1.5 text-sm tabular ${estimate > foodLeft ? "bg-low-bg text-low-fg" : "text-muted"}`}>
+          Food budget left: <strong>{kes(foodLeft)}</strong>
+          {estimate > foodLeft ? ` · this run is ${kes(estimate - foodLeft)} over it` : estimate > 0 ? ` · this run fits, ${kes(foodLeft - estimate)} to spare` : ""}
+        </p>
+      )}
     </div>
   );
 }

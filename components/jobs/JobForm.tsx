@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { dayPlus, dueOnDay, endOfToday, type NewJob } from "@/lib/jobs/actions";
 import { formatMinutes, jobSize, type Strain } from "@/lib/jobs/logic";
 import { CATEGORIES, TEMPLATES } from "@/lib/jobs/templates";
 import { STRAIN } from "./JobCard";
+import { JobLibrary } from "./JobLibrary";
 
 const DURATIONS = [15, 30, 45, 60, 90, 120, 180, 240];
 const REPEATS = [
@@ -24,7 +25,8 @@ const pill = (on: boolean) => `min-h-12 rounded-xl border px-3 text-sm font-bold
 // Light / Medium / Heavy says how physically hard it is.
 type Learned = (key: string) => { minutes: number; samples: number } | null;
 
-export function JobForm({ onPost, onCancel, learned }: { onPost: (job: NewJob) => void; onCancel: () => void; learned?: Learned }) {
+export function JobForm({ onPost, onCancel, learned, start }: { onPost: (job: NewJob) => void; onCancel: () => void; learned?: Learned; start?: string }) {
+  const [library, setLibrary] = useState(false);
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("house_cleaning");
   const [duration, setDuration] = useState(30);
@@ -57,6 +59,12 @@ export function JobForm({ onPost, onCancel, learned }: { onPost: (job: NewJob) =
       setDate(dayPlus(t.daysAhead ?? 3));
     }
   }
+
+  // Opened from the job library: start from that job.
+  useEffect(() => {
+    if (start) applyTemplate(start);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, for the job it was opened with
+  }, []);
 
   function toggleFunds(on: boolean) {
     setFunds(on);
@@ -93,17 +101,20 @@ export function JobForm({ onPost, onCancel, learned }: { onPost: (job: NewJob) =
     <form onSubmit={submit} className="flex flex-col gap-3 rounded-xl border-2 border-brand bg-raised p-4">
       <h2 className="font-display text-xl">Add a job</h2>
 
-      <label className="flex flex-col gap-1 text-sm font-bold">
-        Start from a usual job (optional)
-        <select defaultValue="" onChange={(e) => applyTemplate(e.target.value)} className={field}>
-          <option value="">Choose…</option>
-          {TEMPLATES.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.title}
-            </option>
-          ))}
-        </select>
-      </label>
+      <button type="button" onClick={() => setLibrary(true)} className="flex min-h-12 items-center justify-between gap-2 rounded-xl border border-line bg-base px-4 text-left">
+        <span>{templateKey ? "Picked from the job library" : "Start from a usual job"}</span>
+        <span className="text-sm text-muted">{TEMPLATES.length} jobs ›</span>
+      </button>
+      {library && (
+        <JobLibrary
+          learned={learned}
+          onClose={() => setLibrary(false)}
+          onPick={(t) => {
+            applyTemplate(t.id);
+            setLibrary(false);
+          }}
+        />
+      )}
 
       <label className="flex flex-col gap-1 text-sm font-bold">
         What needs doing?
