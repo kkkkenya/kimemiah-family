@@ -112,7 +112,7 @@ export function CatalogView({ products, stock, cart, cartLines, history, onAdd, 
   const priced = totals.filter((t) => t.priced > 0).sort((a, b) => a.total - b.total);
   const cartCount = cart.length;
 
-  const select = "min-h-12 min-w-0 rounded-xl border border-line bg-raised px-2 text-sm";
+  const select = "min-h-12 min-w-0 rounded-xl border border-line bg-raised px-2";
 
   return (
     <>

@@ -186,7 +186,7 @@ export function ReceiptReader({ stock, shops, meId, onClose }: { stock: StockIte
                   aria-label={`House item for ${r.name}`}
                   value={r.itemId}
                   onChange={(e) => setRows((rs) => rs.map((x) => (x.key === r.key ? { ...x, itemId: e.target.value, include: !!e.target.value } : x)))}
-                  className="min-h-12 rounded-xl border border-line bg-base px-2 text-sm"
+                  className="min-h-12 rounded-xl border border-line bg-base px-2"
                 >
                   <option value="">Not a house item (skip)</option>
                   {items.map((i) => (
