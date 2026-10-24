@@ -1,0 +1,83 @@
+[
+ {
+  "id": "a1",
+  "file": "0244d76a5f503788cc021ee59bdf9bcd.jpg",
+  "y": 0.55,
+  "side": 1
+ },
+ {
+  "id": "a2",
+  "file": "17078c78f23133e7064e3ce75358e868.jpg",
+  "y": 0.52,
+  "side": 1
+ },
+ {
+  "id": "a3",
+  "file": "4d1db87985208688a43f7aa572448cde.jpg",
+  "y": 0.36,
+  "side": 1
+ },
+ {
+  "id": "a4",
+  "file": "85a6d0fa36c079f4c8b34869273b18d6.jpg",
+  "y": 0.45,
+  "side": 1
+ },
+ {
+  "id": "a5",
+  "file": "928181829925efd86bcf04a05b3c9a37.jpg",
+  "y": 0.48,
+  "side": 1,
+  "pad": 0.3
+ },
+ {
+  "id": "a6",
+  "file": "a0e98548091a96540a54ec150ad7371f.jpg",
+  "y": 0.36,
+  "side": 1
+ },
+ {
+  "id": "a7",
+  "file": "a6bac246841305709f5e61f74bddd171.jpg",
+  "y": 0.38,
+  "side": 1
+ },
+ {
+  "id": "a8",
+  "file": "f11a25e2c8b6696fb892876a96debe81.jpg",
+  "y": 0.38,
+  "side": 1
+ },
+ {
+  "id": "a9",
+  "file": "7a4954e665de42c7eb5f3b347dfd27d3.jpg",
+  "y": 0.38,
+  "side": 1,
+  "x": 0.47
+ },
+ {
+  "id": "a10",
+  "file": "9913ece75b359ff17c9b0f369b875668.jpg",
+  "y": 0.45,
+  "side": 1
+ },
+ {
+  "id": "a11",
+  "file": "aacf15347e1d221f90818cc9736428c5.jpg",
+  "y": 0.45,
+  "side": 1,
+  "x": 0.45
+ },
+ {
+  "id": "a12",
+  "file": "b87f767cee9f01a464dd1badbdef73ad.jpg",
+  "y": 0.3,
+  "side": 0.8
+ },
+ {
+  "id": "a13",
+  "file": "ea2d92f1f1ca1b982c3127188ce70ef0.jpg",
+  "y": 0.36,
+  "side": 0.95
+ }
+]

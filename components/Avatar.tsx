@@ -2,12 +2,14 @@
 
 import { useFamilyImage } from "@/lib/images";
 
-// Pictures uploaded by scripts/upload-avatars.mjs as family/avatars/a1.jpg ... a8.jpg.
-export const AVATARS = Array.from({ length: 8 }, (_, i) => `a${i + 1}`);
+// Pictures uploaded by scripts/upload-avatars.mjs as family/avatars/a1.jpg ... a13.jpg, each
+// cropped around the face. Bump PICS when they are re-cropped so phones fetch them again.
+const PICS = "2";
+export const AVATARS = Array.from({ length: 13 }, (_, i) => `a${i + 1}`);
 
 /** A person's picture, or their first letter if they haven't picked one. */
 export function Avatar({ avatar, name, size = 40 }: { avatar?: string | null; name: string; size?: number }) {
-  const url = useFamilyImage(avatar ? `avatars/${avatar}.jpg` : null, "1");
+  const url = useFamilyImage(avatar ? `avatars/${avatar}.jpg` : null, PICS);
   const style = { width: size, height: size };
   return url ? (
     // eslint-disable-next-line @next/next/no-img-element -- local blob URL, not optimisable
@@ -20,7 +22,7 @@ export function Avatar({ avatar, name, size = 40 }: { avatar?: string | null; na
 }
 
 function Choice({ id, selected, onPick }: { id: string; selected: boolean; onPick: (id: string) => void }) {
-  const url = useFamilyImage(`avatars/${id}.jpg`, "1");
+  const url = useFamilyImage(`avatars/${id}.jpg`, PICS);
   return (
     <button
       type="button"
