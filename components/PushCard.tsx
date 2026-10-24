@@ -4,12 +4,19 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSync } from "@/components/SyncProvider";
 import { NOTICE, type NoticeType } from "@/lib/push/style";
-import { pushState, sendTest, turnOff, turnOn, type PushState } from "@/lib/push/client";
+import { pushState, resetPush, sendTest, turnOff, turnOn, type PushState, type Step } from "@/lib/push/client";
 import { syncEngine } from "@/lib/sync/client";
 import { useMe } from "@/lib/sync/hooks";
 
 const isIos = () => typeof navigator !== "undefined" && /iPhone|iPad|iPod/.test(navigator.userAgent);
 const isAndroid = () => typeof navigator !== "undefined" && /Android/.test(navigator.userAgent);
+// What the button says while it works, so a slow phone doesn't look frozen.
+const STEP: Record<Step, string> = {
+  asking: "Waiting for you to tap Allow…",
+  starting: "Starting up…",
+  connecting: "Connecting this phone…",
+  saving: "Saving…",
+};
 const SHOWN: NoticeType[] = ["urgent", "due", "swap", "suggest", "money", "bill", "question", "shop", "team", "thanks"];
 
 /**
@@ -22,6 +29,7 @@ export function PushCard({ compact = false }: { compact?: boolean }) {
   const me = useMe() as (ReturnType<typeof useMe> & { alert_amounts?: boolean }) | undefined;
   const [state, setState] = useState<PushState | null>(null);
   const [busy, setBusy] = useState(false);
+  const [step, setStep] = useState<Step | null>(null);
   const [note, setNote] = useState<string | null>(null);
   useEffect(() => {
     void pushState().then(setState);
@@ -49,9 +57,17 @@ export function PushCard({ compact = false }: { compact?: boolean }) {
 
   async function enable() {
     setBusy(true);
-    setNote(await turnOn());
-    setState(await pushState());
-    setBusy(false);
+    setNote(null);
+    try {
+      const err = await turnOn(setStep);
+      setNote(err ?? "Notifications are on. Send yourself a test to check.");
+    } catch {
+      setNote("Something went wrong. Tap Reset below, then Turn on again.");
+    } finally {
+      setStep(null);
+      setBusy(false);
+      setState(await pushState());
+    }
   }
 
   return (
@@ -97,7 +113,7 @@ export function PushCard({ compact = false }: { compact?: boolean }) {
             <div className="flex flex-col gap-2">
               <p>Your phone will ask once. Tap <strong>Allow</strong>.</p>
               <button type="button" disabled={busy || !appReady} onClick={enable} className="min-h-12 self-start rounded-xl bg-brand px-5 font-bold text-brand-contrast disabled:opacity-50">
-                {busy ? "One moment…" : "Turn on notifications"}
+                {busy ? STEP[step ?? "asking"] : "Turn on notifications"}
               </button>
             </div>
           )}
@@ -108,11 +124,14 @@ export function PushCard({ compact = false }: { compact?: boolean }) {
             <p>A test arrives in a few seconds. If it doesn&apos;t, check the phone isn&apos;t on Do Not Disturb.</p>
             <button
               type="button"
-              disabled={!allowed || busy}
+              disabled={!appReady || busy}
               onClick={async () => {
                 setBusy(true);
-                setNote(await sendTest());
-                setBusy(false);
+                try {
+                  setNote(await sendTest());
+                } finally {
+                  setBusy(false);
+                }
               }}
               className="min-h-12 self-start rounded-xl border border-ink px-5 font-bold disabled:opacity-50"
             >
@@ -155,21 +174,39 @@ export function PushCard({ compact = false }: { compact?: boolean }) {
         </label>
       )}
 
-      {allowed && (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={async () => {
-            setBusy(true);
-            setNote(await turnOff());
-            setState(await pushState());
-            setBusy(false);
-          }}
-          className="mt-3 min-h-10 text-sm font-bold text-muted underline underline-offset-4"
-        >
-          Turn notifications off on this phone
-        </button>
-      )}
+      <div className="mt-3 flex flex-wrap gap-x-5">
+        {allowed && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                setNote(await turnOff());
+              } finally {
+                setBusy(false);
+                setState(await pushState());
+              }
+            }}
+            className="min-h-10 text-sm font-bold text-muted underline underline-offset-4"
+          >
+            Turn notifications off on this phone
+          </button>
+        )}
+        {appReady && (
+          <button
+            type="button"
+            onClick={async () => {
+              setBusy(true);
+              await resetPush();
+              window.location.reload();
+            }}
+            className="min-h-10 text-sm font-bold text-muted underline underline-offset-4"
+          >
+            Stuck? Reset notifications on this phone
+          </button>
+        )}
+      </div>
     </section>
   );
 }
