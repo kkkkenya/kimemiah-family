@@ -93,6 +93,7 @@ export type NewEntry = {
   usage_qty?: number | null;
   paid_from?: "house" | "own";
   payback_to?: string | null;
+  trip_id?: string | null;
 };
 
 /**
@@ -100,7 +101,7 @@ export type NewEntry = {
  * covers ("Money ready"); money toward a project that reaches its target marks it funded and
  * unlocks its house-work job. An M-Pesa code already logged is refused.
  */
-export async function logMoney(entry: NewEntry): Promise<{ error?: string; unlocked: string[]; funded?: string }> {
+export async function logMoney(entry: NewEntry): Promise<{ error?: string; unlocked: string[]; funded?: string; id?: string }> {
   const db = localDB();
   const engine = syncEngine();
   const all = (await db.rows("money_entries").toArray()) as unknown as Entry[];
@@ -134,7 +135,7 @@ export async function logMoney(entry: NewEntry): Promise<{ error?: string; unloc
       }
     }
   }
-  return { unlocked, funded };
+  return { unlocked, funded, id: row.id };
 }
 
 /** A correction: a new entry that cancels a wrong one (entries are never edited or deleted). */
@@ -169,4 +170,72 @@ export async function flagForMeeting(title: string, jobId: string | null = null,
   const sort = Math.max(0, ...items.map((a) => a.sort)) + 1;
   await engine.queue("agenda_items", "insert", { id: crypto.randomUUID(), meeting_id: next.id, title: title.slice(0, 120), minutes: source === "money_review" ? 15 : 5, source, source_job_id: jobId, sort });
   return next.held_on;
+}
+
+// ---------------------------------------------------------------- shop: pay and finish
+
+export type ShopLine = { id: string; extra_id?: string | null; item_id?: string | null; title: string; qty: number; unit: string; unit_price_kes: number; total_kes: number };
+export type ShopPayment = { paid: number; method: "mpesa" | "cash"; mpesa_code?: string | null; counterparty?: string | null; paid_from: "house" | "own" };
+
+/**
+ * A shop is paid: the money is logged once (the amount actually paid, under the right kind for
+ * the place), house items go into stock with their unit prices saved, what was bought comes off
+ * the list, the trip closes with how it was paid, and today's shopping job is done.
+ */
+export async function finishShop(
+  trip: { id: string; shop_id: string | null },
+  lines: ShopLine[],
+  pay: ShopPayment,
+  o: { meId?: string | null; kindId: string | null; shopName: string; discount: number },
+): Promise<{ error?: string; runsDone: number }> {
+  const engine = syncEngine();
+  const money = await logMoney({
+    direction: "out",
+    amount_kes: pay.paid,
+    occurred_on: nairobiToday(),
+    category_id: o.kindId,
+    shop_id: trip.shop_id,
+    method: pay.method,
+    mpesa_code: pay.mpesa_code ?? null,
+    counterparty: pay.counterparty ?? null,
+    spent_by: o.meId ?? null,
+    paid_from: pay.paid_from,
+    trip_id: trip.id,
+    note: `${o.shopName}: ${lines.length === 1 ? lines[0].title : `${lines.length} things`}`,
+  });
+  if (money.error) return { error: money.error, runsDone: 0 };
+
+  // Lines as they were finally paid (after any bargaining spread).
+  for (const l of lines) await engine.queue("trip_lines", "update", { id: l.id, unit_price_kes: l.unit_price_kes, total_kes: l.total_kes, qty_bought: l.qty });
+
+  const stock = (await localDB().rows("stock_items").toArray()) as unknown as { id: string; track_mode?: string }[];
+  const putAway: PutAwayLine[] = lines
+    .filter((l) => l.item_id)
+    .map((l) => ({
+      extraId: l.extra_id ?? `trip:${l.id}`,
+      itemId: l.item_id!,
+      title: l.title,
+      shopId: trip.shop_id,
+      level: stock.find((s) => s.id === l.item_id)?.track_mode === "level",
+      qty: l.qty,
+      perPack: 1,
+      price: l.unit_price_kes,
+    }));
+  const { runsDone } = await restockHouse(putAway, {
+    meId: o.meId,
+    logSpend: false,
+    tripId: trip.id,
+    savePrices: true,
+    extraIds: lines.map((l) => l.extra_id).filter((x): x is string => !!x),
+  });
+  await engine.queue("shopping_trips", "update", {
+    id: trip.id,
+    paid_kes: Math.round(pay.paid),
+    method: pay.method,
+    mpesa_code: pay.mpesa_code ?? null,
+    paid_from: pay.paid_from,
+    money_entry_id: money.id ?? null,
+    discount_kes: o.discount || null,
+  });
+  return { runsDone };
 }

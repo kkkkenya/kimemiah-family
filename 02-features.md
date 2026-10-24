@@ -31,15 +31,16 @@ Top to bottom (cards appear only when there's something to show):
 - **Tools & equipment**: panga, slasher, hedge shears, jembe, rake, hosepipe, dog brush, extension cable, ladder. Where each one is (Store room, Back verandah, Dog kennel, Main house), working or needs fixing (with "Post a repair job"), and who used it last.
 - **Likely running low?** when an item still marked OK has used 80% of its usual time between restocks: Still OK (asks again in 3 days) or Mark Low / Add to the list.
 
-**Shop tab**: two views, **Catalog** (opens first) and **Cart / List**.
+**Shop tab**: three views, **List** (opens first), **Catalog** and **Past shops**. The basket you fill while out shopping is its own page.
 
 **Catalog**
 - Every Naivas and Quickmart product the scraper finds (about 7,000 today, Quickmart only while Naivas blocks us), kept on the phone and searchable with no signal.
 - Search by name, brand or size. Aisles: On sale, House usuals, Unga rice and oil, Dairy bread and eggs, Liquor, Tea coffee and drinks, Cleaning, Toiletries, Home and upgrades, Market and mama mboga (house items, since market prices aren't online).
 - Sort by house usuals, best value per kg / litre / piece, biggest discount, lowest price, or A to Z. Filter by store deals, where it's cheaper, or tier.
 - Each card shows the Quickmart price (and price per kg / litre / piece). Cards group every brand of the same pack; "Show all brands" lists them one by one. If Naivas prices ever come through, both show side by side with the cheaper one marked.
-- **+ Add** puts it in the family cart with its tier (the house item's tier, else the catalog's), then shows Essential / Full shop / Upgrade and a − 1 + stepper right on the card.
-- A cart bar stays at the bottom: items, the total at each store, and "View cart".
+- **+ Add** puts it on the list, then shows **On the list / ✨ Wishlist** and a − 1 + stepper right on the card.
+- A bar stays at the bottom: items, the total at each store, and "View the list".
+- **Tracked staples on offer this week** and the **Supermarket basket** (Naivas vs Quickmart totals) sit at the top of the Catalog.
 
 **Stock**
 - Packaged items (unga, oil, sugar, soap) use **+ / −** counts.
@@ -48,39 +49,33 @@ Top to bottom (cards appear only when there's something to show):
 - Status shows by icon, word and colour together: OK, Low, Out.
 - Each item keeps a short history of who changed it and when.
 
-**Shopping list**
-- Low and Out items appear on their own, grouped by shop: **Naivas, Quickmart, Supermarket (either), Market, Mama mboga, Wholesaler**, plus Gas dealer, Water vendor and M-Pesa for things no supermarket sells.
-- **No kiosk.** Kiosk prices run 20–40% above the supermarket, so milk, bread, eggs, sugar and tissue belong to the supermarket run.
-- Anyone can add a one-off item and pick how urgent it is in one tap: **Essential**, **Full shop** or **Can wait**.
-- Tick items as you shop; mark "Not found" if the shop is out.
-- **✅ Shopping done · add all to stock (KES X)** adds what you bought to stock, logs the spend at the shop prices (one tap fixes a price), clears the basket and marks the supermarket run done on Jobs. If nothing was ticked, it offers the whole list to untick what you didn't buy. Catalog items not on the house list can be tracked at home from there.
-- **Start shopping in store**: the screen stays on, tick targets get bigger, and a bar shows the trolley total, what's left on the list and money left. "Shelf empty? Swap brand" offers the next cheapest of the same pack.
-- **Plan a supermarket run** posts the 2-person money run on Jobs with the cart's total, which follows the cart until the run.
+**List**
+- What the house needs, grouped by **where it's bought**: Supermarket, Market & mama mboga, Kiosk, Vet & Kenchic, Other places, Anywhere. Each thing has its own icon (vegetables, meat, dairy, bread, flour, oil, cleaning, toiletries, dog, gas…).
+- Low and Out stock items join by themselves. Anyone can add a thing in one box; tapping a thing sets how much, where it's bought, **⚡ Needed soon** (goes to the top) or **Wishlist**.
+- The old Essential / Full shop / Can wait tiers are gone. Nice-to-haves live in the **Wishlist** at the bottom, with "Save up for these" (a goal on Money).
+- **⋯** has Send the list on WhatsApp, Plan a supermarket run on Jobs, and Clear the list.
+- **I'm going shopping** asks where (Market, Mama mboga, Naivas, Quickmart, Vet, Kenchic, Gas dealer, Wholesaler, Other), tells everyone at home ("Greg is at the market"), and opens the basket.
 
-**Three modes** (top of the list, each with its own estimated total):
+**Basket** (while shopping; the screen stays on)
+- **To get here**: the list for this place as icon cards. Tap one when you pick it up: **how many**, the **unit** (piece, kg, bunch, heap, tray…) and the price, either **per unit** or **what you paid for the lot** (3 bunches for 50 → 16.67 each). The last price paid and the usual range show underneath.
+- **+ Something not on the list** for anything extra. Things listed for other places are one tap away.
+- A bar at the bottom shows the basket total and **Pay and finish**.
+- **Pay**: **M-Pesa**, by pasting the confirmation message (the easier way to set the amount: nothing to type, and the code stops it being logged twice), or **Cash**, typed. Then house money or your own (your own goes to Settle up).
+- **The payment is checked against the basket.** Paid less (bargained)? The difference is shared across the items so the saved prices are what was really paid. Paid more? It asks if something was missed.
+- Done: the spend is logged once on Money (Food for supermarket and kiosk, Market and fresh for the market, Dog for the vet and Kenchic), house things go into Stock with their prices, bought things come off the list, the shopping run on Jobs is marked done, and anything for here that didn't come home can be kept or dropped.
+- **Share an M-Pesa SMS to the app** (Share → Kimemiah, on Android with the app installed from Chrome): while shopping it opens the pay sheet with the message; otherwise Money's form, filled in.
 
-| Mode | What's in it | When |
-|---|---|---|
-| **Essentials** | Unga, rice, oil, sugar, milk, bread, salt, eggs, tissue, soap, gas | Mid-month top-ups, tight weeks |
-| **Full shop** | Essentials plus tea, Royco, spices, margarine, washing powder, dish soap, bleach, drinks | The bi-weekly or monthly bulk run |
-| **+ Upgrades** | Can-wait items: broom, mop, bucket, basin, containers, pegs, bulbs, cloths, mats | When there's room in the budget, or one is on a deep deal |
-
-Below the modes: "Estimated: KES 3,450 · Money left this month: KES 6,200", in amber when the list costs more than what's left.
-
-**Anti-kiosk trips**
-- **"I'm going to Naivas / Quickmart"** first checks the fast movers (milk, bread, eggs, tissue, sugar, unga). Anything Low, or not checked in 5 days, is offered for the trip list: "Keep them on your trip list so we skip the kiosk this week?"
-- During the trip, a **"Grab while you're there (running low)"** card stays at the top.
-- Everyone else sees "Mom is going to Quickmart. Add anything you need." (the push alert for this comes with Phase 7).
-- If a bulk item runs out more than 4 days before the next big run, twice in a row, it gets a quiet note: "Ran out early last 2 runs. Consider buying more."
+**Past shops**
+- Every paid shop: when, where, what, who, how it was paid and the total (a table on a laptop). Tap one for the items with quantities and unit prices.
+- **Shop this again** puts its things back on the list (skipping what's already there), where they can be changed or removed like anything else.
 
 **Supermarket prices** (updated every Friday, all usable offline)
-- Each item shows the **best brand and store**: "Best: Fresh Fri 2l · KES 545 at Naivas (sale · save KES 85)", with the other store's price underneath.
+- Tap a supermarket item on the list to see the **best brand and store**: "Best: Fresh Fri 2l · KES 545 at Naivas (sale · save KES 85)", with the other store's price underneath.
 - **Brand rules per item**: any brand (cheapest), prefer a brand (with a note when a rival is 12%+ off), or only that brand.
 - **Compare brands and sizes**: a drawer listing every brand and pack at both stores, with the price per kg, litre or piece, so an empty shelf isn't a problem.
 - **Bulk value** tip when a bigger pack is at least 8% cheaper per kg or litre.
-- **Supermarket basket**: Naivas total vs Quickmart total for the current mode, deals and savings, and a "split the run" option when buying some items at each store saves KES 300 or more.
+- **Supermarket basket**: Naivas total vs Quickmart total for the list, deals and savings, and a "split the run" option when buying some items at each store saves KES 300 or more.
 - **Tracked staples on offer this week**: items fine at home but 15%+ off, to restock early.
-- **Find more in the catalog** from the list opens the Catalog view, which works offline.
 
 Naivas blocks automated price tools, so the app shows **Quickmart prices only**. On a real Naivas receipt (21 Oct 2026), 9 of 13 shelf prices matched Quickmart, so they work as a guide for either store. Naivas stays a shop you can go to, list items for and log spending at. Market items (eggs at KES 470 a tray), the vet and Kenchic use the family's usual prices.
 

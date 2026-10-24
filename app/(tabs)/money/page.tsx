@@ -22,6 +22,7 @@ import { ruleFor, suggestMatch, type Rule } from "@/lib/money/rules";
 import type { Review } from "@/lib/push/money";
 import { whatsappHref } from "@/lib/contacts";
 import { kes } from "@/lib/shopping/pricing";
+import { SHARED_SMS } from "@/lib/shopping/market";
 import { syncEngine } from "@/lib/sync/client";
 import { useMe, useRows } from "@/lib/sync/hooks";
 import type { Row } from "@/lib/sync/tables";
@@ -106,6 +107,21 @@ export default function MoneyPage() {
       localStorage.setItem(HIDDEN_KEY, JSON.stringify(next));
     } catch {}
   }
+
+  // An M-Pesa message shared into the app (and not for a basket) opens the form, filled in.
+  const [sharedSms, setSharedSms] = useState<string | undefined>();
+  useEffect(() => {
+    try {
+      const sms = sessionStorage.getItem(SHARED_SMS);
+      if (!sms) return;
+      sessionStorage.removeItem(SHARED_SMS);
+      setSharedSms(sms);
+      setForm({ direction: "out" });
+    } catch {}
+  }, []);
+  useEffect(() => {
+    if (!form) setSharedSms(undefined);
+  }, [form]);
 
   // /money?pay=<bill id> (from Home and from bill jobs) opens the form for that bill.
   const [payId, setPayId] = useState<string | null>(null);
@@ -275,7 +291,7 @@ export default function MoneyPage() {
 
       {form && (
         <div className="lg:[column-span:all]">
-          <EntryForm start={form} categories={categories} projects={projects} bills={bills} rules={rules} meId={me?.id} onSave={save} onCancel={() => setForm(null)} />
+          <EntryForm start={form} categories={categories} projects={projects} bills={bills} rules={rules} meId={me?.id} initialSms={sharedSms} onSave={save} onCancel={() => setForm(null)} />
         </div>
       )}
 
